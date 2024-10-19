@@ -7,10 +7,14 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
+    { name = "portion" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "numpy", specifier = ">=2.1.2" }]
+requires-dist = [
+    { name = "numpy", specifier = ">=2.1.2" },
+    { name = "portion", specifier = ">=2.6.0" },
+]
 
 [[package]]
 name = "numpy"
@@ -46,4 +50,25 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/7c/8e/fc1fdd83a55476765329ac2913321c4aed5b082a7915095628c4ca30ea72/numpy-2.1.2-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:13311c2db4c5f7609b462bc0f43d3c465424d25c626d95040f073e30f7570e35", size = 16021174 },
     { url = "https://files.pythonhosted.org/packages/2a/b6/a790742aa88067adb4bd6c89a946778c1417d4deaeafce3ca928f26d4c52/numpy-2.1.2-cp313-cp313t-musllinux_1_1_x86_64.whl", hash = "sha256:2abbf905a0b568706391ec6fa15161fad0fb5d8b68d73c461b3c1bab6064dd62", size = 16400117 },
     { url = "https://files.pythonhosted.org/packages/48/6f/129e3c17e3befe7fefdeaa6890f4c4df3f3cf0831aa053802c3862da67aa/numpy-2.1.2-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:ef444c57d664d35cac4e18c298c47d7b504c66b17c2ea91312e979fcfbdfb08a", size = 14066202 },
+]
+
+[[package]]
+name = "portion"
+version = "2.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sortedcontainers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/11/4a/bec3f396c3702f3281a3ea8bd73ce8660a5b3334de71b4fb93f45cdfa572/portion-2.6.0.tar.gz", hash = "sha256:6fb538b57a92058f0edd360667694448aa3fc028ab97e41e3091359d14ba4dd5", size = 53885 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4e/1f/32edd9aa4bedfe0dffe9aa9d298f14fb8ad06633492f2f7ad82ae997a2f7/portion-2.6.0-py3-none-any.whl", hash = "sha256:9132580df989b1985dae1caa3070b768f2a3360b40c89c59daa4acc7e6674dc4", size = 28116 },
+]
+
+[[package]]
+name = "sortedcontainers"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88", size = 30594 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575 },
 ]
