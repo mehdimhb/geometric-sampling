@@ -5,6 +5,7 @@ from numpy.typing import NDArray
 import heapq
 import portion as P
 from matplotlib import pyplot as plt
+from tqdm import tqdm
 
 rng = np.random.default_rng()
 
@@ -59,17 +60,34 @@ class Design:
         return new_design
 
     def pull(self) -> tuple[float, set[int]]:
-        return heapq.heappop(self.heap)
+        item = heapq.heappop(self.heap)
+        return -item[0], item[1]
 
     def push(self, *args: tuple[float, set[int]]) -> None:
         for arg in args:
-            heapq.heappush(self.heap, arg)
+            if arg[0] < 1e-9:
+                continue
+            inverse_arg = (-arg[0], arg[1])
+            heapq.heappush(self.heap, inverse_arg)
+
+    def merge_identical(self):
+        heap_copy = self.heap[:]
+        self.heap.clear()
+        dic = {}
+        for prob, IDs in tqdm(heap_copy):
+            prob = -prob
+            h = tuple(sorted(list(IDs)))
+            dic.setdefault(h, 0)
+            dic[h] += prob
+        for IDs, prob in dic.items():
+            self.push((prob, set(IDs)))
 
     def show(self) -> None:
         heap_copy = self.heap[:]
         initial_level = 0
         while heap_copy:
             prob, IDs = heapq.heappop(heap_copy)
+            prob = -prob
             for i in IDs:
                 plt.plot([i, i], [initial_level, initial_level+prob])
             initial_level += prob
@@ -77,7 +95,7 @@ class Design:
 
 def generate_design(design: Design, num_changes: int, length_function: Callable[[float, float], float]) -> Design:
     new_design = design.copy()
-    for _ in range(num_changes):
+    for _ in tqdm(range(num_changes)):
         sample_1_prob, sample_1_IDs = new_design.pull()
         sample_2_prob, sample_2_IDs = new_design.pull()
         if sample_1_IDs == sample_2_IDs:
@@ -97,6 +115,12 @@ def generate_design(design: Design, num_changes: int, length_function: Callable[
 # TODO
 # make bars out of design
 # make sample from design
-
-d = Design([0.7, 0.4, 0.3, 0.6])
-generate_design(d, 50, lambda x, y: min(x, y)/2).show()
+x = [0.07, 0.04, 0.03, 0.06] * 5_000 + [0.02] * 5_000
+print(sum(x), len(x))
+d = Design(x)
+# d.show()
+dd = generate_design(d, 100, lambda x, y: min(x, y)/2)
+print(len(dd.heap))
+dd.merge_identical()
+print(len(dd.heap))
+# dd.show()
