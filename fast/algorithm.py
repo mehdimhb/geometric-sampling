@@ -4,19 +4,19 @@ import numpy as np
 from numpy.typing import NDArray
 import heapq
 import portion as P
+from matplotlib import pyplot as plt
 
 rng = np.random.default_rng()
 
 
 class Design:
 
-
-    def __init__(self, inclusions: NDArray = None) -> None:
+    def __init__(self, inclusions: list[float] = None) -> None:
         self.heap: list[tuple[float, set[int]]] = []
         if inclusions is not None:
             self.push_initial_design(inclusions)
 
-    def push_initial_design(self, inclusions: NDArray):
+    def push_initial_design(self, inclusions: list[float]):
         bars = []
         level = 0
         for p in inclusions:
@@ -65,6 +65,15 @@ class Design:
         for arg in args:
             heapq.heappush(self.heap, arg)
 
+    def show(self) -> None:
+        heap_copy = self.heap[:]
+        initial_level = 0
+        while heap_copy:
+            prob, IDs = heapq.heappop(heap_copy)
+            for i in IDs:
+                plt.plot([i, i], [initial_level, initial_level+prob])
+            initial_level += prob
+        plt.show()
 
 def generate_design(design: Design, num_changes: int, length_function: Callable[[float, float], float]) -> Design:
     new_design = design.copy()
@@ -88,3 +97,6 @@ def generate_design(design: Design, num_changes: int, length_function: Callable[
 # TODO
 # make bars out of design
 # make sample from design
+
+d = Design([0.7, 0.4, 0.3, 0.6])
+generate_design(d, 50, lambda x, y: min(x, y)/2).show()
