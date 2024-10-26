@@ -8,6 +8,7 @@ dependencies = [
     "matplotlib>=3.9.2",
     "numpy>=2.1.2",
     "portion>=2.6.0",
+    "ruff>=0.7.1",
     "tqdm>=4.66.5",
 ]
 
