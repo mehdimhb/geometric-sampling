@@ -1,20 +1,25 @@
 from __future__ import annotations
-from typing import Callable
 import numpy as np
-import heapq
 import portion as P
 from matplotlib import pyplot as plt
 from tqdm import tqdm
+from fast.structs import MaxHeap, Range
 
 rng = np.random.default_rng()
 
 
 class Design:
-    def __init__(self, inclusions: list[float] = None) -> None:
-        self.heap: list[tuple[float, set[int]]] = []
+    def __init__(
+        self,
+        inclusions: list[float] = None,
+        switch_coefficient: float = 0.5,
+    ):
+        self.heap = MaxHeap[Range]()
+        self.switch_coefficient = switch_coefficient
         if inclusions is not None:
             self.push_initial_design(inclusions)
 
+    # TODO: Refactor
     def push_initial_design(self, inclusions: list[float]):
         bars = []
         level = 0
@@ -47,70 +52,80 @@ class Design:
                 active.add(bar_index)
             elif event_type == "end":
                 if last_point != point:
-                    self.push((round(point - last_point, 9), set(active)))
+                    self.push(Range(round(point - last_point, 9), set(active)))
                 active.remove(bar_index)
 
             last_point = point
 
     def copy(self) -> Design:
         new_design = Design()
-        new_design.heap = self.heap[:]
+        new_design.heap = self.heap.copy()
         return new_design
 
-    def pull(self) -> tuple[float, set[int]]:
-        item = heapq.heappop(self.heap)
-        return -item[0], item[1]
+    def pull(self) -> Range:
+        return self.heap.pop()
 
-    def push(self, *args: tuple[float, set[int]]) -> None:
-        for arg in args:
-            if arg[0] < 1e-9:
-                continue
-            inverse_arg = (-arg[0], arg[1])
-            heapq.heappush(self.heap, inverse_arg)
+    def push(self, *args: Range) -> None:
+        for r in args:
+            if not r.almost_zero():
+                self.heap.push(r)
 
     def merge_identical(self):
-        heap_copy = self.heap[:]
-        self.heap.clear()
+        new_heap = MaxHeap[Range]()
         dic = {}
-        for prob, IDs in tqdm(heap_copy):
-            prob = -prob
-            h = tuple(sorted(list(IDs)))
-            dic.setdefault(h, 0)
-            dic[h] += prob
-        for IDs, prob in dic.items():
-            self.push((prob, set(IDs)))
+        for r in self.heap:
+            dic.setdefault(r, 0)
+            dic[r] += r.length
+        for ids, length in dic.items():
+            new_heap.push(Range(length, set(ids.ids)))
+        self.heap = new_heap
+
+    def switch(
+        self,
+        r1: Range,
+        r2: Range,
+    ) -> tuple[Range, Range, Range, Range]:
+        length = self.switch_coefficient * min(r1.length, r2.length)
+        n1 = rng.choice(list(r1.ids - r2.ids))
+        n2 = rng.choice(list(r2.ids - r1.ids))
+        return (
+            Range(length, r1.ids - {n1} | {n2}),
+            Range(r1.length - length, r1.ids),
+            Range(length, r2.ids - {n2} | {n1}),
+            Range(r2.length - length, r2.ids),
+        )
+
+    def iterate(self) -> None:
+        r1 = self.pull()
+        r2 = self.pull()
+        if r1 == r2:
+            self.push(r1 + r2)
+        else:
+            self.push(*self.switch(r1, r2))
 
     def show(self) -> None:
-        heap_copy = self.heap[:]
+        heap_copy = self.heap.copy()
         initial_level = 0
-        while heap_copy:
-            prob, IDs = heapq.heappop(heap_copy)
-            prob = -prob
-            for i in IDs:
-                plt.plot([i, i], [initial_level, initial_level + prob])
-            initial_level += prob
+        for r in heap_copy:
+            for i in r.ids:
+                plt.plot([i, i], [initial_level, initial_level + r.length])
+            initial_level += r.length
         plt.show()
 
+    def __iter__(self) -> Design:
+        return self
 
-def generate_design(
-    design: Design, num_changes: int, length_function: Callable[[float, float], float]
-) -> Design:
+    def __next__(self) -> Design:
+        if not self:
+            raise StopIteration
+        self.iterate()
+        return self
+
+
+def generate_design(design: Design, n: int) -> Design:
     new_design = design.copy()
-    for _ in tqdm(range(num_changes)):
-        sample_1_prob, sample_1_IDs = new_design.pull()
-        sample_2_prob, sample_2_IDs = new_design.pull()
-        if sample_1_IDs == sample_2_IDs:
-            new_design.push((sample_1_prob + sample_2_prob, sample_1_IDs))
-        else:
-            length = length_function(sample_1_prob, sample_2_prob)
-            n1 = rng.choice(list(sample_1_IDs - sample_2_IDs))
-            n2 = rng.choice(list(sample_2_IDs - sample_1_IDs))
-            new_design.push(
-                (length, sample_1_IDs - {n1} | {n2}),
-                (sample_1_prob - length, sample_1_IDs),
-                (length, sample_2_IDs - {n2} | {n1}),
-                (sample_2_prob - length, sample_2_IDs),
-            )
+    for _ in tqdm(range(n)):
+        new_design.iterate()
     return new_design
 
 
@@ -121,7 +136,7 @@ x = [0.07, 0.04, 0.03, 0.06] * 5_000 + [0.02] * 5_000
 print(sum(x), len(x))
 d = Design(x)
 # d.show()
-dd = generate_design(d, 100, lambda x, y: min(x, y) / 2)
+dd = generate_design(d, 100)
 print(len(dd.heap))
 dd.merge_identical()
 print(len(dd.heap))
