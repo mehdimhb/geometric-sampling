@@ -16,7 +16,7 @@ class Design:
         switch_coefficient: float = 0.5,
         rng: np.random.Generator = np.random.default_rng(),
     ):
-        self.heap = MaxHeap[Range]()
+        self.heap = MaxHeap[Range](rng=rng)
         self.switch_coefficient = switch_coefficient
         self.rng = rng
         self.changes = 0
@@ -62,10 +62,11 @@ class Design:
             last_point = point
 
     def copy(self) -> Design:
-        new_design = Design()
+        new_design = Design(
+            rng=self.rng,
+            switch_coefficient=self.switch_coefficient,
+        )
         new_design.heap = self.heap.copy()
-        new_design.rng = self.rng
-        new_design.switch_coefficient = self.switch_coefficient
         new_design.changes = self.changes
         return new_design
 
@@ -78,14 +79,14 @@ class Design:
                 self.heap.push(r)
 
     def merge_identical(self):
-        new_heap = MaxHeap[Range]()
         dic = {}
         for r in self.heap:
             dic.setdefault(r.ids, 0)
             dic[r.ids] += r.length
-        for ids, length in dic.items():
-            new_heap.push(Range(length, ids))
-        self.heap = new_heap
+        self.heap = MaxHeap[Range](
+            initial_heap=[Range(length, ids) for ids, length in dic.items()],
+            rng=self.rng,
+        )
 
     def switch(
         self,

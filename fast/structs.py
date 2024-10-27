@@ -1,7 +1,7 @@
 from __future__ import annotations
 import heapq
 from dataclasses import dataclass
-from typing import Iterator, Generic
+from typing import Iterator, Generic, Collection
 from typing import TypeVar
 
 import numpy as np
@@ -10,8 +10,15 @@ T = TypeVar("T")
 
 
 class MaxHeap(Generic[T]):
-    def __init__(self, rng: np.random.Generator = np.random.default_rng()):
-        self.heap: list[T] = []
+    def __init__(
+        self,
+        initial_heap: Collection[T] = None,
+        rng: np.random.Generator = np.random.default_rng(),
+    ):
+        self.heap = []
+        if initial_heap is not None:
+            self.heap = [-item for item in initial_heap]
+            heapq.heapify(self.heap)
         self.rng = rng
 
     def push(self, item: T):
