@@ -4,12 +4,15 @@ from dataclasses import dataclass
 from typing import Iterator, Generic
 from typing import TypeVar
 
+import numpy as np
+
 T = TypeVar("T")
 
 
 class MaxHeap(Generic[T]):
-    def __init__(self):
+    def __init__(self, rng: np.random.Generator = np.random.default_rng()):
         self.heap: list[T] = []
+        self.rng = rng
 
     def push(self, item: T):
         heapq.heappush(self.heap, -item)
@@ -20,9 +23,20 @@ class MaxHeap(Generic[T]):
     def peek(self) -> T:
         return -self.heap[0]
 
+    def randompop(self) -> T:
+        idx = self.rng.integers(len(self.heap))
+        val = -self.heap[idx]
+        self.heap[idx] = self.heap[-1]
+        self.heap.pop()
+        if idx < len(self.heap):
+            heapq._siftup(self.heap, idx)
+            heapq._siftdown(self.heap, 0, idx)
+        return val
+
     def copy(self) -> MaxHeap[T]:
         new_heap = MaxHeap()
         new_heap.heap = self.heap[:]
+        new_heap.rng = self.rng
         return new_heap
 
     def __len__(self) -> int:
