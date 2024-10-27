@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterator
+from typing import Iterator, Collection
 
 import numpy as np
 import portion as P
@@ -8,22 +8,22 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 from fast.structs import MaxHeap, Range
 
-rng = np.random.default_rng()
-
 
 class Design:
     def __init__(
         self,
-        inclusions: list[float] = None,
+        inclusions: Collection[float] = None,
         switch_coefficient: float = 0.5,
+        rng: np.random.Generator = np.random.default_rng(),
     ):
         self.heap = MaxHeap[Range]()
         self.switch_coefficient = switch_coefficient
+        self.rng = rng
         if inclusions is not None:
             self.push_initial_design(inclusions)
 
     # TODO: Refactor
-    def push_initial_design(self, inclusions: list[float]):
+    def push_initial_design(self, inclusions: Collection[float]):
         bars = []
         level = 0
         for p in inclusions:
@@ -89,8 +89,8 @@ class Design:
         r2: Range,
     ) -> tuple[Range, Range, Range, Range]:
         length = self.switch_coefficient * min(r1.length, r2.length)
-        n1 = rng.choice(list(r1.ids - r2.ids))
-        n2 = rng.choice(list(r2.ids - r1.ids))
+        n1 = self.rng.choice(list(r1.ids - r2.ids))
+        n2 = self.rng.choice(list(r2.ids - r1.ids))
         return (
             Range(length, r1.ids - {n1} | {n2}),
             Range(r1.length - length, r1.ids),

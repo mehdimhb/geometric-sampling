@@ -6,6 +6,7 @@ from typing import TypeVar
 
 T = TypeVar("T")
 
+
 class MaxHeap(Generic[T]):
     def __init__(self):
         self.heap: list[T] = []
