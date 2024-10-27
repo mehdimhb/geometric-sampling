@@ -1,10 +1,12 @@
 from __future__ import annotations
 import heapq
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Iterator, Generic
+from typing import TypeVar
 
+T = TypeVar("T")
 
-class MaxHeap[T]:
+class MaxHeap(Generic[T]):
     def __init__(self):
         self.heap: list[T] = []
 
