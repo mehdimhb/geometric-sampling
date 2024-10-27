@@ -1,4 +1,5 @@
-from fast.algorithm import Design, generate_design
+from fast.algorithm import Design
+from fast.astar import AStarFast
 
 # TODO
 # make bars out of design
@@ -7,7 +8,7 @@ x = [0.07, 0.04, 0.03, 0.06] * 5_000 + [0.02] * 5_000
 print(sum(x), len(x))
 d = Design(x)
 # d.show()
-dd = generate_design(d, 100)
+dd = AStarFast.iterate_design(d, 100)
 print(len(dd.heap))
 dd.merge_identical()
 print(len(dd.heap))

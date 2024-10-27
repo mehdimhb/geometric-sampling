@@ -5,7 +5,6 @@ from typing import Iterator, Collection
 import numpy as np
 import portion as P
 from matplotlib import pyplot as plt
-from tqdm import tqdm
 from fast.structs import MaxHeap, Range
 
 
@@ -128,10 +127,3 @@ class Design:
 
     def __hash__(self) -> int:
         return hash(self.heap)
-
-
-def generate_design(design: Design, n: int) -> Design:
-    new_design = design.copy()
-    for _ in tqdm(range(n)):
-        new_design.iterate()
-    return new_design
