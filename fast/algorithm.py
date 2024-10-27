@@ -19,6 +19,7 @@ class Design:
         self.heap = MaxHeap[Range]()
         self.switch_coefficient = switch_coefficient
         self.rng = rng
+        self.changes = 0
         if inclusions is not None:
             self.push_initial_design(inclusions)
 
@@ -63,6 +64,9 @@ class Design:
     def copy(self) -> Design:
         new_design = Design()
         new_design.heap = self.heap.copy()
+        new_design.rng = self.rng
+        new_design.switch_coefficient = self.switch_coefficient
+        new_design.changes = self.changes
         return new_design
 
     def pull(self) -> Range:
@@ -105,6 +109,7 @@ class Design:
             self.push(r1 + r2)
         else:
             self.push(*self.switch(r1, r2))
+        self.changes += 1
 
     def show(self) -> None:
         initial_level = 0
