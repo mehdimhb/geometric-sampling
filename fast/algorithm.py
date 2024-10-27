@@ -55,7 +55,7 @@ class Design:
                 active.add(bar_index)
             elif event_type == "end":
                 if last_point != point:
-                    self.push(Range(round(point - last_point, 9), set(active)))
+                    self.push(Range(round(point - last_point, 9), frozenset(active)))
                 active.remove(bar_index)
 
             last_point = point
@@ -77,10 +77,10 @@ class Design:
         new_heap = MaxHeap[Range]()
         dic = {}
         for r in self.heap:
-            dic.setdefault(r, 0)
-            dic[r] += r.length
+            dic.setdefault(r.ids, 0)
+            dic[r.ids] += r.length
         for ids, length in dic.items():
-            new_heap.push(Range(length, set(ids.ids)))
+            new_heap.push(Range(length, ids))
         self.heap = new_heap
 
     def switch(

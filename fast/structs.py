@@ -32,10 +32,10 @@ class MaxHeap(Generic[T]):
         return bool(self.heap)
 
     def __iter__(self) -> Iterator[T]:
-        return iter(self.heap)
+        return map(lambda x: -x, self.heap)
 
     def __str__(self):
-        return str(self.heap)
+        return str(list(map(lambda x: -x, self.heap)))
 
     def __hash__(self) -> int:
         return hash(tuple(self.heap))
@@ -47,7 +47,7 @@ class MaxHeap(Generic[T]):
 @dataclass
 class Range:
     length: float
-    ids: set[int]
+    ids: frozenset[int]
 
     def almost_zero(self) -> bool:
         return self.length < 1e-9
@@ -74,4 +74,4 @@ class Range:
         return Range(self.length + other.length, self.ids | other.ids)
 
     def __hash__(self):
-        return hash(frozenset(self.ids))
+        return hash(self.ids)
