@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from typing import Iterator
+
 import numpy as np
 import portion as P
 from matplotlib import pyplot as plt
@@ -104,22 +107,21 @@ class Design:
             self.push(*self.switch(r1, r2))
 
     def show(self) -> None:
-        heap_copy = self.heap.copy()
         initial_level = 0
-        for r in heap_copy:
+        for r in self.heap:
             for i in r.ids:
                 plt.plot([i, i], [initial_level, initial_level + r.length])
             initial_level += r.length
         plt.show()
 
-    def __iter__(self) -> Design:
-        return self
+    def __iter__(self) -> Iterator[Range]:
+        return iter(self.heap)
 
-    def __next__(self) -> Design:
-        if not self:
-            raise StopIteration
-        self.iterate()
-        return self
+    def __eq__(self, other: Design) -> bool:
+        return self.heap == other.heap
+
+    def __hash__(self) -> int:
+        return hash(self.heap)
 
 
 def generate_design(design: Design, n: int) -> Design:

@@ -1,11 +1,12 @@
 from __future__ import annotations
 import heapq
 from dataclasses import dataclass
+from typing import Iterator
 
 
 class MaxHeap[T]:
     def __init__(self):
-        self.heap = []
+        self.heap: list[T] = []
 
     def push(self, item: T):
         heapq.heappush(self.heap, -item)
@@ -27,16 +28,17 @@ class MaxHeap[T]:
     def __bool__(self) -> bool:
         return bool(self.heap)
 
-    def __iter__(self) -> MaxHeap[T]:
-        return self
-
-    def __next__(self) -> T:
-        if not self:
-            raise StopIteration
-        return self.pop()
+    def __iter__(self) -> Iterator[T]:
+        return iter(self.heap)
 
     def __str__(self):
         return str(self.heap)
+
+    def __hash__(self) -> int:
+        return hash(tuple(self.heap))
+
+    def __eq__(self, other: MaxHeap[T]) -> bool:
+        return self.heap == other.heap
 
 
 @dataclass
