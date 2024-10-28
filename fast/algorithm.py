@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Iterator, Collection
 
 import numpy as np
-import portion as P
 from matplotlib import pyplot as plt
 from fast.structs import MaxHeap, Range
 
@@ -22,31 +21,27 @@ class Design:
         if inclusions is not None:
             self.push_initial_design(inclusions)
 
-    # TODO: Refactor
     def push_initial_design(self, inclusions: Collection[float]):
-        bars = []
+        events = []
         level = 0
-        for p in inclusions:
+        for i, p in enumerate(inclusions):
             next_level = level + p
             if next_level < 1 - 1e-9:
-                interval = P.closed(level, next_level)
+                events.append((level, "start", i))
+                events.append((next_level, "end", i))
                 level = next_level
             elif next_level > 1 + 1e-9:
-                interval = P.closed(level, 1) | P.closed(0, next_level - 1)
+                events.append((level, "start", i))
+                events.append((1, "end", i))
+                events.append((0, "start", i))
+                events.append((next_level - 1, "end", i))
                 level = next_level - 1
             else:
-                interval = P.closed(level, 1)
+                events.append((level, "start", i))
+                events.append((1, "end", i))
                 level = 0
-            bars.append(interval)
-
-        events = []
-        for i, bar in enumerate(bars):
-            for interval in bar:
-                events.append((interval.lower, "start", i))
-                events.append((interval.upper, "end", i))
 
         events.sort()
-
         active = set()
         last_point = 0
 
