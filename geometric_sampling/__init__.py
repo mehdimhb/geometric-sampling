@@ -1,8 +1,6 @@
 from importlib import metadata
 
 
-__version__ = metadata.version('geometric_sampling')
+__version__ = metadata.version("geometric_sampling")
 
-__all__ = [
-
-]
+__all__ = []

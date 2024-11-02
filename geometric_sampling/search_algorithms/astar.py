@@ -5,20 +5,9 @@ import numpy as np
 from numpy._typing import NDArray
 from tqdm import tqdm
 
-from fast.algorithm import Design
-from fast.red_black_tree import RedBlackTree
-from fast.type import Comparable
-
-
-@dataclass
-class Criteria:
-    var_NHT: float
-    var_NHT_y: float
-    var_NHT_yr: float
-    NHT_estimator: NDArray
-    NHT_estimator_y: NDArray
-    NHT_yr_Bias: float
-    NHT_y_Bias: float
+from ..design import Design
+from ..red_black_tree import RedBlackTree
+from ..type import Comparable
 
 
 @dataclass
@@ -61,43 +50,6 @@ class AStarFast:
 
         self.best_design: Optional[Design] = None
         self.best_criteria: Optional[Criteria] = None
-
-    def criteria(self, design: Design) -> Criteria:
-        NHT_estimator = np.array(
-            [
-                np.sum(self.x[list(sample.ids)] / self.inclusions[list(sample.ids)])
-                for sample in design
-            ]
-        )
-        NHT_estimator_y = np.array(
-            [
-                np.sum(self.y[list(sample.ids)] / self.inclusions[list(sample.ids)])
-                for sample in design
-            ]
-        )
-        probabilities = np.array([sample.length for sample in design])
-        var_NHT = np.sum((NHT_estimator - np.sum(self.x)) ** 2 * probabilities)
-        var_NHT_y = np.sum((NHT_estimator_y - np.sum(self.y)) ** 2 * probabilities)
-        var_NHT_yr = np.sum(
-            (NHT_estimator_y * np.sum(self.x) / NHT_estimator - np.sum(self.y)) ** 2
-            * probabilities
-        )
-        NHT_yr_Bias = (
-            np.sum(probabilities * NHT_estimator_y * np.sum(self.x) / NHT_estimator)
-            - np.sum(self.y)
-        ) / np.sum(self.y)
-        NHT_y_Bias = (
-            np.sum(NHT_estimator_y * probabilities) - np.sum(self.y)
-        ) / np.sum(self.y)
-        return Criteria(
-            var_NHT,
-            var_NHT_y,
-            var_NHT_yr,
-            NHT_estimator,
-            NHT_estimator_y,
-            NHT_yr_Bias,
-            NHT_y_Bias,
-        )
 
     @staticmethod
     def iterate_design(design: Design, num_changes: int) -> Design:

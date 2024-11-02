@@ -1,8 +1,6 @@
 from abc import abstractmethod
 from typing import TypeVar, Protocol, Any
 
-C = TypeVar("C", bound="Comparable")
-
 
 class Comparable(Protocol):
     @abstractmethod
@@ -10,16 +8,16 @@ class Comparable(Protocol):
         pass
 
     @abstractmethod
-    def __lt__(self: C, other: Any) -> bool:
+    def __lt__(self, other: Any) -> bool:
         pass
 
-    def __gt__(self: C, other: Any) -> bool:
+    def __gt__(self, other: Any) -> bool:
         return (not self < other) and self != other
 
-    def __le__(self: C, other: Any) -> bool:
+    def __le__(self, other: Any) -> bool:
         return self < other or self == other
 
-    def __ge__(self: C, other: Any) -> bool:
+    def __ge__(self, other: Any) -> bool:
         return not self < other
 
     def __neg__(self):

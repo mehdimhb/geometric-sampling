@@ -6,7 +6,7 @@ from typing import TypeVar
 
 import numpy as np
 
-from fast.type import Comparable
+from .type import Comparable
 
 T = TypeVar("T", bound=Comparable)
 

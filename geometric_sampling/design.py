@@ -4,7 +4,7 @@ from typing import Iterator, Collection, Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
-from fast.structs import MaxHeap, Range
+from .structs import MaxHeap, Range
 
 
 class Design:

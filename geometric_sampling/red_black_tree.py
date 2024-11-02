@@ -3,7 +3,7 @@ from collections.abc import Iterator
 
 from typing import Generic, TypeVar
 
-from fast.type import Comparable
+from .type import Comparable
 
 C = TypeVar("C", bound=Comparable)
 
