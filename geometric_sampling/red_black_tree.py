@@ -1,7 +1,6 @@
 from __future__ import annotations
 from collections.abc import Iterator
-
-from typing import Generic, TypeVar
+from typing import TypeVar, Generic
 
 from .type import Comparable
 

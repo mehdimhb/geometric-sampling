@@ -1,24 +1,15 @@
 from abc import abstractmethod
-from typing import TypeVar, Protocol, Any
+from typing import Protocol, Any
 
 
 class Comparable(Protocol):
     @abstractmethod
-    def __eq__(self, other: Any) -> bool:
-        pass
+    def __eq__(self, other: Any) -> bool: ...
 
     @abstractmethod
-    def __lt__(self, other: Any) -> bool:
-        pass
+    def __lt__(self, other: Any) -> bool: ...
 
-    def __gt__(self, other: Any) -> bool:
-        return (not self < other) and self != other
 
-    def __le__(self, other: Any) -> bool:
-        return self < other or self == other
-
-    def __ge__(self, other: Any) -> bool:
-        return not self < other
-
-    def __neg__(self):
-        return NotImplemented
+class ComparableAndNeg(Comparable):
+    @abstractmethod
+    def __neg__(self): ...

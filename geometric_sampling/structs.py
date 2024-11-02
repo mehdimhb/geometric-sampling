@@ -1,14 +1,14 @@
 from __future__ import annotations
 import heapq
 from dataclasses import dataclass
-from typing import Iterator, Generic, Collection, Optional
+from typing import Iterator, Generic, Collection, Optional, Any
 from typing import TypeVar
 
 import numpy as np
 
-from .type import Comparable
+from .type import ComparableAndNeg
 
-T = TypeVar("T", bound=Comparable)
+T = TypeVar("T", bound=ComparableAndNeg)
 
 
 class MaxHeap(Generic[T]):
@@ -69,30 +69,23 @@ class MaxHeap(Generic[T]):
         return self.heap == other.heap
 
 
-@dataclass
-class Range:
+@dataclass(order=False)
+class Range(ComparableAndNeg):  # TODO: Remove ComparableAndNeg
     length: float
     ids: frozenset[int]
 
     def almost_zero(self) -> bool:
         return self.length < 1e-9
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Range):
             return NotImplemented
         return self.ids == other.ids
 
-    def __lt__(self, other: Range) -> bool:
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, Range):
+            return NotImplemented
         return self.length < other.length
-
-    def __le__(self, other: Range) -> bool:
-        return self.length <= other.length
-
-    def __gt__(self, other: Range) -> bool:
-        return self.length > other.length
-
-    def __ge__(self, other: Range) -> bool:
-        return self.length >= other.length
 
     def __neg__(self):
         return Range(-self.length, self.ids)
