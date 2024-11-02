@@ -1,18 +1,20 @@
 from __future__ import annotations
 import heapq
 from dataclasses import dataclass
-from typing import Iterator, Generic, Collection
+from typing import Iterator, Generic, Collection, Optional
 from typing import TypeVar
 
 import numpy as np
 
-T = TypeVar("T")
+from fast.type import Comparable
+
+T = TypeVar("T", bound=Comparable)
 
 
 class MaxHeap(Generic[T]):
     def __init__(
         self,
-        initial_heap: Collection[T] = None,
+        initial_heap: Optional[Collection[T]] = None,
         rng: np.random.Generator = np.random.default_rng(),
     ):
         self.heap = []
@@ -36,12 +38,12 @@ class MaxHeap(Generic[T]):
         self.heap[idx] = self.heap[-1]
         self.heap.pop()
         if idx < len(self.heap):
-            heapq._siftup(self.heap, idx)
-            heapq._siftdown(self.heap, 0, idx)
+            heapq._siftup(self.heap, idx)  # type: ignore
+            heapq._siftdown(self.heap, 0, idx)  # type: ignore
         return val
 
     def copy(self) -> MaxHeap[T]:
-        new_heap = MaxHeap()
+        new_heap = MaxHeap[T]()
         new_heap.heap = self.heap[:]
         new_heap.rng = self.rng
         return new_heap
@@ -61,7 +63,9 @@ class MaxHeap(Generic[T]):
     def __hash__(self) -> int:
         return hash(tuple(self.heap))
 
-    def __eq__(self, other: MaxHeap[T]) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, MaxHeap):
+            return NotImplemented
         return self.heap == other.heap
 
 
@@ -73,7 +77,9 @@ class Range:
     def almost_zero(self) -> bool:
         return self.length < 1e-9
 
-    def __eq__(self, other: Range) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Range):
+            return NotImplemented
         return self.ids == other.ids
 
     def __lt__(self, other: Range) -> bool:

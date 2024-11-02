@@ -1,12 +1,13 @@
-import heapq
 from dataclasses import dataclass
-from typing import Optional, Collection
+from typing import Optional, Collection, Any
 
 import numpy as np
 from numpy._typing import NDArray
 from tqdm import tqdm
 
 from fast.algorithm import Design
+from fast.red_black_tree import RedBlackTree
+from fast.type import Comparable
 
 
 @dataclass
@@ -18,6 +19,25 @@ class Criteria:
     NHT_estimator_y: NDArray
     NHT_yr_Bias: float
     NHT_y_Bias: float
+
+
+@dataclass
+class Node(Comparable):
+    design: Design
+    criteria: Criteria
+
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, Node):
+            return NotImplemented
+        return self.criteria.var_NHT < other.criteria.var_NHT
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Node):
+            return NotImplemented
+        return (
+            self.criteria.var_NHT == other.criteria.var_NHT
+            and self.design == other.design
+        )
 
 
 class AStarFast:
@@ -99,16 +119,19 @@ class AStarFast:
         num_changes: int,
     ):
         closed_set = set()
-        open_set = []
+        open_set = RedBlackTree[Node]()
 
         self.best_design = Design(self.inclusions, rng=self.rng)
         self.best_criteria = self.criteria(self.best_design)
-        heapq.heappush(open_set, (self.best_criteria.var_NHT, self.best_design))
+        open_set.insert(Node(self.best_design, self.best_criteria))
 
         for it in tqdm(range(max_iterations)):
             if not open_set:
                 break
-            _, current_design = heapq.heappop(open_set)
+            node = open_set.get_min()
+            if not node:
+                break
+            current_design = node.design
             if current_design in closed_set:
                 continue
             closed_set.add(current_design)
@@ -121,9 +144,13 @@ class AStarFast:
 
                 new_cost = new_criteria.var_NHT + self.rng.random() * 0.0000001
                 if len(open_set) < max_open_set_size:
-                    heapq.heappush(open_set, (new_cost, new_design))
+                    open_set.insert(Node(new_design, new_criteria))
                 else:
-                    heapq.heappushpop(open_set, (new_cost, new_design))
+                    mx = open_set.get_max()
+                    if mx is None or mx.criteria.var_NHT > new_cost:
+                        if mx is not None:
+                            open_set.remove(mx)
+                        open_set.insert(Node(new_design, new_criteria))
 
                 if new_cost < self.best_criteria.var_NHT:
                     self.best_design = new_design

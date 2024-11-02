@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterator, Collection
+from typing import Iterator, Collection, Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -10,7 +10,7 @@ from fast.structs import MaxHeap, Range
 class Design:
     def __init__(
         self,
-        inclusions: Collection[float] = None,
+        inclusions: Optional[Collection[float]] = None,
         switch_coefficient: float = 0.5,
         rng: np.random.Generator = np.random.default_rng(),
     ):
@@ -22,8 +22,8 @@ class Design:
             self.push_initial_design(inclusions)
 
     def push_initial_design(self, inclusions: Collection[float]):
-        events = []
-        level = 0
+        events: list[tuple[float, str, int]] = []
+        level: float = 0
         for i, p in enumerate(inclusions):
             next_level = level + p
             if next_level < 1 - 1e-9:
@@ -43,7 +43,7 @@ class Design:
 
         events.sort()
         active = set()
-        last_point = 0
+        last_point: float = 0
 
         for point, event_type, bar_index in events:
             if event_type == "start":
@@ -107,7 +107,7 @@ class Design:
         self.changes += 1
 
     def show(self) -> None:
-        initial_level = 0
+        initial_level: float = 0
         for r in self.heap:
             for i in r.ids:
                 plt.plot([i, i], [initial_level, initial_level + r.length])
@@ -117,7 +117,9 @@ class Design:
     def __iter__(self) -> Iterator[Range]:
         return iter(self.heap)
 
-    def __eq__(self, other: Design) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Design):
+            return NotImplemented
         return self.heap == other.heap
 
     def __hash__(self) -> int:
