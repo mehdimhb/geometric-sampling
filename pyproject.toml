@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = "~=3.10"
 dependencies = [
     "matplotlib>=3.9.2",
-    "mypy>=1.13.0",
     "numpy>=2.1.2",
     "tqdm>=4.66.5",
 ]
