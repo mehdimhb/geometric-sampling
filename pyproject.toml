@@ -1,13 +1,18 @@
 [project]
 name = "geometric-sampling"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python package for Geometric Sampling Method"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "matplotlib>=3.9.2",
     "numpy>=2.1.2",
     "tqdm>=4.66.5",
+]
+authors = [
+    { name = "Mehdi Mohebbi", email = "mehdi.mohebbi23@gmail.com" },
+    { name = "AmirMohammad HosseiniNasab", email = "awmirhn@gmail.com" },
+    { name = "Mehdi Hosseini Moghadam", email = "m.h.moghadam1996@gmail.com" }
 ]
 
 [build-system]
