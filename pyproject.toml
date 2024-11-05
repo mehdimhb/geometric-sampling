@@ -13,6 +13,8 @@ authors = [
     { name = "Mehdi Mohebbi", email = "mehdi.mohebbi23@gmail.com" },
     { name = "AmirMohammad HosseiniNasab", email = "awmirhn@gmail.com" },
     { name = "Mehdi Hosseini Moghadam", email = "m.h.moghadam1996@gmail.com" }
+     { name = "Bardia Panahbehagh", email = "bardia.panah@gmail.com" }
+
 ]
 
 [build-system]
