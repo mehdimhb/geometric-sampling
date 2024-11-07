@@ -1,6 +1,6 @@
 import unittest
 
-from fast.structs import MaxHeap
+from geometric_sampling.structs import MaxHeap
 
 
 class MaxHeapTestCase(unittest.TestCase):

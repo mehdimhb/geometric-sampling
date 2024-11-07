@@ -39,25 +39,29 @@ class AStarFast:
         criteria: Criteria,
         threshold_x: float = 1e-2,
         threshold_y: float = 1e-2,
+        switch_coefficient: float = 0.5,
         rng: np.random.Generator = np.random.default_rng(),
     ) -> None:
         self.threshold_y = threshold_y
         self.threshold_x = threshold_x
+        self.switch_coefficient = switch_coefficient
         self.rng = rng
 
         self.criteria = criteria
         self.best_design = Design(self.criteria.inclusions, rng=self.rng)
         self.best_criteria_value = self.criteria(self.best_design)
 
-    @staticmethod
-    def iterate_design(design: Design, num_changes: int) -> Design:
+    def iterate_design(self, design: Design, num_changes: int) -> Design:
         new_design = design.copy()
         for _ in range(num_changes):
-            new_design.iterate()
+            new_design.iterate(switch_coefficient=self.switch_coefficient)
         return new_design
 
     def neighbors(
-        self, design: Design, num_new_nodes: int, num_changes: int
+        self,
+        design: Design,
+        num_new_nodes: int,
+        num_changes: int,
     ) -> Generator[Design, None, None]:
         for _ in range(num_new_nodes):
             yield self.iterate_design(design, num_changes)

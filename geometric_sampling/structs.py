@@ -6,9 +6,9 @@ from typing import TypeVar
 
 import numpy as np
 
-from .type import ComparableAndNeg
+from .type import ComparableNegatable
 
-T = TypeVar("T", bound=ComparableAndNeg)
+T = TypeVar("T", bound=ComparableNegatable)
 
 
 class MaxHeap(Generic[T]):
@@ -17,7 +17,7 @@ class MaxHeap(Generic[T]):
         initial_heap: Optional[Collection[T]] = None,
         rng: np.random.Generator = np.random.default_rng(),
     ):
-        self.heap = []
+        self.heap: list[T] = []
         if initial_heap is not None:
             self.heap = [-item for item in initial_heap]
             heapq.heapify(self.heap)
@@ -70,7 +70,7 @@ class MaxHeap(Generic[T]):
 
 
 @dataclass(order=False)
-class Range(ComparableAndNeg):  # TODO: Remove ComparableAndNeg
+class Range:
     length: float
     ids: frozenset[int]
 
@@ -80,18 +80,15 @@ class Range(ComparableAndNeg):  # TODO: Remove ComparableAndNeg
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Range):
             return NotImplemented
-        return self.ids == other.ids
+        return self.length == other.length and self.ids == other.ids
 
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, Range):
             return NotImplemented
         return self.length < other.length
 
-    def __neg__(self):
+    def __neg__(self) -> Range:
         return Range(-self.length, self.ids)
-
-    def __add__(self, other: Range) -> Range:
-        return Range(self.length + other.length, self.ids | other.ids)
 
     def __hash__(self):
         return hash(self.ids)

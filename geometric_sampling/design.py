@@ -11,11 +11,9 @@ class Design:
     def __init__(
         self,
         inclusions: Optional[Collection[float]] = None,
-        switch_coefficient: float = 0.5,
         rng: np.random.Generator = np.random.default_rng(),
     ):
         self.heap = MaxHeap[Range](rng=rng)
-        self.switch_coefficient = switch_coefficient
         self.rng = rng
         self.changes = 0
         if inclusions is not None:
@@ -58,7 +56,6 @@ class Design:
     def copy(self) -> Design:
         new_design = Design(
             rng=self.rng,
-            switch_coefficient=self.switch_coefficient,
         )
         new_design.heap = self.heap.copy()
         new_design.changes = self.changes
@@ -86,8 +83,9 @@ class Design:
         self,
         r1: Range,
         r2: Range,
+        coefficient: float = 0.5,
     ) -> tuple[Range, Range, Range, Range]:
-        length = self.switch_coefficient * min(r1.length, r2.length)
+        length = coefficient * min(r1.length, r2.length)
         n1 = self.rng.choice(list(r1.ids - r2.ids))
         n2 = self.rng.choice(list(r2.ids - r1.ids))
         return (
@@ -97,13 +95,13 @@ class Design:
             Range(r2.length - length, r2.ids),
         )
 
-    def iterate(self) -> None:
+    def iterate(self, switch_coefficient: float = 0.5) -> None:
         r1 = self.pull()
         r2 = self.pull()
-        if r1 == r2:
-            self.push(r1 + r2)
+        if r1.ids == r2.ids:
+            self.push(Range(r1.length + r2.length, r1.ids))
         else:
-            self.push(*self.switch(r1, r2))
+            self.push(*self.switch(r1, r2, switch_coefficient))
         self.changes += 1
 
     def show(self) -> None:
