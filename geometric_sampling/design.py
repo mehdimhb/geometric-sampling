@@ -61,7 +61,9 @@ class Design:
         new_design.changes = self.changes
         return new_design
 
-    def pull(self) -> Range:
+    def pull(self, random: bool = False) -> Range:
+        if random:
+            return self.heap.randompop()
         return self.heap.pop()
 
     def push(self, *args: Range) -> None:
@@ -95,9 +97,9 @@ class Design:
             Range(r2.length - length, r2.ids),
         )
 
-    def iterate(self, switch_coefficient: float = 0.5) -> None:
-        r1 = self.pull()
-        r2 = self.pull()
+    def iterate(self, random_pull: bool = False, switch_coefficient: float = 0.5) -> None:
+        r1 = self.pull(random_pull)
+        r2 = self.pull(random_pull)
         if r1.ids == r2.ids:
             self.push(Range(r1.length + r2.length, r1.ids))
         else:

@@ -40,11 +40,13 @@ class AStarFast:
         threshold_x: float = 1e-2,
         threshold_y: float = 1e-2,
         switch_coefficient: float = 0.5,
+        random_pull: bool = False,
         rng: np.random.Generator = np.random.default_rng(),
     ) -> None:
         self.threshold_y = threshold_y
         self.threshold_x = threshold_x
         self.switch_coefficient = switch_coefficient
+        self.random_pull = random_pull
         self.rng = rng
 
         self.criteria = criteria
@@ -54,7 +56,10 @@ class AStarFast:
     def iterate_design(self, design: Design, num_changes: int) -> Design:
         new_design = design.copy()
         for _ in range(num_changes):
-            new_design.iterate(switch_coefficient=self.switch_coefficient)
+            new_design.iterate(
+                random_pull=self.random_pull,
+                switch_coefficient=self.switch_coefficient,
+            )
         return new_design
 
     def neighbors(
