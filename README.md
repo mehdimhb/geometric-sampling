@@ -1,7 +1,7 @@
 
-# Geometric Sampling Method (GSM) - Python Package
+# Geometric Sampling Method - Python Package
 
-The Geometric Sampling Method (GSM), introduced by Panahbehagh (2023), presents an innovative approach to finite population sampling based on a unique geometric framework. This method allows researchers to visually depict first-order inclusion probabilities (FIP) as bars on a two-dimensional graph. By adjusting the positions of these bars, users can explore a wide range of sampling designs while controlling second-order inclusion probabilities (SIP).
+The Geometric Sampling Method, introduced by Panahbehagh (2024), presents an innovative approach to finite population sampling based on a unique geometric framework. This method allows researchers to visually depict first-order inclusion probabilities (FIP) as bars on a two-dimensional graph. By adjusting the positions of these bars, users can explore a wide range of sampling designs while controlling second-order inclusion probabilities (SIP).
 
 This package, `geometric_sampling`, provides tools for implementing the Geometric Sampling Method and is available on PyPI.
 
