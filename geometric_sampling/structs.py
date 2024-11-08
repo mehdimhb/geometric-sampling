@@ -70,25 +70,25 @@ class MaxHeap(Generic[T]):
 
 
 @dataclass(order=False)
-class Range:
-    length: float
+class Sample:
+    probability: float
     ids: frozenset[int]
 
     def almost_zero(self) -> bool:
-        return self.length < 1e-9
+        return self.probability < 1e-9
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, Range):
+        if not isinstance(other, Sample):
             return NotImplemented
-        return self.length == other.length and self.ids == other.ids
+        return self.probability == other.probability and self.ids == other.ids
 
     def __lt__(self, other: Any) -> bool:
-        if not isinstance(other, Range):
+        if not isinstance(other, Sample):
             return NotImplemented
-        return self.length < other.length
+        return self.probability < other.probability
 
-    def __neg__(self) -> Range:
-        return Range(-self.length, self.ids)
+    def __neg__(self) -> Sample:
+        return Sample(-self.probability, self.ids)
 
     def __hash__(self):
         return hash(self.ids)

@@ -1,18 +1,10 @@
 from importlib import metadata
 
-from .structs import Range, MaxHeap
 from .design import Design
-from .criteria.var_nht import VarNHT
-from .criteria.criteria import Criteria
-from .search_algorithms.astar import AStarFast
+from . import criteria
+from . import search
+
 
 __version__ = metadata.version("geometric_sampling")
 
-__all__ = [
-    "Design",
-    "Range",
-    "MaxHeap",
-    "VarNHT",
-    "Criteria",
-    "AStarFast",
-]
+__all__ = ["Design", "criteria", "search"]

@@ -10,15 +10,16 @@ class VarNHT(Criteria):
             [
                 np.sum(
                     self.auxiliary_variable[list(sample.ids)]
-                    / self.inclusions[list(sample.ids)]
+                    / self.inclusion_probability[list(sample.ids)]
                 )
                 for sample in design
             ]
         )
 
-        probabilities = np.array([sample.length for sample in design])
+        samples_probabilities = np.array([sample.probability for sample in design])
+
         variance_nht = (
-            np.sum((nht_estimator**2) * probabilities)
+            np.sum((nht_estimator**2) * samples_probabilities)
             - (np.sum(self.auxiliary_variable)) ** 2
         )
 

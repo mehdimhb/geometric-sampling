@@ -1,7 +1,7 @@
+from dataclasses import dataclass
 from typing import Generator, Any
 
 import numpy as np
-from dataclasses import dataclass
 
 from ..criteria.criteria import Criteria
 from ..design import Design
@@ -33,25 +33,27 @@ class Node:
         return other < self
 
 
-class AStarFast:
+class AStar:
     def __init__(
         self,
+        initial_design: Design,
         criteria: Criteria,
-        threshold_x: float = 1e-2,
-        threshold_y: float = 1e-2,
+        *,
         switch_coefficient: float = 0.5,
         random_pull: bool = False,
+        threshold: float = 1e-2,
         rng: np.random.Generator = np.random.default_rng(),
     ) -> None:
-        self.threshold_y = threshold_y
-        self.threshold_x = threshold_x
+        self.initial_design = initial_design
+        self.criteria = criteria
         self.switch_coefficient = switch_coefficient
         self.random_pull = random_pull
+        self.threshold = threshold
         self.rng = rng
 
-        self.criteria = criteria
-        self.best_design = Design(self.criteria.inclusions, rng=self.rng)
-        self.best_criteria_value = self.criteria(self.best_design)
+        self.initial_criteria_value = self.criteria(self.initial_design)
+        self.best_design = self.initial_design
+        self.best_criteria_value = self.initial_criteria_value
 
     def iterate_design(self, design: Design, num_changes: int) -> Design:
         new_design = design.copy()
@@ -80,7 +82,7 @@ class AStarFast:
     ):
         closed_set = set()
         open_set = RedBlackTree[Node]()
-        open_set.insert(Node(self.best_criteria_value, self.best_design))
+        open_set.insert(Node(self.initial_criteria_value, self.initial_design))
 
         for it in range(max_iterations):
             if not open_set:
@@ -96,6 +98,7 @@ class AStarFast:
                 current_design, num_new_nodes, num_changes
             ):
                 new_criteria_value = self.criteria(new_design)
+
                 if new_design in closed_set:
                     continue
                 if len(open_set) < max_open_set_size:
@@ -111,6 +114,6 @@ class AStarFast:
                     self.best_design = new_design
                     self.best_criteria_value = new_criteria_value
 
-                    if self.best_criteria_value < self.threshold_x:
+                    if self.best_criteria_value < self.threshold:
                         return it
         return max_iterations

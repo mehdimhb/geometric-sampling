@@ -9,7 +9,7 @@ from ..design import Design
 @dataclass
 class Criteria:
     auxiliary_variable: NDArray
-    inclusions: NDArray
+    inclusion_probability: NDArray
 
     @abstractmethod
     def __call__(self, design: Design) -> float: ...
