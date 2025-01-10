@@ -1,4 +1,3 @@
-from typing import Literal
 from itertools import pairwise
 
 import numpy as np
@@ -11,27 +10,21 @@ class Population:
         coordinate: NDArray,
         inclusion_probability: NDArray,
         *,
-        orientation: Literal['vertical', 'horizontal'],
-        region_threshold: float,
-        subregion_threshold: float,
         n_of_zones: int|tuple[int, int],
         tolerance: int
     ) -> None:
         self.coords = coordinate
         self.probs = inclusion_probability
-        self.orientation = orientation
-        self.region_threshold = region_threshold
         self.n_zones = n_of_zones
         self.tolerance = tolerance
 
         self.N = self.coords.shape[0]
         self.units = np.concatenate([np.arange(1, self.N+1).reshape(-1, 1), self.coords, self.probs.reshape(-1, 1)], axis=1)
 
-        self.regions, self.boarder_units = self._generate_regions()
-        # self.subregions = self._generate_subregions()
+        self.regions = self._generate_regions()
 
     def _generate_regions(self):
-        return self._sweep(self.units[np.argsort(self.units[:, 1])], self.region_threshold)
+        return self._sweep(self.units[np.argsort(self.units[:, 1])], 0.1)
 
     def _generate_subregions(self):
         subregions = []
@@ -41,41 +34,47 @@ class Population:
         return subregions
 
     def _sweep(self, units: NDArray, threshold: float) -> tuple[list[NDArray], list[int]]:
-        areas_indices = self._generate_areas_indices(units, threshold)
-        swept_areas = []
-        boarder_units_IDs = []
-        remainder: NDArray = None
-        for k, indices in enumerate(pairwise(areas_indices)):
-            area, remainder, border_unit_ID = self._sweep_area(units, indices, remainder, threshold)
-            swept_areas.append(area)
-            if border_unit_ID is not None:
-                boarder_units_IDs.append((border_unit_ID, [k, k+1]))
-        return swept_areas, boarder_units_IDs
+        boarder_units_remainings, zones_indices = self._generate_boarders_and_indices(units, threshold)
+        swept_zones = []
+        for indices in pairwise(zones_indices):
+            zone, boarder_units_remainings = self._sweep_zone(units, boarder_units_remainings, indices, threshold)
+            swept_zones.append(zone)
+        return swept_zones
 
-    def _generate_areas_indices(self, units: NDArray, threshold: float):
+    def _generate_boarders_and_indices(self, units: NDArray, threshold: float):
         thresholds = np.arange(round(np.sum(units[:, 3]), self.tolerance), step=threshold)
-        return np.append(np.searchsorted(units[:, 3].cumsum(), thresholds, side='right'), [units.shape[0]])
+        indices = np.append(np.searchsorted(units[:, 3].cumsum(), thresholds, side='right'), units.shape[0]-1)
+        boarder_units = {index: units[index][3] for index in np.unique(indices)}
+        return boarder_units, indices
 
-    def _sweep_area(self, units: NDArray, indices: tuple[NDArray, NDArray], remainder: NDArray|None, threshold: float) -> NDArray:
-        start_index, end_index = 0 if indices[0] == 0 else indices[0]+1, indices[1]
-        boarder_index = units.shape[0]-1 if indices[1] == units.shape[0] else indices[1]
-        area = self._add_unit(units[start_index:end_index], remainder, False)
-        if indices[0] != indices[1]:
-            border_unit, remainder = self._split_unit(units[boarder_index], round(threshold-np.sum(area[:, 3]), self.tolerance))
-        else:
-            border_unit, remainder = self._split_unit(units[boarder_index], round(threshold-np.sum(area[:, 3]), self.tolerance))
-        area = self._add_unit(area, border_unit)
-        return area, remainder, (int(border_unit[0]) if border_unit is not None else None)
+    def _sweep_zone(self, units: NDArray, boarder_units_remainings: NDArray, indices: tuple[NDArray, NDArray], threshold: float) -> NDArray:
+        zone, start_remainder = self._sweep_boarder_unit(
+            np.array([]).reshape(0, 4),
+            units[indices[0]],
+            boarder_units_remainings[indices[0]],
+            threshold
+        )
+        boarder_units_remainings[indices[0]] = start_remainder
 
-    def _add_unit(self, units: NDArray, unit: NDArray|None, at_end: bool = True) -> NDArray:
-        if unit is None:
-            return units
-        if at_end:
-            return np.concatenate([units, unit.reshape(1, -1)])
-        return np.concatenate([unit.reshape(1, -1), units])
+        zone = np.concatenate([zone, units[indices[0]+1:indices[1]]])
 
-    def _split_unit(self, unit: NDArray, splitting_value: float) -> tuple[NDArray, NDArray]:
-        first_part = np.append(unit[:3], splitting_value) if splitting_value > 10**-self.tolerance else None
-        second_part = (np.append(unit[:3], round(unit[3]-splitting_value, self.tolerance))
-                       if (unit[3] - splitting_value) > 10**-self.tolerance else None)
-        return first_part, second_part
+        zone, stop_remainder = self._sweep_boarder_unit(
+            zone,
+            units[indices[1]],
+            boarder_units_remainings[indices[1]],
+            round(threshold-np.sum(zone[:, 3]), self.tolerance)
+        )
+        boarder_units_remainings[indices[1]] = stop_remainder
+
+        return zone, boarder_units_remainings
+
+    def _sweep_boarder_unit(self, zone: NDArray, unit: NDArray, probability: float, threshold: float) -> tuple[NDArray, float]:
+        if probability < 10**-self.tolerance:
+            return zone, 0
+        if threshold < 10**-self.tolerance:
+            return zone, probability
+        if probability < threshold-10**-self.tolerance:
+            return np.concatenate([zone, np.append(unit[:3], probability).reshape(1, -1)]), 0
+        elif probability > threshold+10**-self.tolerance:
+            return np.concatenate([zone, np.append(unit[:3], threshold).reshape(1, -1)]), round(probability-threshold, self.tolerance)
+        return np.concatenate([zone, np.append(unit[:3], threshold).reshape(1, -1)]), 0
