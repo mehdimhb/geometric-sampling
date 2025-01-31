@@ -6,6 +6,7 @@ class SoftBalancedKMeans:
     def __init__(self, k: int, tolerance: int = 9) -> None:
         self.k = k
         self.tolerance = tolerance
+        self.data: NDArray = None
         self.centroids: NDArray = None
         self.labels: NDArray = None
         self.fractional_labels: NDArray = None
@@ -32,12 +33,13 @@ class SoftBalancedKMeans:
         return sum([np.sum(np.linalg.norm(data[self.labels == i]-self.centroids[i])**2) for i in range(self.k)])
 
     def fit(self, data: NDArray) -> None:
-        self._initiate_centroids(data)
+        self.data = data
+        self._initiate_centroids(self.data)
         prev_cost = np.inf
         while True:
-            self._assign(data)
-            self._update_centroids(data)
-            current_cost = self._cost(data)
+            self._assign(self.data)
+            self._update_centroids(self.data)
+            current_cost = self._cost(self.data)
             if current_cost + 10**-self.tolerance >= prev_cost:
                 self.final_cost = current_cost
                 break
@@ -48,10 +50,6 @@ class SoftBalancedKMeans:
         for i in range(self.labels.shape[0]):
             fractional_labels[i, self.labels[i]] = probs[i]
         return fractional_labels
-
-    @property
-    def _max_difference_sum(self) -> float:
-        return np.max(self.clusters_sum - self.clusters_sum[:, None])
 
     def _reassignment_cost(self, data_point: NDArray, current_cluster_indx: float, other_cluster_indx: float) -> float:
         if self.clusters_sum[current_cluster_indx] - self.clusters_sum[other_cluster_indx] > 10**-self.tolerance:
@@ -72,7 +70,7 @@ class SoftBalancedKMeans:
 
         costs = np.array(costs)
 
-        return costs[np.argsort(costs[:, 0])][:1, 1:].astype(int)
+        return costs[np.argsort(costs[:, 0])][:top_m, 1:].astype(int)
 
     def _transfer(self, data_index: int, from_index: int, to_index: int) -> None:
         if (self.clusters_sum[from_index] >= 1 - 10**-self.tolerance and self.clusters_sum[to_index] >= 1 - 10**-self.tolerance) or (self.clusters_sum[from_index] <= 1 + 10**-self.tolerance and self.clusters_sum[to_index] <= 1 + 10**-self.tolerance):
@@ -86,27 +84,39 @@ class SoftBalancedKMeans:
                 self.clusters_sum[from_index] - 1,
                 1 - self.clusters_sum[to_index],
             )
-        self.fractional_labels[data_index, from_index] = round(self.fractional_labels[data_index, from_index] - transfer_prob, self.tolerance)
-        self.fractional_labels[data_index, to_index] = round(self.fractional_labels[data_index, to_index] + transfer_prob, self.tolerance)
+        self.fractional_labels[data_index, from_index] = self.fractional_labels[data_index, from_index] - transfer_prob
+        self.fractional_labels[data_index, to_index] = self.fractional_labels[data_index, to_index] + transfer_prob
 
-    def _is_no_transfer_possible(self, transfer_records: NDArray) -> bool:
+    def _is_transfer_impossible(self, transfer_records: NDArray) -> bool:
         return transfer_records[0, 0] == np.inf
 
-    def _balance(self, data: NDArray, probs: NDArray) -> None:
+    def _stop_codition(self, tol) -> bool:
+        return np.all(np.abs(self.clusters_sum - 1) < 10**-tol)
+
+    def _expected_num_transfers(self) -> float:
+        max_diff_sum = np.max(self.clusters_sum - self.clusters_sum[:, None])
+        mean_nonzero_probs = np.mean(self.fractional_labels[np.nonzero(self.fractional_labels)])
+        return max(int(np.floor(max_diff_sum/(2*mean_nonzero_probs))), 1)
+
+    def _numerical_stabilizer(self) -> float:
+        self.fractional_labels = np.round(self.fractional_labels, self.tolerance)
+        self.fractional_labels *= 1/np.sum(self.fractional_labels, axis=0)
+        self.clusters_sum = np.sum(self.fractional_labels, axis=0)
+
+    def balance(self, probs: NDArray) -> None:
         self.fractional_labels = self._generate_fractional_labels(probs)
         self.clusters_sum = np.sum(self.fractional_labels, axis=0)
 
-        # print(self._max_difference_sum)
+        i = 1
 
-        while self._max_difference_sum >= 10**-self.tolerance:
-            transfer_records = self._get_transfer_records(data, top_m=max(int(np.floor(self._max_difference_sum/(2*np.mean(probs)))), 1))
-            print(self.clusters_sum)
-            # print(transfer_records)
-            if self._is_no_transfer_possible(transfer_records):
+        while not self._stop_codition(self.tolerance):
+            transfer_records = self._get_transfer_records(self.data, top_m=2*self._expected_num_transfers())
+            if self._is_transfer_impossible(transfer_records):
                 break
             for data_index, from_cluster_index, to_cluster_index in transfer_records:
-                print(f"Transfering data point {data_index} with prob {round(self.fractional_labels[data_index, from_cluster_index], 5)} from cluster {from_cluster_index} to cluster {to_cluster_index}")
                 self._transfer(data_index, from_cluster_index, to_cluster_index)
                 self.clusters_sum = np.sum(self.fractional_labels, axis=0)
-            self._update_centroids(data, balance_step=True)
-            # print(self._max_difference_sum)
+            self._update_centroids(self.data, balance_step=True)
+            i += 1
+
+        self._numerical_stabilizer()

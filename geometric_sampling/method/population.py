@@ -1,7 +1,21 @@
 from itertools import pairwise
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
+
+from ..clustering import SoftBalancedKMeans
+
+
+@dataclass
+class Zone:
+    units: NDArray
+
+
+@dataclass
+class Cluster:
+    units: NDArray
+    zones: list[Zone]
 
 
 class Population:
@@ -10,28 +24,43 @@ class Population:
         coordinate: NDArray,
         inclusion_probability: NDArray,
         *,
-        n_of_zones: int|tuple[int, int],
+        n_clusters: int,
+        n_zones: tuple[int, int],
         tolerance: int
     ) -> None:
         self.coords = coordinate
         self.probs = inclusion_probability
-        self.n_zones = n_of_zones
+        self.n_clusters = n_clusters
+        self.n_zones = n_zones
         self.tolerance = tolerance
 
-        self.N = self.coords.shape[0]
-        self.units = np.concatenate([np.arange(1, self.N+1).reshape(-1, 1), self.coords, self.probs.reshape(-1, 1)], axis=1)
+        self.clusters = self._generate_clusters()
 
-        self.regions = self._generate_regions()
+    def _generate_clusters(self) -> list[Cluster]:
+        kmeans = SoftBalancedKMeans(self.n_clusters, self.tolerance)
+        kmeans.fit(self.coords)
+        kmeans.balance(self.probs)
 
-    def _generate_regions(self):
-        return self._sweep(self.units[np.argsort(self.units[:, 1])], 0.1)
+        clusters = []
+        for i in range(self.n_clusters):
+            probs = kmeans.fractional_labels[:, i]
+            ids = np.nonzero(probs)[0]
+            units = self._generate_units(ids, self.coords[ids], probs[ids])
+            cluster = Cluster(units=units, zones=self._generate_zones(units))
+            clusters.append(cluster)
 
-    def _generate_subregions(self):
-        subregions = []
-        for region in self.regions:
-            subregion, _ = self._sweep(region[np.argsort(region[:, 2])], 0.5)
-            subregions.append(subregion)
-        return subregions
+        return clusters
+
+    def _generate_units(self, ids: NDArray, coords: NDArray, probs: NDArray) -> NDArray:
+        return np.concatenate([ids.reshape(-1, 1), coords, probs.reshape(-1, 1)], axis=1)
+
+    def _generate_zones(self, units) -> list[Zone]:
+        vertical_zones = self._sweep(units[np.argsort(units[:, 1])], round(1/self.n_zones[0], self.tolerance))
+        zones = []
+        for zone in vertical_zones:
+            units_of_basic_zones = self._sweep(zone[np.argsort(zone[:, 2])], round(1/(np.prod(self.n_zones)), self.tolerance))
+            zones.extend([Zone(units=units) for units in units_of_basic_zones])
+        return zones
 
     def _sweep(self, units: NDArray, threshold: float) -> tuple[list[NDArray], list[int]]:
         boarder_units_remainings, zones_indices = self._generate_boarders_and_indices(units, threshold)

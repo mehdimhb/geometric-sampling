@@ -3,10 +3,11 @@ from importlib import metadata
 from .design import Design
 from . import criteria
 from . import search
-from . import shatranj
-from . import balanced_kmeans
+from . import method
+from . import clustering
+from . import random
 
 
 __version__ = metadata.version("geometric_sampling")
 
-__all__ = ["Design", "criteria", "search", "shatranj", "balanced_kmeans"]
+__all__ = ["Design", "criteria", "search", "method", "clustering", "random"]

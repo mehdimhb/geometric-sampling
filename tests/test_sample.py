@@ -2,7 +2,7 @@ import unittest
 from geometric_sampling.structs import Sample
 
 
-class RangeTestCase(unittest.TestCase):
+class SampleTestCase(unittest.TestCase):
     def test_almost_zero(self):
         r = Sample(1e-10, frozenset({1, 2, 3}))
         assert r.almost_zero()
