@@ -55,10 +55,10 @@ class Population:
         return np.concatenate([ids.reshape(-1, 1), coords, probs.reshape(-1, 1)], axis=1)
 
     def _generate_zones(self, units) -> list[Zone]:
-        vertical_zones = self._sweep(units[np.argsort(units[:, 1])], round(1/self.n_zones[0], self.tolerance))
+        vertical_zones = self._sweep(units[np.argsort(units[:, 1])], 1/self.n_zones[0])
         zones = []
         for zone in vertical_zones:
-            units_of_basic_zones = self._sweep(zone[np.argsort(zone[:, 2])], round(1/(np.prod(self.n_zones)), self.tolerance))
+            units_of_basic_zones = self._sweep(zone[np.argsort(zone[:, 2])], 1/(np.prod(self.n_zones)))
             zones.extend([Zone(units=units) for units in units_of_basic_zones])
         return zones
 
@@ -71,8 +71,8 @@ class Population:
         return swept_zones
 
     def _generate_boarders_and_indices(self, units: NDArray, threshold: float):
-        thresholds = np.arange(round(np.sum(units[:, 3]), self.tolerance), step=threshold)
-        indices = np.append(np.searchsorted(units[:, 3].cumsum(), thresholds, side='right'), units.shape[0]-1)
+        thresholds = np.arange(threshold, np.sum(units[:, 3])-threshold/2, threshold)
+        indices = np.concatenate(([0], np.searchsorted(units[:, 3].cumsum(), thresholds, side='right'), [units.shape[0]-1]))
         boarder_units = {index: units[index][3] for index in np.unique(indices)}
         return boarder_units, indices
 
@@ -91,7 +91,7 @@ class Population:
             zone,
             units[indices[1]],
             boarder_units_remainings[indices[1]],
-            round(threshold-np.sum(zone[:, 3]), self.tolerance)
+            threshold-np.sum(zone[:, 3])
         )
         boarder_units_remainings[indices[1]] = stop_remainder
 
@@ -105,5 +105,5 @@ class Population:
         if probability < threshold-10**-self.tolerance:
             return np.concatenate([zone, np.append(unit[:3], probability).reshape(1, -1)]), 0
         elif probability > threshold+10**-self.tolerance:
-            return np.concatenate([zone, np.append(unit[:3], threshold).reshape(1, -1)]), round(probability-threshold, self.tolerance)
+            return np.concatenate([zone, np.append(unit[:3], threshold).reshape(1, -1)]), probability-threshold
         return np.concatenate([zone, np.append(unit[:3], threshold).reshape(1, -1)]), 0

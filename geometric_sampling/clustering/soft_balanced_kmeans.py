@@ -107,16 +107,13 @@ class SoftBalancedKMeans:
         self.fractional_labels = self._generate_fractional_labels(probs)
         self.clusters_sum = np.sum(self.fractional_labels, axis=0)
 
-        i = 1
-
         while not self._stop_codition(self.tolerance):
-            transfer_records = self._get_transfer_records(self.data, top_m=2*self._expected_num_transfers())
+            transfer_records = self._get_transfer_records(self.data, top_m=self._expected_num_transfers())
             if self._is_transfer_impossible(transfer_records):
                 break
             for data_index, from_cluster_index, to_cluster_index in transfer_records:
                 self._transfer(data_index, from_cluster_index, to_cluster_index)
                 self.clusters_sum = np.sum(self.fractional_labels, axis=0)
             self._update_centroids(self.data, balance_step=True)
-            i += 1
 
         self._numerical_stabilizer()
