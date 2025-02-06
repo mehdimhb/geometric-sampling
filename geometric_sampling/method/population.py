@@ -3,6 +3,9 @@ from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from scipy.spatial import ConvexHull
 
 from ..clustering import SoftBalancedKMeans
 
@@ -107,3 +110,30 @@ class Population:
         elif probability > threshold+10**-self.tolerance:
             return np.concatenate([zone, np.append(unit[:3], threshold).reshape(1, -1)]), probability-threshold
         return np.concatenate([zone, np.append(unit[:3], threshold).reshape(1, -1)]), 0
+
+    def plot(self, figsize: tuple[int, int] = (8, 6)) -> None:
+        fig, ax = plt.subplots(figsize=figsize)
+
+        def plot_convex_hull(points, ax, color, alpha=0.3, edge_color='black', line_width=1.0):
+            if len(points) < 3:
+                return ax, None
+            hull = ConvexHull(points)
+            polygon = Polygon(points[hull.vertices], closed=True, facecolor=color, alpha=alpha, edgecolor=edge_color, lw=line_width)
+            ax.add_patch(polygon)
+            return ax, hull
+
+        for cluster_idx, cluster in enumerate(self.clusters):
+            cluster_points = cluster.units[:, 1:3]
+            cluster_color = plt.cm.tab10(cluster_idx % 10)
+            ax, _ = plot_convex_hull(cluster_points, ax, color=cluster_color, alpha=0.2)
+            ax.scatter(cluster_points[:, 0], cluster_points[:, 1], color=cluster_color, label=f'Cluster {cluster_idx+1}', alpha=0.8)
+
+            for zone_idx, zone in enumerate(cluster.zones):
+                zone_points = zone.units[:, 1:3]
+                zone_color = cluster_color
+                ax, hull = plot_convex_hull(zone_points, ax, color=zone_color, alpha=0.4, edge_color='gray', line_width=0.8)
+
+                hull_center = np.mean(zone_points if hull is None else zone_points[hull.vertices], axis=0)
+                ax.text(hull_center[0], hull_center[1], f'{zone_idx+1}', color='black', fontsize=16, alpha=0.3,
+                        ha='center', va='center', weight='bold')
+        return ax
