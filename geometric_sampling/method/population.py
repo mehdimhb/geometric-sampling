@@ -111,8 +111,9 @@ class Population:
             return np.concatenate([zone, np.append(unit[:3], threshold).reshape(1, -1)]), probability-threshold
         return np.concatenate([zone, np.append(unit[:3], threshold).reshape(1, -1)]), 0
 
-    def plot(self, figsize: tuple[int, int] = (8, 6)) -> None:
-        fig, ax = plt.subplots(figsize=figsize)
+    def plot(self, ax = None, figsize: tuple[int, int] = (8, 6)) -> None:
+        if ax is None:
+            fig, ax = plt.subplots(figsize=figsize)
 
         def plot_convex_hull(points, ax, color, alpha=0.3, edge_color='black', line_width=1.0):
             if len(points) < 3:
@@ -137,3 +138,22 @@ class Population:
                 ax.text(hull_center[0], hull_center[1], f'{zone_idx+1}', color='black', fontsize=16, alpha=0.3,
                         ha='center', va='center', weight='bold')
         return ax
+
+    def plot_with_samples(self, samples: NDArray, max_cols: int = 4) -> None:
+        n_samples = len(samples)
+        n_cols = min(max_cols, n_samples)
+        n_rows = (n_samples + n_cols - 1) // n_cols
+        figsize = (5 * n_cols, 5 * n_rows)
+
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
+        axes = axes.flatten() if n_samples > 1 else [axes]
+
+        for sample_idx, sample in enumerate(samples):
+            ax = axes[sample_idx]
+            ax = self.plot(ax)
+            ax.scatter(self.coords[sample][:, 0], self.coords[sample][:, 1], color='black', marker='X',
+                       alpha=0.8, s=200, label=f'Sample {sample_idx+1}')
+            ax.set_title(f'Sample {sample_idx+1}')
+
+        for ax in axes[n_samples:]:
+            fig.delaxes(ax)
