@@ -8,7 +8,6 @@ dependencies = [
     "matplotlib>=3.9.2",
     "numpy>=2.1.2",
     "scipy>=1.15.1",
-    "tqdm>=4.66.5",
 ]
 authors = [
     { name = "Bardia Panahbehagh", email = "bardia.panah@gmail.com" },
@@ -26,6 +25,7 @@ dev = [
     "ipykernel>=6.29.5",
     "mypy>=1.13.0",
     "notebook>=7.2.2",
+    "pytest>=8.3.4",
     "ruff>=0.7.1",
     "types-tqdm>=4.66.0.20240417",
 ]
