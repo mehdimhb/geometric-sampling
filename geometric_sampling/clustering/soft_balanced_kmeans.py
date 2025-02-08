@@ -3,11 +3,14 @@ from numpy.typing import NDArray
 
 
 class SoftBalancedKMeans:
-    def __init__(self, k: int, tolerance: int = 9) -> None:
+    def __init__(
+        self, k: int, tolerance: int = 9, initial_centroids: NDArray = None
+    ) -> None:
+        self.final_cost = float("inf")
         self.k = k
         self.tolerance = tolerance
         self.data: NDArray = None
-        self.centroids: NDArray = None
+        self.centroids = initial_centroids
         self.labels: NDArray = None
         self.fractional_labels: NDArray = None
         self.clusters_sum: NDArray = None
@@ -52,7 +55,8 @@ class SoftBalancedKMeans:
 
     def fit(self, data: NDArray) -> None:
         self.data = data
-        self._initiate_centroids(self.data)
+        if self.centroids is None:
+            self._initiate_centroids(self.data)
         prev_cost = np.inf
         while True:
             self._assign(self.data)
