@@ -19,8 +19,7 @@ def test_soft_balanced_kmeans():
         coordinates = rng.random_coordinates((N, 2))
         probabilities = rng.unequal_probabilities(n, N)
         kmeans = gs.clustering.SoftBalancedKMeans(n, tolerance=tolerance)
-        kmeans.fit(coordinates)
-        kmeans.balance(probabilities)
+        kmeans.fit(coordinates, probabilities)
 
         each_cluster_sum_to_one += int(
             np.all(np.abs(kmeans.clusters_sum - 1) < 10**-tolerance)

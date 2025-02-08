@@ -40,9 +40,8 @@ class Population:
         self.clusters = self._generate_clusters()
 
     def _generate_clusters(self) -> list[Cluster]:
-        kmeans = SoftBalancedKMeans(self.n_clusters, self.tolerance)
-        kmeans.fit(self.coords)
-        kmeans.balance(self.probs)
+        kmeans = SoftBalancedKMeans(self.n_clusters, tolerance=self.tolerance)
+        kmeans.fit(self.coords, self.probs)
 
         clusters = []
         for i in range(self.n_clusters):

@@ -1,12 +1,12 @@
 import numpy as np
 from numpy.typing import NDArray
+from sklearn.cluster import KMeans
 
 
 class SoftBalancedKMeans:
     def __init__(
-        self, k: int, tolerance: int = 9, initial_centroids: NDArray = None
+        self, k: int, *, initial_centroids: NDArray = None, tolerance: int = 9
     ) -> None:
-        self.final_cost = float("inf")
         self.k = k
         self.tolerance = tolerance
         self.data: NDArray = None
@@ -15,57 +15,6 @@ class SoftBalancedKMeans:
         self.fractional_labels: NDArray = None
         self.clusters_sum: NDArray = None
         self.rng = np.random.default_rng()
-
-    def _initiate_centroids(self, data: NDArray) -> None:
-        self.centroids = np.zeros((self.k, 2))
-        self.centroids[0] = self.rng.choice(data)
-        for i in range(1, self.k):
-            distances = np.min(
-                np.linalg.norm(data.reshape(-1, 1, 2) - self.centroids[:i], axis=2)
-                ** 2,
-                axis=1,
-            )
-            self.centroids[i] = self.rng.choice(data, p=distances / np.sum(distances))
-
-    def _assign(self, data: NDArray) -> None:
-        self.labels = np.argmin(
-            np.linalg.norm(data.reshape(-1, 1, 2) - self.centroids, axis=2) ** 2, axis=1
-        )
-
-    def _update_centroids(self, data: NDArray, balance_step: bool = False) -> None:
-        if balance_step:
-            self.centroids = np.array(
-                [
-                    np.mean(data[np.nonzero(self.fractional_labels[:, i])[0]], axis=0)
-                    for i in range(self.k)
-                ]
-            )
-        else:
-            self.centroids = np.array(
-                [np.mean(data[self.labels == i], axis=0) for i in range(self.k)]
-            )
-
-    def _cost(self, data: NDArray) -> float:
-        return sum(
-            [
-                np.sum(np.linalg.norm(data[self.labels == i] - self.centroids[i]) ** 2)
-                for i in range(self.k)
-            ]
-        )
-
-    def fit(self, data: NDArray) -> None:
-        self.data = data
-        if self.centroids is None:
-            self._initiate_centroids(self.data)
-        prev_cost = np.inf
-        while True:
-            self._assign(self.data)
-            self._update_centroids(self.data)
-            current_cost = self._cost(self.data)
-            if current_cost + 10**-self.tolerance >= prev_cost:
-                self.final_cost = current_cost
-                break
-            prev_cost = current_cost
 
     def _generate_fractional_labels(self, probs: NDArray):
         fractional_labels = np.zeros((*self.labels.shape, self.k))
@@ -148,12 +97,31 @@ class SoftBalancedKMeans:
         )
         return max(int(np.floor(max_diff_sum / (2 * mean_nonzero_probs))), 1)
 
+    def _update_centroids(self, data: NDArray) -> None:
+        self.centroids = np.array(
+            [
+                np.mean(data[np.nonzero(self.fractional_labels[:, i])[0]], axis=0)
+                for i in range(self.k)
+            ]
+        )
+
     def _numerical_stabilizer(self) -> float:
         self.fractional_labels = np.round(self.fractional_labels, self.tolerance)
         self.fractional_labels *= 1 / np.sum(self.fractional_labels, axis=0)
         self.clusters_sum = np.sum(self.fractional_labels, axis=0)
 
-    def balance(self, probs: NDArray) -> None:
+    def fit(self, data: NDArray, probs: NDArray) -> None:
+        self.data = data
+
+        kmeans = KMeans(
+            n_clusters=self.k,
+            init=self.centroids if self.centroids is not None else "k-means++",
+            tol=10**-self.tolerance
+        )
+        kmeans.fit(self.data)
+
+        self.centroids = kmeans.cluster_centers_
+        self.labels = kmeans.labels_
         self.fractional_labels = self._generate_fractional_labels(probs)
         self.clusters_sum = np.sum(self.fractional_labels, axis=0)
 
@@ -166,6 +134,6 @@ class SoftBalancedKMeans:
             for data_index, from_cluster_index, to_cluster_index in transfer_records:
                 self._transfer(data_index, from_cluster_index, to_cluster_index)
                 self.clusters_sum = np.sum(self.fractional_labels, axis=0)
-            self._update_centroids(self.data, balance_step=True)
+            self._update_centroids(self.data)
 
         self._numerical_stabilizer()
