@@ -7,14 +7,14 @@ from . import Population
 
 class KMeansSpatialSampling:
     def __init__(
-            self,
-            coordinate: NDArray,
-            inclusion_probability: NDArray,
-            *,
-            n: int,
-            n_zones: int|tuple[int, int],
-            tolerance: int
-        ) -> None:
+        self,
+        coordinate: NDArray,
+        inclusion_probability: NDArray,
+        *,
+        n: int,
+        n_zones: int | tuple[int, int],
+        tolerance: int,
+    ) -> None:
         self.coords = coordinate
         self.probs = inclusion_probability
         self.n = n
@@ -26,11 +26,11 @@ class KMeansSpatialSampling:
             self.probs,
             n_clusters=self.n,
             n_zones=n_zones,
-            tolerance=self.tolerance
+            tolerance=self.tolerance,
         )
         self.rng = np.random.default_rng()
 
-    def _pair(self, n: int|tuple[int, int]) -> tuple[int, int]:
+    def _pair(self, n: int | tuple[int, int]) -> tuple[int, int]:
         if isinstance(n, int):
             return (n, n)
         else:
@@ -41,15 +41,17 @@ class KMeansSpatialSampling:
         for i in range(n_samples):
             random_number = self.rng.random()
             zone_index = np.searchsorted(
-                np.arange(1, step=round(1/np.prod(self.n_zones), self.tolerance)),
+                np.arange(1, step=round(1 / np.prod(self.n_zones), self.tolerance)),
                 random_number,
-                side='right'
+                side="right",
             )
             for j, cluster in enumerate(self.population.clusters):
                 unit_index = np.searchsorted(
-                    cluster.zones[zone_index-1].units[:, 3].cumsum()+(zone_index-1)*round(1/np.prod(self.n_zones), self.tolerance),
+                    cluster.zones[zone_index - 1].units[:, 3].cumsum()
+                    + (zone_index - 1)
+                    * round(1 / np.prod(self.n_zones), self.tolerance),
                     random_number,
-                    side='right'
+                    side="right",
                 )
-                samples[i, j] = cluster.zones[zone_index-1].units[unit_index, 0]
+                samples[i, j] = cluster.zones[zone_index - 1].units[unit_index, 0]
         return samples

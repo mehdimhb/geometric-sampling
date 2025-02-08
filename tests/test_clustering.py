@@ -1,6 +1,7 @@
 import numpy as np
 import geometric_sampling as gs
 
+
 def test_soft_balanced_kmeans():
     rng = gs.random.rng(42)
     np_rng = np.random.default_rng(42)
@@ -21,8 +22,12 @@ def test_soft_balanced_kmeans():
         kmeans.fit(coordinates)
         kmeans.balance(probabilities)
 
-        each_cluster_sum_to_one += int(np.all(np.abs(kmeans.clusters_sum - 1) < 10**-tolerance))
-        sum_of_clusters_equal_n += int(np.all((np.sum(kmeans.clusters_sum) - n) < 10**-tolerance))
+        each_cluster_sum_to_one += int(
+            np.all(np.abs(kmeans.clusters_sum - 1) < 10**-tolerance)
+        )
+        sum_of_clusters_equal_n += int(
+            np.all((np.sum(kmeans.clusters_sum) - n) < 10**-tolerance)
+        )
         all_probs_positive += int(np.all(kmeans.fractional_labels >= 0))
 
     assert each_cluster_sum_to_one == n_iterations

@@ -1,8 +1,10 @@
 from geometric_sampling.structs import Sample
 
+
 def test_almost_zero():
     r = Sample(1e-10, frozenset({1, 2, 3}))
     assert r.almost_zero()
+
 
 def test_compare():
     r1 = Sample(0.3, frozenset({1, 2}))

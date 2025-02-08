@@ -1,5 +1,6 @@
 from geometric_sampling.structs import MaxHeap
 
+
 def test_push():
     h = MaxHeap[int]()
     h.push(1)
@@ -9,6 +10,7 @@ def test_push():
     assert h.pop() == 2
     assert h.pop() == 1
     assert not h
+
 
 def test_randompop():
     h = MaxHeap[int]()
@@ -23,6 +25,7 @@ def test_randompop():
     assert p2 in {1, 2, 3} - {p1}
     assert p3 in {1, 2, 3} - {p1, p2}
     assert not h
+
 
 def test_copy():
     h = MaxHeap[int]()
@@ -44,6 +47,7 @@ def test_copy():
     assert not h
     assert not h2
 
+
 def test_len():
     h = MaxHeap[int]()
     assert len(h) == 0
@@ -60,6 +64,7 @@ def test_len():
     h.pop()
     assert len(h) == 0
 
+
 def test_iter():
     h = MaxHeap[int]()
     h.push(1)
@@ -67,6 +72,7 @@ def test_iter():
     h.push(3)
     assert set(h) == {1, 2, 3}
     assert len(h) == 3
+
 
 def test_str():
     h = MaxHeap[int]()
