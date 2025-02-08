@@ -24,7 +24,7 @@ def test_population():
             probabilities,
             n_clusters=n,
             n_zones=(num_zone_in_d, num_zone_in_d),
-            tolerance=tolerance
+            tolerance=tolerance,
         )
 
         total_zones = 0
@@ -35,10 +35,15 @@ def test_population():
         for cluster in population.clusters:
             for zone in cluster.zones:
                 total_zones += 1
-                if np.all(np.abs(1 / num_zone_in_d**2 - np.sum(zone.units[:, 3])) < 10**-tolerance):
+                if np.all(
+                    np.abs(1 / num_zone_in_d**2 - np.sum(zone.units[:, 3]))
+                    < 10**-tolerance
+                ):
                     sum_of_zone_successes += 1
                 all_zones_units_positive_successes += int(np.all(zone.units[:, 3] >= 0))
-            all_clusters_units_positive_successes += int(np.all(cluster.units[:, 3] >= 0))
+            all_clusters_units_positive_successes += int(
+                np.all(cluster.units[:, 3] >= 0)
+            )
 
         if total_zones == num_zone_in_d * num_zone_in_d * n:
             total_zone_count += 1

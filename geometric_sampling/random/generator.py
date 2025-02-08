@@ -6,7 +6,7 @@ class Generator:
     def __init__(self, seed: int = None) -> None:
         self.rng = np.random.default_rng(seed)
 
-    def grid_coordinates(self, size: int|tuple[int, ...] = None) -> NDArray:
+    def grid_coordinates(self, size: int | tuple[int, ...] = None) -> NDArray:
         """
         Generate grid coordinates.
 
@@ -24,13 +24,13 @@ class Generator:
         batch, N, dim = self._check_size(size)
 
         linspace = np.linspace(0, 1, N)
-        grid = np.meshgrid(*[linspace]*dim)
+        grid = np.meshgrid(*[linspace] * dim)
         base_coordinates = np.stack([indices.ravel() for indices in grid], axis=-1)
         coordinates = np.repeat(base_coordinates[np.newaxis, :, :], batch, axis=0)
 
         return coordinates.squeeze()
 
-    def random_coordinates(self, size: int|tuple[int, ...] = None) -> NDArray:
+    def random_coordinates(self, size: int | tuple[int, ...] = None) -> NDArray:
         """
         Generate random coordinates uniformly from [0, 1].
 
@@ -48,7 +48,9 @@ class Generator:
         coordinates = self.rng.random((batch, N, dim))
         return coordinates.squeeze()
 
-    def uniform_coordinates(self, low: float = 0.0, high: float = 1.0, size: int|tuple[int, ...] = None) -> NDArray:
+    def uniform_coordinates(
+        self, low: float = 0.0, high: float = 1.0, size: int | tuple[int, ...] = None
+    ) -> NDArray:
         """
         Generate random coordinates uniformly from [low, high].
 
@@ -70,7 +72,9 @@ class Generator:
         coordinates = self.rng.uniform(low, high, (batch, N, dim)).squeeze()
         return coordinates.squeeze()
 
-    def normal_1D_coordinates(self, mean: float = 0.0, std: float = 1.0, size: int|tuple[int, ...] = None) -> NDArray:
+    def normal_1D_coordinates(
+        self, mean: float = 0.0, std: float = 1.0, size: int | tuple[int, ...] = None
+    ) -> NDArray:
         """
         Generate random 1D coordinates sampled from a normal distribution.
 
@@ -90,7 +94,9 @@ class Generator:
         coordinates = self.rng.normal(mean, std, (batch, N)).squeeze()
         return coordinates.squeeze()
 
-    def normal_mD_coordinates(self, mean: NDArray, cov: NDArray, size: int|tuple[int, ...] = None) -> NDArray:
+    def normal_mD_coordinates(
+        self, mean: NDArray, cov: NDArray, size: int | tuple[int, ...] = None
+    ) -> NDArray:
         """
         Generate random m-dimensional coordinates sampled from a multivariate normal distribution.
 
@@ -110,7 +116,12 @@ class Generator:
         coordinates = self.rng.multivariate_normal(mean, cov, (batch, N)).squeeze()
         return coordinates.squeeze()
 
-    def cluster_coordinates(self, n_clusters: int, cluster_std: float|NDArray, size: int|tuple[int, ...] = None) -> NDArray:
+    def cluster_coordinates(
+        self,
+        n_clusters: int,
+        cluster_std: float | NDArray,
+        size: int | tuple[int, ...] = None,
+    ) -> NDArray:
         """
         Generate clustered coordinates by placing points around cluster centers.
 
@@ -142,13 +153,17 @@ class Generator:
                 cluster_id = cluster_assignments[b, n]
                 coordinates[b, n, :] = self.rng.normal(
                     cluster_centers[b, cluster_id],
-                    cluster_std if isinstance(cluster_std, float) else cluster_std[cluster_id],
-                    dim
+                    cluster_std
+                    if isinstance(cluster_std, float)
+                    else cluster_std[cluster_id],
+                    dim,
                 )
 
         return coordinates.squeeze()
 
-    def equal_probabilities(self, n: int, size: int|tuple[int, ...] = None) -> NDArray:
+    def equal_probabilities(
+        self, n: int, size: int | tuple[int, ...] = None
+    ) -> NDArray:
         """
         Generate equal probabilities that sum up to n.
 
@@ -167,10 +182,12 @@ class Generator:
             raise ValueError("n must be an positive integer.")
 
         batch, N, dim = self._check_size(size, fixed_dim=1)
-        probabilities = np.full((batch, N, dim), n/N)
+        probabilities = np.full((batch, N, dim), n / N)
         return probabilities.squeeze()
 
-    def unequal_probabilities(self, n: int, size: int|tuple[int, ...] = None) -> NDArray:
+    def unequal_probabilities(
+        self, n: int, size: int | tuple[int, ...] = None
+    ) -> NDArray:
         """
         Generate equal probabilities that sum up to n.
 
@@ -190,10 +207,12 @@ class Generator:
 
         batch, N, dim = self._check_size(size, fixed_dim=1)
         probabilities = self.rng.random((batch, N))
-        probabilities *= n/probabilities.sum(axis=1)
+        probabilities *= n / probabilities.sum(axis=1)
         return probabilities.squeeze()
 
-    def _check_size(self, size: int|tuple[int, ...], fixed_dim: int = None) -> tuple[int, int, int]:
+    def _check_size(
+        self, size: int | tuple[int, ...], fixed_dim: int = None
+    ) -> tuple[int, int, int]:
         """
         Validate and parse the size input.
 
@@ -215,7 +234,9 @@ class Generator:
         if not all(isinstance(x, int) and x > 0 for x in size):
             raise ValueError("All elements of size must be positive integers.")
         if len(size) == 3 and fixed_dim is not None and size[2] != fixed_dim:
-            raise ValueError("The dimension is fixed. you cannot set a different dimension.")
+            raise ValueError(
+                "The dimension is fixed. you cannot set a different dimension."
+            )
 
         match len(size):
             case 1:
