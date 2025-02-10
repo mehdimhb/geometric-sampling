@@ -37,7 +37,7 @@ def test_population():
                 total_zones += 1
                 if np.all(
                     np.abs(1 / num_zone_in_d**2 - np.sum(zone.units[:, 3]))
-                    < 10 ** -(tolerance - 1)
+                    < 10**-tolerance
                 ):
                     sum_of_zone_successes += 1
                 all_zones_units_positive_successes += int(np.all(zone.units[:, 3] >= 0))

@@ -67,7 +67,9 @@ class Population:
             units_of_basic_zones = self._sweep(
                 zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
             )
-            zones.extend([Zone(units=units) for units in units_of_basic_zones])
+            for units in units_of_basic_zones:
+                units[:, 3] = self._numerical_stabilizer(units[:, 3])
+                zones.append(Zone(units=units))
         return zones
 
     def _sweep(
@@ -141,6 +143,11 @@ class Population:
                 [zone, np.append(unit[:3], threshold).reshape(1, -1)]
             ), probability - threshold
         return np.concatenate([zone, np.append(unit[:3], threshold).reshape(1, -1)]), 0
+
+    def _numerical_stabilizer(self, probs: NDArray) -> NDArray:
+        probs_stabled = np.round(probs, self.tolerance)
+        probs_stabled *= 1 / (np.sum(probs_stabled) * np.prod(self.n_zones))
+        return probs_stabled
 
     def plot(self, ax=None, figsize: tuple[int, int] = (8, 6)) -> None:
         if ax is None:
