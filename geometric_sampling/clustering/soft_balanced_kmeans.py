@@ -84,8 +84,14 @@ class SoftBalancedKMeans:
             self.fractional_labels[data_index, to_index] + transfer_prob
         )
 
-    def _is_transfer_impossible(self, transfer_records: NDArray) -> bool:
+    def _no_transfer_possible(self, transfer_records: NDArray) -> bool:
         return transfer_records[0, 0] == np.inf
+
+    def _is_transfer_possible(self, from_cluster: int, to_cluster: int) -> bool:
+        return (
+            self.clusters_sum[from_cluster] - self.clusters_sum[to_cluster]
+            > 10**-self.tolerance
+        )
 
     def _stop_codition(self, tol) -> bool:
         return np.all(np.abs(self.clusters_sum - 1) < 10**-tol)
@@ -116,7 +122,7 @@ class SoftBalancedKMeans:
         kmeans = KMeans(
             n_clusters=self.k,
             init=self.centroids if self.centroids is not None else "k-means++",
-            tol=10**-self.tolerance
+            tol=10**-self.tolerance,
         )
         kmeans.fit(self.data)
 
@@ -129,11 +135,12 @@ class SoftBalancedKMeans:
             transfer_records = self._get_transfer_records(
                 self.data, top_m=self._expected_num_transfers()
             )
-            if self._is_transfer_impossible(transfer_records):
+            if self._no_transfer_possible(transfer_records):
                 break
             for data_index, from_cluster_index, to_cluster_index in transfer_records:
-                self._transfer(data_index, from_cluster_index, to_cluster_index)
-                self.clusters_sum = np.sum(self.fractional_labels, axis=0)
+                if self._is_transfer_possible(from_cluster_index, to_cluster_index):
+                    self._transfer(data_index, from_cluster_index, to_cluster_index)
+                    self.clusters_sum = np.sum(self.fractional_labels, axis=0)
             self._update_centroids(self.data)
 
         self._numerical_stabilizer()
