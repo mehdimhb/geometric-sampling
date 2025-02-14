@@ -39,7 +39,7 @@ class SoftBalancedKMeans:
             ) / (
                 self.clusters_sum[current_cluster_indx]
                 - self.clusters_sum[other_cluster_indx]
-                + 10**-self.tolerance
+                + 1e9
             )
         else:
             return np.inf
@@ -122,6 +122,7 @@ class SoftBalancedKMeans:
         kmeans = KMeans(
             n_clusters=self.k,
             init=self.centroids if self.centroids is not None else "k-means++",
+            n_init=10,
             tol=10**-self.tolerance,
         )
         kmeans.fit(self.data)
