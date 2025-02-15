@@ -49,7 +49,7 @@ print("Initial criteria value:", astar.initial_criteria_value)
 astar.initial_design.show()
 
 # Run the A* search algorithm to optimize the design
-astar.run(iterations=2000, num_new_nodes=10, max_open_set_size=10000, num_changes=1)
+astar.run(max_iterations=2000, num_new_nodes=10, max_open_set_size=10000, num_changes=1)
 
 # Display results after optimization
 print("Best criteria value:", astar.best_criteria_value)
