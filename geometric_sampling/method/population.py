@@ -42,21 +42,7 @@ class Population:
     def _generate_clusters(self) -> list[Cluster]:
         kmeans = SoftBalancedKMeans(self.n_clusters, tolerance=self.tolerance)
         kmeans.fit(self.coords, self.probs)
-
-        clusters = []
-        for i in range(self.n_clusters):
-            probs = kmeans.fractional_labels[:, i]
-            ids = np.nonzero(probs)[0]
-            units = self._generate_units(ids, self.coords[ids], probs[ids])
-            cluster = Cluster(units=units, zones=self._generate_zones(units))
-            clusters.append(cluster)
-
-        return clusters
-
-    def _generate_units(self, ids: NDArray, coords: NDArray, probs: NDArray) -> NDArray:
-        return np.concatenate(
-            [ids.reshape(-1, 1), coords, probs.reshape(-1, 1)], axis=1
-        )
+        return [Cluster(units=units, zones=self._generate_zones(units)) for units in kmeans.get_clusters()]
 
     def _generate_zones(self, units) -> list[Zone]:
         vertical_zones = self._sweep(

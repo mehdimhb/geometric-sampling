@@ -9,7 +9,7 @@ class SoftBalancedKMeans:
     ) -> None:
         self.k = k
         self.tolerance = tolerance
-        self.data: NDArray = None
+        self.coords: NDArray = None
         self.centroids = initial_centroids
         self.labels: NDArray = None
         self.fractional_labels: NDArray = None
@@ -22,7 +22,7 @@ class SoftBalancedKMeans:
             fractional_labels[i, self.labels[i]] = probs[i]
         return fractional_labels
 
-    def _reassignment_cost(
+    def _transfer_score(
         self,
         data_point: NDArray,
         current_cluster_indx: float,
@@ -50,9 +50,9 @@ class SoftBalancedKMeans:
         for i in range(data.shape[0]):
             for j in np.nonzero(self.fractional_labels[i])[0]:
                 t_min = np.argmin(
-                    [self._reassignment_cost(data[i], j, t) for t in range(self.k)]
+                    [self._transfer_score(data[i], j, t) for t in range(self.k)]
                 )
-                cost = self._reassignment_cost(data[i], j, t_min)
+                cost = self._transfer_score(data[i], j, t_min)
                 costs.append((cost, i, j, t_min))
 
         costs = np.array(costs)
@@ -117,7 +117,7 @@ class SoftBalancedKMeans:
         self.clusters_sum = np.sum(self.fractional_labels, axis=0)
 
     def fit(self, data: NDArray, probs: NDArray) -> None:
-        self.data = data
+        self.coords = data
 
         kmeans = KMeans(
             n_clusters=self.k,
@@ -125,7 +125,7 @@ class SoftBalancedKMeans:
             n_init=10,
             tol=10**-self.tolerance,
         )
-        kmeans.fit(self.data)
+        kmeans.fit(self.coords)
 
         self.centroids = kmeans.cluster_centers_
         self.labels = kmeans.labels_
@@ -134,7 +134,7 @@ class SoftBalancedKMeans:
 
         while not self._stop_codition(self.tolerance):
             transfer_records = self._get_transfer_records(
-                self.data, top_m=self._expected_num_transfers()
+                self.coords, top_m=self._expected_num_transfers()
             )
             if self._no_transfer_possible(transfer_records):
                 break
@@ -142,6 +142,19 @@ class SoftBalancedKMeans:
                 if self._is_transfer_possible(from_cluster_index, to_cluster_index):
                     self._transfer(data_index, from_cluster_index, to_cluster_index)
                     self.clusters_sum = np.sum(self.fractional_labels, axis=0)
-            self._update_centroids(self.data)
+            self._update_centroids(self.coords)
 
         self._numerical_stabilizer()
+
+    def get_clusters(self) -> NDArray:
+        clusters = []
+
+        for i in range(self.k):
+            probs = self.fractional_labels[:, i]
+            ids = np.nonzero(probs)[0]
+            units = np.concatenate(
+                [ids.reshape(-1, 1), self.coords[ids], probs[ids].reshape(-1, 1)], axis=1
+            )
+            clusters.append(units)
+
+        return clusters
