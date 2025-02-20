@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from typing import Protocol, Any
-from typing_extensions import Self
 
 
 class Comparable(Protocol):
@@ -12,7 +11,7 @@ class Comparable(Protocol):
 
 
 class Negatable(Protocol):
-    def __neg__(self) -> Self: ...
+    def __neg__(self) -> 'Negatable': ...
 
 
 class ComparableNegatable(Comparable, Negatable, Protocol): ...
