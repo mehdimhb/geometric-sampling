@@ -39,7 +39,7 @@ class SoftBalancedKMeans:
             ) / (
                 self.clusters_sum[current_cluster_indx]
                 - self.clusters_sum[other_cluster_indx]
-                + 1e9
+                + 1e-9
             )
         else:
             return np.inf
