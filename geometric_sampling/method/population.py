@@ -42,7 +42,10 @@ class Population:
     def _generate_clusters(self) -> list[Cluster]:
         kmeans = SoftBalancedKMeans(self.n_clusters, tolerance=self.tolerance)
         kmeans.fit(self.coords, self.probs)
-        return [Cluster(units=units, zones=self._generate_zones(units)) for units in kmeans.get_clusters()]
+        return [
+            Cluster(units=units, zones=self._generate_zones(units))
+            for units in kmeans.get_clusters()
+        ]
 
     def _generate_zones(self, units) -> list[Zone]:
         vertical_zones = self._sweep(

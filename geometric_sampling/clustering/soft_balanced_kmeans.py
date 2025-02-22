@@ -153,7 +153,8 @@ class SoftBalancedKMeans:
             probs = self.fractional_labels[:, i]
             ids = np.nonzero(probs)[0]
             units = np.concatenate(
-                [ids.reshape(-1, 1), self.coords[ids], probs[ids].reshape(-1, 1)], axis=1
+                [ids.reshape(-1, 1), self.coords[ids], probs[ids].reshape(-1, 1)],
+                axis=1,
             )
             clusters.append(units)
 

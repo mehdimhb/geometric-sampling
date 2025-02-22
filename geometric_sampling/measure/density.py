@@ -13,7 +13,7 @@ class Density:
         self.kde = self._kde(coordinates)
 
     def _kde(self, coords: NDArray) -> KernelDensity:
-        kde = KernelDensity(kernel='gaussian', bandwidth='scott')
+        kde = KernelDensity(kernel="gaussian", bandwidth="scott")
         kde.fit(coords)
         return kde
 
@@ -24,10 +24,17 @@ class Density:
         return np.linalg.norm(np.exp(log_density) - np.exp(log_density_shifted))
 
     def _generate_labels_centroids(self, sample_coords: NDArray):
-        sbk = SoftBalancedKMeans(k=sample_coords.shape[0], initial_centroids=sample_coords)
+        sbk = SoftBalancedKMeans(
+            k=sample_coords.shape[0], initial_centroids=sample_coords
+        )
         sbk.fit(self.coords, self.probs)
         labels = np.argmax(sbk.fractional_labels, axis=1)
-        centroids = np.array([np.mean(self.coords[labels == i], axis=0) for i in range(sample_coords.shape[0])])
+        centroids = np.array(
+            [
+                np.mean(self.coords[labels == i], axis=0)
+                for i in range(sample_coords.shape[0])
+            ]
+        )
         return labels, centroids
 
     def _assign_samples_to_centroids(samples: NDArray, centroids: NDArray) -> NDArray:
@@ -48,10 +55,15 @@ class Density:
     def _scale(self, value: float, n: int) -> float:
         return 1 - (1 - value) ** n
 
-    def _score_sample(self, sample: NDArray, labels: NDArray, centroids: NDArray) -> float:
+    def _score_sample(
+        self, sample: NDArray, labels: NDArray, centroids: NDArray
+    ) -> float:
         shifts = sample - centroids
         shifted_coords = self._generate_shifted_coords(shifts, labels)
-        return self._scale(self._norm_density(shifted_coords)/self._max_score(labels, centroids), sample.shape[0])
+        return self._scale(
+            self._norm_density(shifted_coords) / self._max_score(labels, centroids),
+            sample.shape[0],
+        )
 
     def score(self, samples: NDArray) -> NDArray:
         scores = np.zeros(samples.shape[0])

@@ -28,25 +28,28 @@ class Agg:
         return membership
 
     def _generate_Tij(self) -> NDArray:
-        return np.sum(self.X_features[:, :, np.newaxis] * self.membership[:, np.newaxis, :], axis=0).T
+        return np.sum(
+            self.X_features[:, :, np.newaxis] * self.membership[:, np.newaxis, :],
+            axis=0,
+        ).T
 
     def _generate_Ti(self) -> NDArray:
-        return np.sum((self.weights[np.newaxis, :])*self._generate_Tij(), axis=1)
+        return np.sum((self.weights[np.newaxis, :]) * self._generate_Tij(), axis=1)
 
     def _weighet_norm(self, array: NDArray) -> NDArray:
-        return np.sum(self.weights*array**2)
+        return np.sum(self.weights * array**2)
 
     def _minimum_percent(self, data_index: int, from_index: int, to_index: int):
-        return (
-            np.sum(self.weights * self.X_features[data_index] * (self.Tij[from_index] - self.Tij[to_index]))/
-            (2*np.sum(self.weights * self.X_features[data_index]**2))
-        )
+        return np.sum(
+            self.weights
+            * self.X_features[data_index]
+            * (self.Tij[from_index] - self.Tij[to_index])
+        ) / (2 * np.sum(self.weights * self.X_features[data_index] ** 2))
 
     def _zero_percent(self, data_index: int, cluster: int):
-        return (
-            np.sum(self.weights * self.X_features[data_index] * self.Tij[cluster])/
-            (np.sum(self.weights * self.X_features[data_index]**2))
-        )
+        return np.sum(
+            self.weights * self.X_features[data_index] * self.Tij[cluster]
+        ) / (np.sum(self.weights * self.X_features[data_index] ** 2))
 
     def _transfer_score(
         self,
@@ -59,12 +62,16 @@ class Agg:
             > 10**-self.tolerance
         ):
             return (
-                np.linalg.norm(self.Y_features[data_indx] - self.centroids[new_cluster_indx]) ** 2
-                - np.linalg.norm(self.Y_features[data_indx] - self.centroids[current_cluster_indx]) ** 2
+                np.linalg.norm(
+                    self.Y_features[data_indx] - self.centroids[new_cluster_indx]
+                )
+                ** 2
+                - np.linalg.norm(
+                    self.Y_features[data_indx] - self.centroids[current_cluster_indx]
+                )
+                ** 2
             ) / self._weighet_norm(
-                self.Tij[current_cluster_indx]
-                - self.Tij[new_cluster_indx]
-                + 1e-9
+                self.Tij[current_cluster_indx] - self.Tij[new_cluster_indx] + 1e-9
             )
         else:
             return np.inf
@@ -83,7 +90,7 @@ class Agg:
         costs = np.array(costs)
 
         print()
-        print('cost')
+        print("cost")
         print(costs[np.argsort(costs[:, 0])][:10])
         print()
 
@@ -91,15 +98,15 @@ class Agg:
 
     def _transfer(self, data_index: int, from_index: int, to_index: int) -> None:
         if (
-            self.Ti[from_index] >= - 10**-self.tolerance
-            and self.Ti[to_index] >= - 10**-self.tolerance
+            self.Ti[from_index] >= -(10**-self.tolerance)
+            and self.Ti[to_index] >= -(10**-self.tolerance)
         ) or (
             self.Ti[from_index] <= 10**-self.tolerance
             and self.Ti[to_index] <= 10**-self.tolerance
         ):
             transfer_percent = min(
                 self.membership[data_index, from_index],
-                self._minimum_percent(data_index, from_index, to_index)
+                self._minimum_percent(data_index, from_index, to_index),
             )
         else:
             transfer_percent = min(
@@ -110,7 +117,6 @@ class Agg:
 
         self.membership[data_index, from_index] -= transfer_percent
         self.membership[data_index, to_index] += transfer_percent
-
 
     def _no_transfer_possible(self, transfer_records: NDArray) -> bool:
         return transfer_records[0, 0] == np.inf
@@ -126,13 +132,14 @@ class Agg:
 
     def _expected_num_transfers(self) -> float:
         max_diff_sum = np.max(self.Ti - self.Ti[:, None])
-        mean_nonzero_probs = np.mean(
-            self.membership[np.nonzero(self.membership)]
-        )
+        mean_nonzero_probs = np.mean(self.membership[np.nonzero(self.membership)])
         return max(int(np.floor(max_diff_sum / (2 * mean_nonzero_probs))), 1)
 
     def _update_centroids(self) -> None:
-        self.centroids = np.mean(self.Y_features[:, :, np.newaxis] * self.membership[:, np.newaxis, :], axis=0).T
+        self.centroids = np.mean(
+            self.Y_features[:, :, np.newaxis] * self.membership[:, np.newaxis, :],
+            axis=0,
+        ).T
 
     def fit(self, Y_features: NDArray, X_features: NDArray, weights: NDArray) -> None:
         self.Y_features = Y_features
