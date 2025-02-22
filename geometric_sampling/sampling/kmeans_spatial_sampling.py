@@ -25,7 +25,7 @@ class KMeansSpatialSampling:
             self.coords,
             self.probs,
             n_clusters=self.n,
-            n_zones=n_zones,
+            n_zones=self.n_zones,
             tolerance=self.tolerance,
         )
         self.rng = np.random.default_rng()
