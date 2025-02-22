@@ -5,6 +5,7 @@ from numpy._typing import NDArray
 from scipy.optimize import linear_sum_assignment
 from sklearn.neighbors import KernelDensity
 
+import matplotlib.pyplot as plt
 
 class Density:
     def __init__(self, coordinates: NDArray, probabilities: NDArray):
@@ -37,9 +38,9 @@ class Density:
         )
         return labels, centroids
 
-    def _assign_samples_to_centroids(samples: NDArray, centroids: NDArray) -> NDArray:
-        cost_matrix = np.linalg.norm(samples[:, np.newaxis] - centroids, axis=2)
-        return samples[linear_sum_assignment(cost_matrix)[1]]
+    def _assign_samples_to_centroids(self, sample: NDArray, centroids: NDArray) -> NDArray:
+        cost_matrix = np.linalg.norm(sample[:, np.newaxis] - centroids, axis=2)
+        return sample[linear_sum_assignment(cost_matrix)[1]]
 
     def _generate_shifted_coords(self, shifts: NDArray, labels: NDArray) -> NDArray:
         shifted_coords = self.coords.copy()
@@ -48,7 +49,7 @@ class Density:
         return shifted_coords
 
     def _max_score(self, labels: NDArray, centroids: NDArray) -> float:
-        shifts = centroids.mean(0) - centroids
+        shifts = centroids.mean(axis=0) - centroids
         shifted_coords = self._generate_shifted_coords(shifts, labels)
         return self._norm_density(shifted_coords)
 
@@ -67,8 +68,8 @@ class Density:
 
     def score(self, samples: NDArray) -> NDArray:
         scores = np.zeros(samples.shape[0])
-        for sample in samples:
+        for i, sample in enumerate(samples):
             labels, centroids = self._generate_labels_centroids(self.coords[sample])
-            sample_assigned = self._assign_samples_to_centroids(sample, centroids)
-            scores[sample] = self._score_sample(sample_assigned, labels, centroids)
+            sample_assigned = self._assign_samples_to_centroids(self.coords[sample], centroids)
+            scores[i] = self._score_sample(sample_assigned, labels, centroids)
         return scores

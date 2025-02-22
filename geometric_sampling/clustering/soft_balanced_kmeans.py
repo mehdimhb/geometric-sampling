@@ -122,7 +122,7 @@ class SoftBalancedKMeans:
         kmeans = KMeans(
             n_clusters=self.k,
             init=self.centroids if self.centroids is not None else "k-means++",
-            n_init=10,
+            n_init=1 if self.centroids is not None else 10,
             tol=10**-self.tolerance,
         )
         kmeans.fit(self.coords)
