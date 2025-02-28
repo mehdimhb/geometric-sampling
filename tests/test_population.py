@@ -19,7 +19,7 @@ def test_population():
         coordinates = rng.random_coordinates((N, 2))
         probabilities = rng.unequal_probabilities(n, N)
 
-        population = gs.method.Population(
+        population = gs.sampling.Population(
             coordinates,
             probabilities,
             n_clusters=n,
