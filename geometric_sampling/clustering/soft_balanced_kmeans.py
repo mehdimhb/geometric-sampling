@@ -5,7 +5,7 @@ from sklearn.cluster import KMeans
 
 class SoftBalancedKMeans:
     def __init__(
-        self, k: int, *, initial_centroids: NDArray = None, tolerance: int = 9
+        self, k: int, *, initial_centroids: NDArray = None, tolerance: int = 3
     ) -> None:
         self.k = k
         self.tolerance = tolerance
