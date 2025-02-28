@@ -1,46 +1,53 @@
-from ..clustering import SoftBalancedKMeans
+from ..clustering import AggregateBalancedKMeans
 
 import numpy as np
 from numpy._typing import NDArray
 from scipy.optimize import linear_sum_assignment
 from sklearn.neighbors import KernelDensity
 
-import matplotlib.pyplot as plt
 
 class Density:
-    def __init__(self, coordinates: NDArray, probabilities: NDArray):
+    def __init__(self, coordinates: NDArray, probabilities: NDArray, k: int):
         self.coords = coordinates
         self.probs = probabilities
         self.kde = self._kde(coordinates)
+        self.labels, self.centroids, self.clusters = self._generate_labels_centroids(k)
 
     def _kde(self, coords: NDArray) -> KernelDensity:
-        kde = KernelDensity(kernel="gaussian", bandwidth="scott")
+        kde = KernelDensity(kernel="tophat", bandwidth="scott")
         kde.fit(coords)
         return kde
 
-    def _norm_density(self, shifted_coords: NDArray) -> float:
+    def _density(self, shifted_coords: NDArray) -> float:
         shifted_kde = self._kde(shifted_coords)
-        log_density = self.kde.score_samples(self.coords)
-        log_density_shifted = shifted_kde.score_samples(shifted_coords)
-        return np.linalg.norm(np.exp(log_density) - np.exp(log_density_shifted))
+        density = np.exp(self.kde.score_samples(self.coords))
+        shifted_density = np.exp(shifted_kde.score_samples(shifted_coords))
+        measure = [
+            np.mean((density-shifted_density)/np.sqrt(density**2+shifted_density**2))
+            # np.corrcoef(density, shifted_density)[0, 1],
+            # np.sum(density-shifted_density)**2
+            # np.mean(np.abs(density-shifted_density)),
+            # np.mean((density-shifted_density)**2),
+            # np.mean((density-shifted_density)**2/density),
+            # np.sum((density-shifted_density)**2/density)
+        ]
+        return density, shifted_density, measure
 
-    def _generate_labels_centroids(self, sample_coords: NDArray):
-        sbk = SoftBalancedKMeans(
-            k=sample_coords.shape[0], initial_centroids=sample_coords
-        )
-        sbk.fit(self.coords, self.probs)
-        labels = np.argmax(sbk.fractional_labels, axis=1)
+    def _generate_labels_centroids(self, k):
+        agg = AggregateBalancedKMeans(k=k, tolerance=5)
+        agg.fit(self.coords, self.probs.reshape(-1, 1), np.array([1]))
+        labels = np.argmax(agg.membership, axis=1)
         centroids = np.array(
             [
                 np.mean(self.coords[labels == i], axis=0)
-                for i in range(sample_coords.shape[0])
+                for i in range(k)
             ]
         )
-        return labels, centroids
+        return labels, centroids, agg.get_clusters()
 
-    def _assign_samples_to_centroids(self, sample: NDArray, centroids: NDArray) -> NDArray:
-        cost_matrix = np.linalg.norm(sample[:, np.newaxis] - centroids, axis=2)
-        return sample[linear_sum_assignment(cost_matrix)[1]]
+    def _assign_samples_to_centroids(self, samples, centroids):
+        cost_matrix = np.linalg.norm(samples[:, :, np.newaxis] - centroids, axis=3).transpose(0, 2, 1)
+        return np.array([samples[i][linear_sum_assignment(cost_matrix[i])[1]] for i in range(samples.shape[0])])
 
     def _generate_shifted_coords(self, shifts: NDArray, labels: NDArray) -> NDArray:
         shifted_coords = self.coords.copy()
@@ -48,28 +55,28 @@ class Density:
             shifted_coords[labels == j] += shift
         return shifted_coords
 
-    def _max_score(self, labels: NDArray, centroids: NDArray) -> float:
-        shifts = centroids.mean(axis=0) - centroids
-        shifted_coords = self._generate_shifted_coords(shifts, labels)
-        return self._norm_density(shifted_coords)
-
-    def _scale(self, value: float, n: int) -> float:
-        return 1 - (1 - value) ** n
-
     def _score_sample(
         self, sample: NDArray, labels: NDArray, centroids: NDArray
     ) -> float:
         shifts = sample - centroids
         shifted_coords = self._generate_shifted_coords(shifts, labels)
-        return self._scale(
-            self._norm_density(shifted_coords) / self._max_score(labels, centroids),
-            sample.shape[0],
-        )
+        return self._density(shifted_coords)
 
     def score(self, samples: NDArray) -> NDArray:
-        scores = np.zeros(samples.shape[0])
-        for i, sample in enumerate(samples):
-            labels, centroids = self._generate_labels_centroids(self.coords[sample])
-            sample_assigned = self._assign_samples_to_centroids(self.coords[sample], centroids)
-            scores[i] = self._score_sample(sample_assigned, labels, centroids)
-        return scores
+        scores = []
+        densities = []
+        samples_assigned = self._assign_samples_to_centroids(
+                self.coords[samples], self.centroids
+            )
+        for sample in samples_assigned:
+            density, shifted_density, score = self._score_sample(sample, self.labels, self.centroids)
+            densities.append([density, shifted_density])
+            scores.append(score)
+        return self.zippify(scores), densities
+
+    def zippify(self, scores):
+        zipped_scores = [[] for _ in range(len(scores[0]))]
+        for score in scores:
+            for i, den in enumerate(score):
+                zipped_scores[i].append(den)
+        return zipped_scores
