@@ -18,12 +18,25 @@ class Density:
         kde.fit(coords)
         return kde
 
+    def scale(self, scores):
+        scaled_scores = np.zeros_like(scores)
+        limit = np.sin(np.pi/8)/np.sin(np.pi/4)
+        for i, score in enumerate(scores):
+            if score >= 0:
+                scaled_scores[i] = min(score, limit)/limit
+            else:
+                scaled_scores[i] = max(score, -limit)/limit
+        return scaled_scores
+
     def _density(self, shifted_coords: NDArray) -> float:
         shifted_kde = self._kde(shifted_coords)
         density = np.exp(self.kde.score_samples(self.coords))
         shifted_density = np.exp(shifted_kde.score_samples(shifted_coords))
         measure = [
-            np.mean((density-shifted_density)/np.sqrt(density**2+shifted_density**2))
+            np.mean((density-shifted_density)/np.sqrt(density**2+shifted_density**2)),
+            np.mean(self.scale((density-shifted_density)/np.sqrt(density**2+shifted_density**2)))
+            # np.mean(np.abs(density-shifted_density)/np.sqrt(density**2+shifted_density**2)),
+            # np.mean((density-shifted_density)**2/np.sqrt(density**2+shifted_density**2)),
             # np.corrcoef(density, shifted_density)[0, 1],
             # np.sum(density-shifted_density)**2
             # np.mean(np.abs(density-shifted_density)),
