@@ -101,33 +101,12 @@ class AggregateBalancedKMeans:
             and self.Ti[new_cluster] <= self.goal
         ):
             # print('case ++ or --')
-            # print(
-            #     round(self.membership[data_index, old_cluster], 4),
-            #     round((np.sum(self.weights * self.X_features[data_index] * (self.Tij[old_cluster] + self.Tij[new_cluster] - 2 * self.goal_j))
-            #     / (2 * np.sum(self.weights * self.X_features[data_index] ** 2))), 4),
-            #     round((np.sum(self.weights * (self.Tij[old_cluster] - self.goal_j))
-            #     / (2 * np.sum(self.weights * self.X_features[data_index]))), 4),
-            #     round((np.sum(self.weights * (self.goal_j - self.Tij[new_cluster]))
-            #     / (2 * np.sum(self.weights * self.X_features[data_index]))), 4),
-            #     round(((self.Ti[old_cluster] - self.Ti[new_cluster]) / (2*np.sum(self.X_features[data_index]))), 4)
-            # )
             return min(
                 self.membership[data_index, old_cluster],
                 ((self.Ti[old_cluster] - self.Ti[new_cluster]) / (2*np.sum(self.X_features[data_index])))
             )
         else:
             # print('case +-')
-            # print(
-            #     round(self.membership[data_index, old_cluster], 4),
-            #     round((np.sum(self.weights * self.X_features[data_index] * (self.Tij[old_cluster] + self.Tij[new_cluster] - 2 * self.goal_j))
-            #     / (2 * np.sum(self.weights * self.X_features[data_index] ** 2))), 4),
-            #     round((np.sum(self.weights * (self.Tij[old_cluster] - self.goal_j))
-            #     / (2 * np.sum(self.weights * self.X_features[data_index]))), 4),
-            #     round((np.sum(self.weights * (self.goal_j - self.Tij[new_cluster]))
-            #     / (2 * np.sum(self.weights * self.X_features[data_index]))), 4),
-            #     round(((self.Ti[old_cluster] - self.goal) / np.sum(self.X_features[data_index])), 4),
-            #     round(((self.goal - self.Ti[new_cluster]) / np.sum(self.X_features[data_index])), 4)
-            # )
             return min(
                 self.membership[data_index, old_cluster],
                 ((self.Ti[old_cluster] - self.goal) / np.sum(self.X_features[data_index])),
@@ -158,8 +137,9 @@ class AggregateBalancedKMeans:
 
     def _expected_num_transfers(self) -> float:
         max_diff_sum = np.max(self.Ti - self.Ti[:, None])
-        mean_nonzero_probs = np.mean(self.membership[np.nonzero(self.membership)])
-        return max(int(np.floor(max_diff_sum / (2 * mean_nonzero_probs))), 1)
+        possible_transfers = self.X_features.sum(axis=1)[:, np.newaxis]*self.membership
+        mean_nonzero_transfers = np.mean(possible_transfers[np.nonzero(possible_transfers)])
+        return max(int(np.floor(max_diff_sum / (2 * mean_nonzero_transfers))), 1)
 
     def _update_centroids(self) -> None:
         for i in range(self.k):
@@ -200,10 +180,11 @@ class AggregateBalancedKMeans:
             # print("================================================")
             # print("iter:", iter_)
             # print("\nTij", self.Tij)
+            # print("\nTij - goal_j", self.Tij - self.goal_j)
             # print("\nTi", self.Ti)
             # print("\nTij_cost", round(self.Tij_cost, 5))
             # print()
-            best_cost, transfer_records = self._get_transfer_records(top_m=1)
+            best_cost, transfer_records = self._get_transfer_records(top_m=self._expected_num_transfers())
             if self._no_transfer_possible(best_cost):
                 break
             for data_index, old_cluster, new_cluster in transfer_records:
