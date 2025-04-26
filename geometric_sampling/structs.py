@@ -32,15 +32,27 @@ class MaxHeap(Generic[T]):
     def peek(self) -> T:
         return -self.heap[0]
 
+    def is_empty(self) -> bool:
+        return len(self.heap) == 0
+
     def randompop(self) -> T:
-        idx = self.rng.integers(len(self.heap))
-        val = -self.heap[idx]
-        self.heap[idx] = self.heap[-1]
-        self.heap.pop()
-        if idx < len(self.heap):
-            heapq._siftup(self.heap, idx)  # type: ignore
-            heapq._siftdown(self.heap, 0, idx)  # type: ignore
-        return val
+
+        total = sum(item.probability for item in map(lambda x: -x, self.heap))
+        r = self.rng.random() * total
+        cum = 0.0
+        for idx, neg_item in enumerate(self.heap):
+            item = -neg_item
+            cum += item.probability
+            if cum >= r:
+                val = item
+                self.heap[idx] = self.heap[-1]
+                self.heap.pop()
+                if idx < len(self.heap):
+                    heapq._siftup(self.heap, idx)
+                    heapq._siftdown(self.heap, 0, idx)
+                return val
+
+        return -heapq.heappop(self.heap)
 
     def copy(self) -> MaxHeap[T]:
         new_heap = MaxHeap[T]()
@@ -92,3 +104,30 @@ class Sample:
 
     def __hash__(self):
         return hash(self.ids)
+
+
+@dataclass(order=False)
+class SampleGenetic:
+    probability: float
+    ids: frozenset[int]
+    index : list[int | list[int]]
+
+    def almost_zero(self) -> bool:
+        return self.probability < 1e-9
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, SampleGenetic):
+            return NotImplemented
+        return self.probability == other.probability and self.ids == other.ids
+
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, SampleGenetic):
+            return NotImplemented
+        return self.probability < other.probability
+
+    def __neg__(self) -> SampleGenetic:
+        return SampleGenetic(-self.probability, self.ids, self.index)
+
+    def __hash__(self):
+        return hash(self.ids)
+
