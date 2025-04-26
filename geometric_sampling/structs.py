@@ -1,6 +1,6 @@
 from __future__ import annotations
 import heapq
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Iterator, Generic, Collection, Optional, Any
 from typing import TypeVar
 
@@ -85,6 +85,7 @@ class MaxHeap(Generic[T]):
 class Sample:
     probability: float
     ids: frozenset[int]
+    index: list[int | list[int]] = None
 
     def almost_zero(self) -> bool:
         return self.probability < 1e-9
@@ -100,7 +101,7 @@ class Sample:
         return self.probability < other.probability
 
     def __neg__(self) -> Sample:
-        return Sample(-self.probability, self.ids)
+        return Sample(-self.probability, self.ids, self.index)
 
     def __hash__(self):
         return hash(self.ids)
@@ -110,7 +111,7 @@ class Sample:
 class SampleGenetic:
     probability: float
     ids: frozenset[int]
-    index : list[int | list[int]]
+    index : list[int | list[int]] = None
 
     def almost_zero(self) -> bool:
         return self.probability < 1e-9

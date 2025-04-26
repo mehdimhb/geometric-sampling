@@ -134,7 +134,7 @@ class DesignGenetic:
             rng: np.random.Generator = np.random.default_rng(42),
     ):
         self.step = 0
-        self.heap = MaxHeap[SampleGenetic](rng=rng)
+        self.heap = MaxHeap[Sample](rng=rng)
         self.rng = rng
         self.changes = 0
         self.sucsses = 0
@@ -172,7 +172,7 @@ class DesignGenetic:
                 active.add(bar_index)
             elif event_type == "end":
                 if last_point != point:
-                    self.push(SampleGenetic(round(point - last_point, 9), frozenset(active), [counter,[]]))
+                    self.push(Sample(round(point - last_point, 9), frozenset(active), [counter,[]]))
                     counter += 1
                 active.remove(bar_index)
 
@@ -186,15 +186,15 @@ class DesignGenetic:
         new_design.changes = self.changes
         return new_design
 
-    def pull(self, random: bool = False) -> SampleGenetic:
+    def pull(self, random: bool = False) -> Sample:
         if self.heap.is_empty():
-            return SampleGenetic(0, frozenset(), [0, []])
+            return Sample(0, frozenset(), [0, []])
 
         if random:
             return self.heap.randompop()
         return self.heap.pop()
 
-    def push(self, *args: SampleGenetic) -> None:
+    def push(self, *args: Sample) -> None:
         for r in args:
             if not r.almost_zero():
                 self.heap.push(r)
@@ -202,13 +202,13 @@ class DesignGenetic:
 
     def switch(
             self,
-            r1: SampleGenetic,
-            r2: SampleGenetic,
+            r1: Sample,
+            r2: Sample,
             coefficient: float = 0.5,
             border_units: set[int] = None,
             partitions: dict[int, list[int]] = None,
             step: int = 0
-    ) -> tuple[SampleGenetic, SampleGenetic, SampleGenetic, SampleGenetic]:
+    ) -> tuple[Sample, Sample, Sample, Sample]:
 
         border_units = border_units or set()
 
@@ -230,10 +230,10 @@ class DesignGenetic:
 
             if not common_partitions:
                 return (
-                    SampleGenetic(r1.probability, r1.ids, r1.index),
-                    SampleGenetic(0, frozenset(), [0, []]),
-                    SampleGenetic(r2.probability, r2.ids, r2.index),
-                    SampleGenetic(0, frozenset(),[0, []]),
+                    Sample(r1.probability, r1.ids, r1.index),
+                    Sample(0, frozenset(), [0, []]),
+                    Sample(r2.probability, r2.ids, r2.index),
+                    Sample(0, frozenset(),[0, []]),
                 )
             else:
                 chosen_partition = self.rng.choice(common_partitions)
@@ -241,10 +241,10 @@ class DesignGenetic:
 
         if not eligible_r1 or not eligible_r2:
             return (
-                SampleGenetic(r1.probability, r1.ids, r1.index),
-                SampleGenetic(0, frozenset(), [0, []]),
-                SampleGenetic(r2.probability, r2.ids, r2.index),
-                SampleGenetic(0, frozenset(), [0, []]),
+                Sample(r1.probability, r1.ids, r1.index),
+                Sample(0, frozenset(), [0, []]),
+                Sample(r2.probability, r2.ids, r2.index),
+                Sample(0, frozenset(), [0, []]),
             )
 
         length = coefficient * min(r1.probability, r2.probability)
@@ -252,10 +252,10 @@ class DesignGenetic:
         n1 = self.rng.choice(list(eligible_r1))
         n2 = self.rng.choice(list(eligible_r2))
 
-        new_r1 = SampleGenetic(length, (r1.ids - {n1}) | {n2}, r1.index)
-        remaining_r1 = SampleGenetic(r1.probability - length, r1.ids, [r1.index[0], r1.index[1] + [step]] )
-        new_r2 = SampleGenetic(length, (r2.ids - {n2}) | {n1}, r2.index )
-        remaining_r2 = SampleGenetic(r2.probability - length, r2.ids, [r2.index[0], r2.index[1] + [step]] )
+        new_r1 = Sample(length, (r1.ids - {n1}) | {n2}, r1.index)
+        remaining_r1 = Sample(r1.probability - length, r1.ids, [r1.index[0], r1.index[1] + [step]] )
+        new_r2 = Sample(length, (r2.ids - {n2}) | {n1}, r2.index )
+        remaining_r2 = Sample(r2.probability - length, r2.ids, [r2.index[0], r2.index[1] + [step]] )
         self.sucsses+=1
         return new_r1, remaining_r1, new_r2, remaining_r2
 
@@ -272,7 +272,7 @@ class DesignGenetic:
         r2 = self.pull(random_pull)
 
         if r1.ids == r2.ids:
-            self.push(SampleGenetic(r1.probability + r2.probability, r1.ids, r1.index))
+            self.push(Sample(r1.probability + r2.probability, r1.ids, r1.index))
         else:
             new_samples= self.switch(
                 r1,
@@ -292,19 +292,20 @@ class DesignGenetic:
 
     def show(self) -> None:
         initial_level: float = 0
-        for r in sorted(list(self.heap), key=lambda sampleGenetic: (sampleGenetic.index[0], tuple(sampleGenetic.index[1]), len(sampleGenetic.index[1]))):
+        for r in sorted(list(self.heap),
+                        key=lambda Sample: (Sample.index[0], tuple(Sample.index[1]), len(Sample.index[1]))):
             for i in r.ids:
                 plt.plot([i, i], [initial_level, initial_level + r.probability])
             initial_level += r.probability
         plt.show()
 
-    def __iter__(self) -> Iterator[SampleGenetic]:
+    def __iter__(self) -> Iterator[Sample]:
         return iter(self.heap)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Design):
             return NotImplemented
-        return self.index == other.index
+        return self.heap == other.heap
 
     def __hash__(self) -> int:
         return hash(self.heap)
