@@ -1,10 +1,10 @@
 from math import isclose
-from typing import List, Optional, Tuple, Set
+from typing import List, Optional, Tuple, Set, Dict, Any
+
 from geometric_sampling.design import DesignGenetic
 from geometric_sampling.structs import  Sample
 
 import numpy as np
-import geometric_sampling as gm
 
 
 
@@ -106,127 +106,81 @@ class GeneticOptimizer:
 
         return child_design
 
+    def design_fragmentation_n(
+        self,
+        parent: DesignGenetic,
+        n_parts: int,
+        random_pull: bool = False
+    ) -> List[DesignGenetic]:
 
-    def _evaluate(self,
-                  inclusion: np.ndarray,
-                  x: np.ndarray
-    ) -> float:
-        """
-        Build VarNHT criterion and return a fitness to *maximize*.
-        Here we want to MINIMIZE variance → return negative variance.
-        """
-        # you may want to pass other params in, e.g. y, strata, etc.
-        nht = gm.criteria.VarNHT(x, inclusion)
-        return - nht.variance()
+        children: List[DesignGenetic] = [
+            DesignGenetic(inclusions=None, rng=parent.rng)
+            for _ in range(n_parts)
+        ]
 
-    def _crossover(self,
-                   p1: np.ndarray,
-                   p2: np.ndarray,
-                   partitions: dict[int, list[int]],
-                   border_units: Set[int],
-                   cx_rate: float
-    ) -> np.ndarray:
-        """
-        With probability cx_rate use n-parent combine; else clone p1.
-        Returns a new inclusion vector (normalized to sum to n).
-        """
-        if self.rng.random() < cx_rate:
-            d1 = DesignGenetic(p1, rng=self.rng)
-            d2 = DesignGenetic(p2, rng=self.rng)
-            child_design = self.combine_n_parents([d1, d2], random_pull=False)
-            # reconstruct inclusion from child_design.heap
-            N = p1.size
-            incl = np.zeros(N)
-            for samp in child_design.heap:
-                for i in samp.ids:
-                    incl[i] += samp.probability
-            # renormalize sum → n
-            incl *= p1.sum() / incl.sum()
-            return incl
-        else:
-            return p1.copy()
 
-    def _mutate(self,
-                inclusion: np.ndarray,
-                mut_rate: float,
-                sigma: float = 0.05
-    ) -> np.ndarray:
-        """
-        Gaussian‐perturb each gene with probability mut_rate,
-        then renormalize to same total.
-        """
-        if self.rng.random() > mut_rate:
-            return inclusion
-        noise = self.rng.normal(0, sigma, size=inclusion.shape)
-        new = inclusion + noise
-        new = np.clip(new, 1e-8, None)
-        new *= inclusion.sum() / new.sum()
-        return new
+        while parent.heap:
+            sample = parent.pull(random_pull)
+            ids_chunks = self._chunk_ids(sample.ids, n_parts)
+            # total_ids = len(sample.ids)
 
-    def _tournament(self,
-                    pop: List[np.ndarray],
-                    fits: np.ndarray,
-                    k: int = 2
-    ) -> np.ndarray:
-        """
-        k‐tournament selection: pick k at random, return the best.
-        """
-        idx = self.rng.choice(len(pop), size=k, replace=False)
-        best = idx[np.argmax(fits[idx])]
-        return pop[best].copy()
+            for i, ids_part in enumerate(ids_chunks):
+                if not ids_part:
+                    continue
+                weight_i = sample.probability
+                s = Sample(weight_i,
+                           frozenset(ids_part),
+                           index=sample.index)
+                children[i].push(s)
+                children[i].changes += 1
 
-    def optimize(self,
-                 x: np.ndarray,
-                 N: int,
-                 n: float,
-                 pop_size: int = 50,
-                 generations: int = 100,
-                 cx_rate: float = 0.8,
-                 mut_rate: float = 0.3,
-                 num_partitions: int = 2,
-                 elite_size: int = 2
-    ) -> Tuple[np.ndarray, float]:
-        """
-        The main GA loop. Returns (best_inclusion, best_fitness).
-        """
-        # 1) partition design once on uniform FIPs (or any fip_list you prefer)
-        fip_list = [1/N]*N
-        partitions, border_units = self.partition_design(fip_list, num_partitions)
+        return children
 
-        # 2) init population
-        pop: List[np.ndarray] = []
-        for _ in range(pop_size):
-            incl = self.rng.random(N)
-            incl *= n / incl.sum()
-            pop.append(incl)
+    def combine_fragments_n(
+        self,
+        fragments: List[DesignGenetic],
+        random_pull: bool = False
+    ) -> DesignGenetic:
 
-        # 3) evaluate
-        fits = np.array([self._evaluate(ind, x) for ind in pop])
+        n = len(fragments)
+        leftovers: List[Optional[Sample]] = [None] * n
 
-        # 4) GA loop
-        for gen in range(generations):
-            new_pop: List[np.ndarray] = []
+        child = DesignGenetic(inclusions=None, rng=fragments[0].rng)
 
-            # 4a) elitism
-            elite_idx = np.argsort(fits)[-elite_size:]
-            for idx in elite_idx:
-                new_pop.append(pop[idx].copy())
+        while any(leftovers) or any(frag.heap for frag in fragments):
+            pulled: List[Sample] = []
+            for i, frag in enumerate(fragments):
+                if leftovers[i] is not None:
+                    r = leftovers[i]
+                    leftovers[i] = None
+                else:
+                    r = frag.pull(random_pull)
+                pulled.append(r)
 
-            # 4b) fill
-            while len(new_pop) < pop_size:
-                p1 = self._tournament(pop, fits, k=2)
-                p2 = self._tournament(pop, fits, k=2)
-                child = self._crossover(p1, p2,
-                                        partitions, border_units, cx_rate)
-                child = self._mutate(child, mut_rate)
-                new_pop.append(child)
+            length = min(r.probability for r in pulled)
+            if length <= 0:
+                break
 
-            pop = new_pop
-            fits = np.array([self._evaluate(ind, x) for ind in pop])
+            combined_ids: set[int] = set()
+            for r in pulled:
+                combined_ids |= r.ids
 
-            best_var = -fits.max()
-            print(f"Gen {gen:3d}  best VarNHT = {best_var:.6e}")
 
-        # return best
-        best_idx = np.argmax(fits)
-        return pop[best_idx], fits[best_idx]
+            # idx = pulled[0].index
+
+            child_sample = Sample(length,
+                            frozenset(combined_ids),
+                            index=[child.step, []])
+            child.push(child_sample)
+
+            for i, r in enumerate(pulled):
+                rem = r.probability - length
+                if rem > 0:
+                    leftovers[i] = Sample(rem, r.ids,  index=[-1, []])
+                else:
+                    leftovers[i] = None
+
+            child.step += 1
+            child.changes += 1
+
+        return child
