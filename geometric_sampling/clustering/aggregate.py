@@ -184,7 +184,7 @@ class AggregateBalancedKMeans:
             # print("\nTi", self.Ti)
             # print("\nTij_cost", round(self.Tij_cost, 5))
             # print()
-            best_cost, transfer_records = self._get_transfer_records(top_m=self._expected_num_transfers())
+            best_cost, transfer_records = self._get_transfer_records(top_m=1)  #self._expected_num_transfers())
             if self._no_transfer_possible(best_cost):
                 break
             for data_index, old_cluster, new_cluster in transfer_records:

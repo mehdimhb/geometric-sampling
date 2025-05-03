@@ -26,6 +26,7 @@ dev = [
     "ipykernel>=6.29.5",
     "mypy>=1.13.0",
     "notebook>=7.2.2",
+    "opencv-python>=4.11.0.86",
     "pytest>=8.3.4",
     "ruff>=0.7.1",
     "types-tqdm>=4.66.0.20240417",
