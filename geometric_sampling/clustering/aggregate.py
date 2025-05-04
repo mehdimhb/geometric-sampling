@@ -66,7 +66,7 @@ class AggregateBalancedKMeans:
                 )
                 ** 2
             ) / (self.Ti[old_cluster] - self.Ti[new_cluster] + 1e-9)
-            return score if score > 0 else np.inf
+            return score #if score > 0 else np.inf
         else:
             return np.inf
 
