@@ -177,6 +177,10 @@ class AggregateBalancedKMeans:
         iter_ = 0
 
         while not self._stop_codition(self.tolerance) and iter_ < 1000:
+            print(f"\nIteration {iter_}")
+            print(f"Ti: {self.Ti}")
+            print(f"Sum Ti: {np.sum(self.Ti)}")
+            
             # print("================================================")
             # print("iter:", iter_)
             # print("\nTij", self.Tij)
