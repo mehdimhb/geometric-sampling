@@ -8,6 +8,7 @@ from matplotlib.patches import Polygon
 from scipy.spatial import ConvexHull
 
 from ..clustering import DublyBalancedKMeans
+from ..clustering import AggregateBalancedKMeans
 
 
 @dataclass
@@ -43,8 +44,8 @@ class Population:
         # kmeans = SoftBalancedKMeans(self.n_clusters, tolerance=self.tolerance)
         # kmeans.fit(self.coords, self.probs)
 
-        # agg = AggregateBalancedKMeans(k=self.n_clusters, tolerance=self.tolerance)
-        # agg.fit(self.coords, self.probs.reshape(-1, 1), np.array([1]))
+        agg = AggregateBalancedKMeans(k=self.n_clusters, tolerance=self.tolerance)
+        agg.fit(self.coords, self.probs.reshape(-1, 1), np.array([1]))
 
         dbk = DublyBalancedKMeans(k=self.n_clusters)
         dbk.fit(self.coords, self.probs)

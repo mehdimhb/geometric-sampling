@@ -5,13 +5,13 @@ from scipy.stats import mode
 
 
 class DublyBalancedKMeans:
-    def __init__(self, k, split_size=0.01):
+    def __init__(self, k, split_size=0.001):
         self.k = k
         self.split_size = split_size
 
     def _generate_expanded_coords(self, coords, probs):
-        counts = (probs / self.split_size).round().astype(int)
-        expanded_coords = np.repeat(coords, counts, axis=0)
+        expanded_coords = (probs / self.split_size).round().astype(int)
+        counts[counts == 0] == 1     
         expanded_idx = np.repeat(np.arange(self.N), counts)
         return expanded_coords, expanded_idx
 
