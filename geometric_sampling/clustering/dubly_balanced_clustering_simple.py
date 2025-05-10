@@ -4,15 +4,12 @@ from scipy.stats import mode
 
 
 class DublyBalancedKMeansSimple:
-    def __init__(self, k, hard_clustering=True, split_size=0.01):
+    def __init__(self, k, split_size=0.001):
         self.k = k
         self.split_size = split_size
-        self.hard_clustering = hard_clustering
 
     def _generate_expanded_coords(self, coords, probs):
         counts = (probs / self.split_size).round().astype(int)
-        # print("portion of zeros after rounding")
-        # print(len(counts[counts == 0]) / len(counts))
         counts[counts == 0] = 1
         expanded_coords = np.repeat(coords, counts, axis=0)
         expanded_idx = np.repeat(np.arange(self.N), counts)

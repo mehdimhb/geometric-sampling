@@ -7,12 +7,12 @@ from sklearn.neighbors import KernelDensity
 
 
 class Density:
-    def __init__(self, coordinates: NDArray, probabilities: NDArray, k: int):
+    def __init__(self, coordinates: NDArray, probabilities: NDArray, k: int, split_size: float):
         # self.coords = (coordinates - coordinates.min(axis=0))/np.ptp(coordinates, axis=0)[0]
         self.coords = coordinates
         self.probs = probabilities
         self.kde = self._kde(coordinates)
-        self.labels, self.centroids, self.clusters = self._generate_labels_centroids(k)
+        self.labels, self.centroids, self.clusters = self._generate_labels_centroids(k, split_size)
 
     def _kde(self, coords: NDArray) -> KernelDensity:
         kde = KernelDensity(kernel="tophat", bandwidth="scott")
@@ -53,8 +53,8 @@ class Density:
         ]
         return density, shifted_density, measure
 
-    def _generate_labels_centroids(self, k):
-        dubly = DublyBalancedKMeansSimple(k=k)
+    def _generate_labels_centroids(self, k, split_size):
+        dubly = DublyBalancedKMeansSimple(k=k, split_size=split_size)
         dubly.fit(self.coords, self.probs)
         labels = np.argmax(dubly.membership, axis=1)
         centroids = np.array(
