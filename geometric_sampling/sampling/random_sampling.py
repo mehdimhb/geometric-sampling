@@ -16,6 +16,9 @@ class RandomSampling:
 
     def sample(self, n_samples: int):
         return np.array(
-            [self.rng.integers(0, self.probs.shape[0], size=self.n) for _ in range(n_samples)],
-            dtype=int
+            [
+                self.rng.integers(0, self.probs.shape[0], size=self.n)
+                for _ in range(n_samples)
+            ],
+            dtype=int,
         )

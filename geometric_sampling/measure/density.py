@@ -21,22 +21,30 @@ class Density:
 
     def scale(self, scores):
         scaled_scores = np.zeros_like(scores)
-        limit = np.sin(np.pi/8)/np.sin(np.pi/4)
+        limit = np.sin(np.pi / 8) / np.sin(np.pi / 4)
         for i, score in enumerate(scores):
             if score >= 0:
-                scaled_scores[i] = min(score, limit)/limit
+                scaled_scores[i] = min(score, limit) / limit
             else:
-                scaled_scores[i] = max(score, -limit)/limit
+                scaled_scores[i] = max(score, -limit) / limit
         return scaled_scores
 
     def _density(self, shifted_coords: NDArray) -> float:
         shifted_kde = self._kde(shifted_coords)
         density = np.exp(self.kde.score_samples(self.coords))
         shifted_density = np.exp(shifted_kde.score_samples(shifted_coords))
-        spread = np.mean(self.scale((density-shifted_density)/np.sqrt(density**2+shifted_density**2)))
-        var = np.mean(1 - (density+shifted_density)/(np.sqrt(2)*np.sqrt(density**2+shifted_density**2)))
-        scale_for_var = 1-np.cos(np.pi/8)
-        var_scaled = min(var, scale_for_var)/scale_for_var
+        spread = np.mean(
+            self.scale(
+                (density - shifted_density) / np.sqrt(density**2 + shifted_density**2)
+            )
+        )
+        var = np.mean(
+            1
+            - (density + shifted_density)
+            / (np.sqrt(2) * np.sqrt(density**2 + shifted_density**2))
+        )
+        scale_for_var = 1 - np.cos(np.pi / 8)
+        var_scaled = min(var, scale_for_var) / scale_for_var
         measure = [
             spread,
             var_scaled,
@@ -50,16 +58,20 @@ class Density:
         agg.fit(self.coords, self.probs.reshape(-1, 1), np.array([1]))
         labels = np.argmax(agg.membership, axis=1)
         centroids = np.array(
-            [
-                np.mean(self.coords[labels == i], axis=0)
-                for i in range(k)
-            ]
+            [np.mean(self.coords[labels == i], axis=0) for i in range(k)]
         )
         return labels, centroids, agg.get_clusters()
 
     def _assign_samples_to_centroids(self, samples, centroids):
-        cost_matrix = np.linalg.norm(samples[:, :, np.newaxis] - centroids, axis=3).transpose(0, 2, 1)
-        return np.array([samples[i][linear_sum_assignment(cost_matrix[i])[1]] for i in range(samples.shape[0])])
+        cost_matrix = np.linalg.norm(
+            samples[:, :, np.newaxis] - centroids, axis=3
+        ).transpose(0, 2, 1)
+        return np.array(
+            [
+                samples[i][linear_sum_assignment(cost_matrix[i])[1]]
+                for i in range(samples.shape[0])
+            ]
+        )
 
     def _generate_shifted_coords(self, shifts: NDArray, labels: NDArray) -> NDArray:
         shifted_coords = self.coords.copy()
@@ -78,10 +90,12 @@ class Density:
         scores = []
         densities = []
         samples_assigned = self._assign_samples_to_centroids(
-                self.coords[samples], self.centroids
-            )
+            self.coords[samples], self.centroids
+        )
         for sample in samples_assigned:
-            density, shifted_density, score = self._score_sample(sample, self.labels, self.centroids)
+            density, shifted_density, score = self._score_sample(
+                sample, self.labels, self.centroids
+            )
             densities.append([density, shifted_density])
             scores.append(score)
         return self.zippify(scores), densities

@@ -11,4 +11,12 @@ from . import measure
 
 __version__ = metadata.version("geometric_sampling")
 
-__all__ = ["Design", "criteria", "search", "sampling", "clustering", "random", "measure"]
+__all__ = [
+    "Design",
+    "criteria",
+    "search",
+    "sampling",
+    "clustering",
+    "random",
+    "measure",
+]

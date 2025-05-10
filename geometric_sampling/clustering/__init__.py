@@ -12,5 +12,11 @@ from .dubly_balanced_clustering_simple import DublyBalancedKMeansSimple
 # from .swap import SwapAgg
 
 
-__all__ = ["SoftBalancedKMeans", "AggregateBalancedKMeans", "OneBoundaryBalancedKMeans", "DublyBalancedKMeans", "DublyBalancedKMeansSimple"]
+__all__ = [
+    "SoftBalancedKMeans",
+    "AggregateBalancedKMeans",
+    "OneBoundaryBalancedKMeans",
+    "DublyBalancedKMeans",
+    "DublyBalancedKMeansSimple",
+]
 # __all__ = ["SoftBalancedKMeans", "AggregateBalancingKmeans", "Agg", "AggOne", "FinalAgg", "FinalAgg2", "SwapAgg"]

@@ -20,7 +20,9 @@ class DublyBalancedKMeans:
         for i in range(self.N):
             assigned_labels = extended_labels[expanded_idx == i]
             if len(assigned_labels) == 0:
-                labels[i] = np.argmin(np.linalg.norm(self.centroids - coords[i], axis=1))
+                labels[i] = np.argmin(
+                    np.linalg.norm(self.centroids - coords[i], axis=1)
+                )
             else:
                 labels[i] = mode(assigned_labels, keepdims=True)[0][0]
         return labels
@@ -30,9 +32,7 @@ class DublyBalancedKMeans:
         expanded_coords, expanded_idx = self._generate_expanded_coords(coords, probs)
         cluster_size = len(expanded_idx) // self.k
         kmeans = KMeansConstrained(
-            n_clusters=self.k,
-            size_min=cluster_size,
-            size_max=cluster_size+1
+            n_clusters=self.k, size_min=cluster_size, size_max=cluster_size + 1
         )
         labels = kmeans.fit_predict(expanded_coords)
         self.centroids = kmeans.cluster_centers_
@@ -49,11 +49,8 @@ class DublyBalancedKMeans:
         self.clusters = cb.get_clusters()
 
 
-
 class ContinuesBalancing:
-    def __init__(
-        self, k: int, *, tolerance: int = 3
-    ) -> None:
+    def __init__(self, k: int, *, tolerance: int = 3) -> None:
         self.k = k
         self.tolerance = tolerance
         self.Y_features = None
@@ -64,7 +61,7 @@ class ContinuesBalancing:
         self.goal: float = None
 
     def _generate_goal(self) -> float:
-        return self.X_feature.sum()/self.k
+        return self.X_feature.sum() / self.k
 
     def _generate_membership(self):
         membership = np.zeros((self.N, self.k))
@@ -84,10 +81,7 @@ class ContinuesBalancing:
         old_cluster: int,
         new_cluster: int,
     ) -> float:
-        if (
-            self.Ti[old_cluster] - self.Ti[new_cluster]
-            > 10**-self.tolerance
-        ):
+        if self.Ti[old_cluster] - self.Ti[new_cluster] > 10**-self.tolerance:
             score = (
                 np.linalg.norm(
                     self.Y_features[data_index] - self.centroids[new_cluster]
@@ -122,21 +116,26 @@ class ContinuesBalancing:
 
     def _transfer_percent(self, data_index: int, old_cluster: int, new_cluster: int):
         if (
-            self.Ti[old_cluster] >= self.goal
-            and self.Ti[new_cluster] >= self.goal
-        ) or (
-            self.Ti[old_cluster] <= self.goal
-            and self.Ti[new_cluster] <= self.goal
-        ):
+            self.Ti[old_cluster] >= self.goal and self.Ti[new_cluster] >= self.goal
+        ) or (self.Ti[old_cluster] <= self.goal and self.Ti[new_cluster] <= self.goal):
             return min(
                 self.membership[data_index, old_cluster],
-                ((self.Ti[old_cluster] - self.Ti[new_cluster]) / (2*np.sum(self.X_feature[data_index])))
+                (
+                    (self.Ti[old_cluster] - self.Ti[new_cluster])
+                    / (2 * np.sum(self.X_feature[data_index]))
+                ),
             )
         else:
             return min(
                 self.membership[data_index, old_cluster],
-                ((self.Ti[old_cluster] - self.goal) / np.sum(self.X_feature[data_index])),
-                ((self.goal - self.Ti[new_cluster]) / np.sum(self.X_feature[data_index])),
+                (
+                    (self.Ti[old_cluster] - self.goal)
+                    / np.sum(self.X_feature[data_index])
+                ),
+                (
+                    (self.goal - self.Ti[new_cluster])
+                    / np.sum(self.X_feature[data_index])
+                ),
             )
 
     def _transfer(self, data_index: int, old_cluster: int, new_cluster: int) -> None:
@@ -148,10 +147,7 @@ class ContinuesBalancing:
         return best_cost == np.inf
 
     def _is_transfer_possible(self, old_cluster: int, new_cluster: int) -> bool:
-        return (
-            self.Ti[old_cluster] - self.Ti[new_cluster]
-            > 10**-self.tolerance
-        )
+        return self.Ti[old_cluster] - self.Ti[new_cluster] > 10**-self.tolerance
 
     def _stop_codition(self, tol) -> bool:
         return np.all(np.abs(self.Ti - self.goal) < 10**-tol)
@@ -159,7 +155,9 @@ class ContinuesBalancing:
     def _expected_num_transfers(self) -> float:
         max_diff_sum = np.max(self.Ti - self.Ti[:, None])
         possible_transfers = self.X_feature[:, np.newaxis] * self.membership
-        mean_nonzero_transfers = np.mean(possible_transfers[np.nonzero(possible_transfers)])
+        mean_nonzero_transfers = np.mean(
+            possible_transfers[np.nonzero(possible_transfers)]
+        )
         return max(int(np.floor(max_diff_sum / (2 * mean_nonzero_transfers))), 1)
 
     def _update_centroids(self) -> None:
@@ -168,7 +166,14 @@ class ContinuesBalancing:
                 self.Y_features[self.membership[:, i] > 0], axis=0
             )
 
-    def fit(self, Y_features: NDArray, X_feature: NDArray, centroids: NDArray, labels: NDArray, max_iteration: int = 1000) -> None:
+    def fit(
+        self,
+        Y_features: NDArray,
+        X_feature: NDArray,
+        centroids: NDArray,
+        labels: NDArray,
+        max_iteration: int = 1000,
+    ) -> None:
         self.N = len(X_feature)
         self.Y_features = Y_features
         self.X_feature = X_feature
@@ -184,7 +189,9 @@ class ContinuesBalancing:
             print(f"\nIteration {iter_}")
             print(f"Ti: {self.Ti}")
             print(f"Sum Ti: {np.sum(self.Ti)}")
-            best_cost, transfer_records = self._get_transfer_records(top_m=self._expected_num_transfers())
+            best_cost, transfer_records = self._get_transfer_records(
+                top_m=self._expected_num_transfers()
+            )
             if self._no_transfer_possible(best_cost):
                 break
             for data_index, old_cluster, new_cluster in transfer_records:

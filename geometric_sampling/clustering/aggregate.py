@@ -23,7 +23,7 @@ class AggregateBalancedKMeans:
         self.rng = np.random.default_rng()
 
     def _generate_goal_j(self) -> float:
-        return self.X_features.sum(axis=0)/self.k
+        return self.X_features.sum(axis=0) / self.k
 
     def _generate_goal(self) -> float:
         return np.sum(self._generate_goal_j())
@@ -44,7 +44,7 @@ class AggregateBalancedKMeans:
         return np.sum(self._generate_Tij(), axis=1)
 
     def _generate_Tij_cost(self):
-        return np.sum((self.weights*(self.Tij-self.goal_j))**2)
+        return np.sum((self.weights * (self.Tij - self.goal_j)) ** 2)
 
     def _transfer_score(
         self,
@@ -52,10 +52,7 @@ class AggregateBalancedKMeans:
         old_cluster: int,
         new_cluster: int,
     ) -> float:
-        if (
-            self.Ti[old_cluster] - self.Ti[new_cluster]
-            > 10**-self.tolerance
-        ):
+        if self.Ti[old_cluster] - self.Ti[new_cluster] > 10**-self.tolerance:
             score = (
                 np.linalg.norm(
                     self.Y_features[data_index] - self.centroids[new_cluster]
@@ -66,7 +63,7 @@ class AggregateBalancedKMeans:
                 )
                 ** 2
             ) / (self.Ti[old_cluster] - self.Ti[new_cluster] + 1e-9)
-            return score #if score > 0 else np.inf
+            return score  # if score > 0 else np.inf
         else:
             return np.inf
 
@@ -94,23 +91,28 @@ class AggregateBalancedKMeans:
 
     def _transfer_percent(self, data_index: int, old_cluster: int, new_cluster: int):
         if (
-            self.Ti[old_cluster] >= self.goal
-            and self.Ti[new_cluster] >= self.goal
-        ) or (
-            self.Ti[old_cluster] <= self.goal
-            and self.Ti[new_cluster] <= self.goal
-        ):
+            self.Ti[old_cluster] >= self.goal and self.Ti[new_cluster] >= self.goal
+        ) or (self.Ti[old_cluster] <= self.goal and self.Ti[new_cluster] <= self.goal):
             # print('case ++ or --')
             return min(
                 self.membership[data_index, old_cluster],
-                ((self.Ti[old_cluster] - self.Ti[new_cluster]) / (2*np.sum(self.X_features[data_index])))
+                (
+                    (self.Ti[old_cluster] - self.Ti[new_cluster])
+                    / (2 * np.sum(self.X_features[data_index]))
+                ),
             )
         else:
             # print('case +-')
             return min(
                 self.membership[data_index, old_cluster],
-                ((self.Ti[old_cluster] - self.goal) / np.sum(self.X_features[data_index])),
-                ((self.goal - self.Ti[new_cluster]) / np.sum(self.X_features[data_index])),
+                (
+                    (self.Ti[old_cluster] - self.goal)
+                    / np.sum(self.X_features[data_index])
+                ),
+                (
+                    (self.goal - self.Ti[new_cluster])
+                    / np.sum(self.X_features[data_index])
+                ),
             )
 
     def _transfer(self, data_index: int, old_cluster: int, new_cluster: int) -> None:
@@ -127,18 +129,19 @@ class AggregateBalancedKMeans:
         return best_cost == np.inf
 
     def _is_transfer_possible(self, old_cluster: int, new_cluster: int) -> bool:
-        return (
-            self.Ti[old_cluster] - self.Ti[new_cluster]
-            > 10**-self.tolerance
-        )
+        return self.Ti[old_cluster] - self.Ti[new_cluster] > 10**-self.tolerance
 
     def _stop_codition(self, tol) -> bool:
         return np.all(np.abs(self.Ti - self.goal) < 10**-tol)
 
     def _expected_num_transfers(self) -> float:
         max_diff_sum = np.max(self.Ti - self.Ti[:, None])
-        possible_transfers = self.X_features.sum(axis=1)[:, np.newaxis]*self.membership
-        mean_nonzero_transfers = np.mean(possible_transfers[np.nonzero(possible_transfers)])
+        possible_transfers = (
+            self.X_features.sum(axis=1)[:, np.newaxis] * self.membership
+        )
+        mean_nonzero_transfers = np.mean(
+            possible_transfers[np.nonzero(possible_transfers)]
+        )
         return max(int(np.floor(max_diff_sum / (2 * mean_nonzero_transfers))), 1)
 
     def _update_centroids(self) -> None:
@@ -180,7 +183,7 @@ class AggregateBalancedKMeans:
             print(f"\nIteration {iter_}")
             print(f"Ti: {self.Ti}")
             print(f"Sum Ti: {np.sum(self.Ti)}")
-            
+
             # print("================================================")
             # print("iter:", iter_)
             # print("\nTij", self.Tij)
@@ -188,7 +191,9 @@ class AggregateBalancedKMeans:
             # print("\nTi", self.Ti)
             # print("\nTij_cost", round(self.Tij_cost, 5))
             # print()
-            best_cost, transfer_records = self._get_transfer_records(top_m=self._expected_num_transfers())
+            best_cost, transfer_records = self._get_transfer_records(
+                top_m=self._expected_num_transfers()
+            )
             if self._no_transfer_possible(best_cost):
                 break
             for data_index, old_cluster, new_cluster in transfer_records:

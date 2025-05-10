@@ -21,7 +21,7 @@ class OneBoundaryBalancedKMeans:
         self.rng = np.random.default_rng()
 
     def _generate_goal(self) -> float:
-        return self.x_feature.sum()/self.k
+        return self.x_feature.sum() / self.k
 
     def _generate_membership(self):
         membership = np.zeros((self.N, self.k))
@@ -66,7 +66,9 @@ class OneBoundaryBalancedKMeans:
                 continue
 
             # distances to centroid
-            dists = np.linalg.norm(self.Y_features[candidates] - self.centroids[cluster_idx], axis=1)
+            dists = np.linalg.norm(
+                self.Y_features[candidates] - self.centroids[cluster_idx], axis=1
+            )
             sorted_idx = np.argsort(dists)
             sorted_candidates = [candidates[i] for i in sorted_idx]
             # print(f"centroid: {self.centroids[cluster_idx]}")
@@ -91,7 +93,9 @@ class OneBoundaryBalancedKMeans:
                     frac_move = avail_frac
                     gains.append((pt_idx, frac_move))
                     dists_for_gains.append(
-                        np.linalg.norm(self.Y_features[pt_idx] - self.centroids[cluster_idx])
+                        np.linalg.norm(
+                            self.Y_features[pt_idx] - self.centroids[cluster_idx]
+                        )
                     )
                     accum += avail_mass
                     self.locked_frac[pt_idx] = locked + frac_move
@@ -104,7 +108,9 @@ class OneBoundaryBalancedKMeans:
                     if frac_move > 0:
                         gains.append((pt_idx, frac_move))
                         dists_for_gains.append(
-                            np.linalg.norm(self.Y_features[pt_idx] - self.centroids[cluster_idx])
+                            np.linalg.norm(
+                                self.Y_features[pt_idx] - self.centroids[cluster_idx]
+                            )
                         )
                         self.locked_frac[pt_idx] = locked + frac_move
                     break
@@ -122,8 +128,9 @@ class OneBoundaryBalancedKMeans:
         best = min(cluster_scores, key=cluster_scores.get)
         return {best: cluster_gains[best]}
 
-
-    def _assign_points_to_clusters(self, points_to_gain: dict[int, list[tuple[int, float]]]) -> None:
+    def _assign_points_to_clusters(
+        self, points_to_gain: dict[int, list[tuple[int, float]]]
+    ) -> None:
         """
         Assigns the computed gains for the single target cluster:
         - `frac` is the additional fraction of the point to assign to the cluster.
@@ -218,13 +225,19 @@ class OneBoundaryBalancedKMeans:
             plt.figure(figsize=(5, 5), dpi=200)
             plt.scatter(*Y_features.T, c=mem)
             # plt.scatter(*Y_features[boarders].T, c='red', s=10)
-            plt.scatter(*Y_features[points_id].T, c='red', marker='*', s=10)
-            plt.scatter(*self.centroids.T, c='black', marker='x', s=100)
+            plt.scatter(*Y_features[points_id].T, c="red", marker="*", s=10)
+            plt.scatter(*self.centroids.T, c="black", marker="x", s=100)
 
             for i, point_id in enumerate(points_id):
                 x, y = Y_features[point_id]
-                plt.text(x, y - 0.05, f"{points_frac[i]:.2f}, {point_id}", color='black', fontsize=8, ha='center')  # Adjust y-offset as needed
-
+                plt.text(
+                    x,
+                    y - 0.05,
+                    f"{points_frac[i]:.2f}, {point_id}",
+                    color="black",
+                    fontsize=8,
+                    ha="center",
+                )  # Adjust y-offset as needed
 
             print("(AFT) Ti:", self.Ti)
             print("Diff Ti:", np.sum(np.abs(self.Ti - self.goal)))

@@ -4,6 +4,7 @@ from numpy.typing import NDArray
 
 from . import PopulationSimple
 
+
 class KMeansSpatialSamplingSimple:
     def __init__(
         self,
@@ -56,8 +57,10 @@ class KMeansSpatialSamplingSimple:
                     side="right",
                 )
                 if np.prod(self.n_zones) != len(cluster.zones):
-                    warning_msg = (f"Warning: Cluster {j} has {len(cluster.zones)} zones, "
-                                f"but expected {np.prod(self.n_zones)} based on n_zones={self.n_zones}")
+                    warning_msg = (
+                        f"Warning: Cluster {j} has {len(cluster.zones)} zones, "
+                        f"but expected {np.prod(self.n_zones)} based on n_zones={self.n_zones}"
+                    )
                     print(warning_msg)
                 samples[i, j] = cluster.zones[zone_index - 1].units[unit_index, 0]
         return samples

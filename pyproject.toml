@@ -37,3 +37,6 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["geometric_sampling"]
+
+[tool.ruff]
+extend-exclude = ["*.ipynb"]

@@ -8,8 +8,6 @@ from matplotlib.patches import Polygon
 from scipy.spatial import ConvexHull
 
 from ..clustering import DublyBalancedKMeans
-from ..clustering import AggregateBalancedKMeans
-
 
 
 @dataclass
@@ -52,12 +50,16 @@ class Population:
         # agg = AggregateBalancedKMeans(k=self.n_clusters, tolerance=self.tolerance)
         # agg.fit(self.coords, self.probs.reshape(-1, 1), np.array([1]))
 
-        dbk = DublyBalancedKMeans(k=self.n_clusters, split_size=self.split_size, hard_clustering=self.hard_clustering)
+        dbk = DublyBalancedKMeans(
+            k=self.n_clusters,
+            split_size=self.split_size,
+            hard_clustering=self.hard_clustering,
+        )
         dbk.fit(self.coords, self.probs)
 
         return [
             Cluster(units=units, zones=self._generate_zones(units))
-#            for units in agg.get_clusters()
+            #            for units in agg.get_clusters()
             for units in dbk.clusters
         ]
 
@@ -182,7 +184,7 @@ class Population:
                 cluster_points[:, 1],
                 color=cluster_color,
                 label=f"Cluster {cluster_idx+1}",
-                s=cluster.units[:, 3] * 2000,                 # <---- Include this: sizes from probs!
+                s=cluster.units[:, 3] * 2000,  # <---- Include this: sizes from probs!
                 alpha=0.8,
             )
             prob_sum = round(cluster.units[:, 3].sum(), 3)
@@ -196,7 +198,7 @@ class Population:
                 weight="bold",
                 alpha=0.8,
                 ha="center",
-                va="center"
+                va="center",
             )
 
             for zone_idx, zone in enumerate(cluster.zones):
