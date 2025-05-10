@@ -1,4 +1,4 @@
-from ..clustering import AggregateBalancedKMeans
+from ..clustering import DublyBalancedKMeansSimple
 
 import numpy as np
 from numpy._typing import NDArray
@@ -54,8 +54,8 @@ class Density:
         return density, shifted_density, measure
 
     def _generate_labels_centroids(self, k):
-        agg = AggregateBalancedKMeans(k=k, tolerance=5)
-        agg.fit(self.coords, self.probs.reshape(-1, 1), np.array([1]))
+        dubly = DublyBalancedKMeansSimple(k=k)
+        dubly.fit(self.coords, self.probs.reshape(-1, 1))
         labels = np.argmax(agg.membership, axis=1)
         centroids = np.array(
             [np.mean(self.coords[labels == i], axis=0) for i in range(k)]

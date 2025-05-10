@@ -177,7 +177,7 @@ class PopulationSimple:
                 cluster_points[:, 0],
                 cluster_points[:, 1],
                 color=cluster_color,
-                label=f"Cluster {cluster_idx+1}",
+                label=f"Cluster {cluster_idx + 1}",
                 s=cluster.units[:, 3] * 2000,  # <---- Include this: sizes from probs!
                 alpha=0.8,
             )
@@ -213,7 +213,7 @@ class PopulationSimple:
                 ax.text(
                     hull_center[0],
                     hull_center[1],
-                    f"{zone_idx+1}",
+                    f"{zone_idx + 1}",
                     color="black",
                     fontsize=16,
                     alpha=0.3,
@@ -242,9 +242,9 @@ class PopulationSimple:
                 marker="X",
                 alpha=0.8,
                 s=200,
-                label=f"Sample {sample_idx+1}",
+                label=f"Sample {sample_idx + 1}",
             )
-            ax.set_title(f"Sample {sample_idx+1}")
+            ax.set_title(f"Sample {sample_idx + 1}")
 
         for ax in axes[n_samples:]:
             fig.delaxes(ax)

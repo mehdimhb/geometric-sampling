@@ -31,7 +31,6 @@ class DublyBalancedKMeansSimple:
         return labels
 
     def fit(self, coords, probs):
-        print("eeeeeeeeeeeeeeeeeeeeeeeeeeeee")
         self.N = coords.shape[0]
         expanded_coords, expanded_idx = self._generate_expanded_coords(coords, probs)
         cluster_size = len(expanded_idx) // self.k
