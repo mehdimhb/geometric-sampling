@@ -13,7 +13,7 @@ class DublyBalancedKMeansSimple:
         counts = (probs / self.split_size).round().astype(int)
         print("portion of zeros after rounding")
         print(len(counts[counts == 0]) / len(counts))
-        counts[counts == 0] == 1
+        counts[counts == 0] = 1
         expanded_coords = np.repeat(coords, counts, axis=0)
         expanded_idx = np.repeat(np.arange(self.N), counts)
         return expanded_coords, expanded_idx
