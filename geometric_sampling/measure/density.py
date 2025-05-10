@@ -55,12 +55,12 @@ class Density:
 
     def _generate_labels_centroids(self, k):
         dubly = DublyBalancedKMeansSimple(k=k)
-        dubly.fit(self.coords, self.probs.reshape(-1, 1))
-        labels = np.argmax(agg.membership, axis=1)
+        dubly.fit(self.coords, self.probs)
+        labels = np.argmax(dubly.membership, axis=1)
         centroids = np.array(
             [np.mean(self.coords[labels == i], axis=0) for i in range(k)]
         )
-        return labels, centroids, agg.get_clusters()
+        return labels, centroids, dubly.clusters
 
     def _assign_samples_to_centroids(self, samples, centroids):
         cost_matrix = np.linalg.norm(

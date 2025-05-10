@@ -48,7 +48,7 @@ class KMeansSpatialSamplingSimple:
                 random_number,
                 side="right",
             )
-            for j, cluster in enumerate(self.population.clusters):
+            for j, cluster in enumerate(self.popu.clusters):
                 unit_index = np.searchsorted(
                     cluster.zones[zone_index - 1].units[:, 3].cumsum()
                     + (zone_index - 1)

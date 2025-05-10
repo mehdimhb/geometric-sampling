@@ -5,4 +5,4 @@ from .kmeans_spatial_sampling_simple import KMeansSpatialSamplingSimple
 from .random_sampling import RandomSampling
 
 
-__all__ = ["Population", "PopulationSimple", "KMeansSpatialSampling", "RandomSampling"]
+__all__ = ["Population", "PopulationSimple", "KMeansSpatialSamplingSimple", "RandomSampling"]
