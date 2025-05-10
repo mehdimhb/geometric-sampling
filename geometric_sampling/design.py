@@ -139,6 +139,15 @@ class DesignGenetic(Design):
         self.changes = 0
         self.sucsses = 0
 
+    def copy(self) -> DesignGenetic:
+        new_design = DesignGenetic(
+            rng=self.rng,
+        )
+        new_design.heap = self.heap.copy()
+        new_design.changes = self.changes
+        return new_design
+
+
     def push_initial_design(self, inclusions: Collection[float]):
         events: list[tuple[float, str, int]] = []
         level: float = 0
