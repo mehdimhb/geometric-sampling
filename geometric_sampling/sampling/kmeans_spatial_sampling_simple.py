@@ -14,7 +14,6 @@ class KMeansSpatialSamplingSimple:
         n_zones: int | tuple[int, int],
         tolerance: int,
         split_size: float,
-        hard_clustering: bool,
     ) -> None:
         self.coords = coordinate
         self.probs = inclusion_probability
@@ -22,7 +21,6 @@ class KMeansSpatialSamplingSimple:
         self.n_zones = self._pair(n_zones)
         self.tolerance = tolerance
         self.split_size = split_size
-        self.hard_clustering = hard_clustering
 
         self.popu = PopulationSimple(
             self.coords,
@@ -31,7 +29,6 @@ class KMeansSpatialSamplingSimple:
             n_zones=n_zones,
             tolerance=self.tolerance,
             split_size=self.split_size,
-            hard_clustering=self.hard_clustering,
         )
         self.rng = np.random.default_rng()
 

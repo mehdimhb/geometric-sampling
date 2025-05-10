@@ -30,7 +30,6 @@ class PopulationSimple:
         n_zones: tuple[int, int],
         tolerance: int,
         split_size: float,
-        hard_clustering: bool,
     ) -> None:
         self.coords = coordinate
         self.probs = inclusion_probability
@@ -38,7 +37,6 @@ class PopulationSimple:
         self.n_zones = n_zones
         self.tolerance = tolerance
         self.split_size = split_size
-        self.hard_clustering = hard_clustering
 
         self.clusters = self._generate_clusters()
 
@@ -49,7 +47,7 @@ class PopulationSimple:
         # agg = AggregateBalancedKMeans(k=self.n_clusters, tolerance=self.tolerance)
         # agg.fit(self.coords, self.probs.reshape(-1, 1), np.array([1]))
 
-        dbk = DublyBalancedKMeansSimple(k=self.n_clusters, split_size=self.split_size, hard_clustering=self.hard_clustering)
+        dbk = DublyBalancedKMeansSimple(k=self.n_clusters, split_size=self.split_size)
         dbk.fit(self.coords, self.probs)
 
         return [
