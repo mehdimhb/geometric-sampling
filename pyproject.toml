@@ -3,12 +3,15 @@ name = "geometric-sampling"
 version = "0.4.3"
 description = "Python package for Geometric Sampling Method"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "matplotlib",
     "numpy",
     "scikit-learn",
     "scipy",
+    "k-means-constrained>=0.7.5",
+    "package-sampling>=0.3.0",
+    "pandas",
 ]
 authors = [
     { name = "Bardia Panahbehagh", email = "bardia.panah@gmail.com" },
