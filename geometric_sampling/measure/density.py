@@ -46,8 +46,8 @@ class Density:
         scale_for_var = 1 - np.cos(np.pi / 8)
         var_scaled = min(var, scale_for_var) / scale_for_var
         measure = [
-            spread,
-            var_scaled,
+            #spread,
+            #var_scaled,
             spread + (np.sign(spread) - spread) * var_scaled,
             # spread + (np.sign(spread) - spread) * var_scaled**2
         ]

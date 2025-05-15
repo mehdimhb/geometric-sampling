@@ -148,65 +148,123 @@ class PopulationSimple:
         probs_stabled *= 1 / (np.sum(probs_stabled) * np.prod(self.n_zones))
         return probs_stabled
 
-    def plot(self, ax=None, figsize: tuple[int, int] = (8, 6)) -> None:
+    def lighten_color(color, amount=0.5):
+        import matplotlib.colors as mc
+        import colorsys
+        try:
+            c = mc.cnames[color]
+        except:
+            c = color
+        c = np.array(mc.to_rgb(c))
+        white = np.array([1, 1, 1])
+        return tuple((1 - amount) * c + amount * white)
+
+    def plot(self, ax=None, figsize: tuple[int, int] = (8, 6), background_gdf=None) -> None:
+        import matplotlib.pyplot as plt
+        def lighten_color(color, amount=0.5):
+            import matplotlib.colors as mc
+            import colorsys
+            try:
+                c = mc.cnames[color]
+            except:
+                c = color
+            c = np.array(mc.to_rgb(c))
+            white = np.array([1, 1, 1])
+            return tuple((1 - amount) * c + amount * white)
+
+
         if ax is None:
             fig, ax = plt.subplots(figsize=figsize)
+        # Make Swiss background white for max color pop
+        if background_gdf is not None:
+            background_gdf.plot(ax=ax, color="white", edgecolor="black", linewidth=1.5, zorder=0)
 
-        def plot_convex_hull(
-            points, ax, color, alpha=0.3, edge_color="black", line_width=1.0
-        ):
-            if len(points) < 3:
+        def plot_convex_hull(points, ax, color, alpha=0.33, edge_color="gray", line_width=0.6):
+            points = np.asarray(points)
+            # Points must be (N,2), N >= 3, and not all in a line (not all x or y the same)
+            if (points.ndim != 2) or (points.shape[0] < 3) or (points.shape[1] != 2):
                 return ax, None
-            hull = ConvexHull(points)
-            polygon = Polygon(
-                points[hull.vertices],
-                closed=True,
-                facecolor=color,
-                alpha=alpha,
-                edgecolor=edge_color,
-                lw=line_width,
-            )
-            ax.add_patch(polygon)
-            return ax, hull
+            # Check if all x or all y values are the same (collinear)
+            if np.allclose(points[:,0], points[0,0]) or np.allclose(points[:,1], points[0,1]):
+                return ax, None
+            try:
+                hull = ConvexHull(points)
+                polygon = Polygon(
+                    points[hull.vertices],
+                    closed=True,
+                    facecolor=color,
+                    alpha=alpha,
+                    edgecolor=edge_color,
+                    lw=line_width,
+                    zorder=1
+                )
+                ax.add_patch(polygon)
+                return ax, hull
+            except QhullError:
+                return ax, None
 
+        n_clusters = len(self.clusters)
         for cluster_idx, cluster in enumerate(self.clusters):
+            # Use a warm, vivid colormap: turbo is perceptually uniform and warm!
+            cluster_color = plt.cm.autumn(cluster_idx / max(1, n_clusters-1))
+            # cluster_color = plt.cm.nipy_spectral(cluster_idx / max(1, n_clusters-1))
+            # cluster_color = plt.cm.turbo(cluster_idx / max(1, n_clusters-1))
+            # cluster_color = plt.cm.hot(cluster_idx / max(1, n_clusters-1))
+            cluster_color = lighten_color(plt.cm.plasma(cluster_idx / max(1, n_clusters-1)))
+            # cluster_color = plt.cm.inferno(cluster_idx / max(1, n_clusters-1))
+            # cluster_color = plt.cm.cividis(cluster_idx / max(1, n_clusters-1))
+            # cmap = plt.get_cmap('tab10')         
+            # n_colors = cmap.N                  
+            # cluster_color = cmap(cluster_idx % n_colors) 
+            # cluster_color = plt.cm.autumn(cluster_idx / max(1, n_clusters-1))
+        
+    
+            # cluster_color = plt.cm.Set1(cluster_idx % 8)
             cluster_points = cluster.units[:, 1:3]
-            cluster_color = plt.cm.tab10(cluster_idx % 10)
-            ax, _ = plot_convex_hull(cluster_points, ax, color=cluster_color, alpha=0.2)
+            ax, _ = plot_convex_hull(
+                cluster_points,
+                ax,
+                color=cluster_color,
+                alpha=0.36,
+                edge_color="black",
+                line_width=0.9
+            )
             ax.scatter(
                 cluster_points[:, 0],
                 cluster_points[:, 1],
                 color=cluster_color,
-                label=f"Cluster {cluster_idx + 1}",
-                s=cluster.units[:, 3] * 2000,  # <---- Include this: sizes from probs!
-                alpha=0.8,
+                edgecolors="none",
+                s=cluster.units[:, 3] * 700,
+                alpha=0.88,
+                zorder=2,
             )
-            prob_sum = round(cluster.units[:, 3].sum(), 3)
+
+            prob_sum = round(cluster.units[:, 3].sum(), 2)
             center = cluster_points.mean(axis=0)
             ax.text(
                 center[0],
                 center[1],
-                f"Σp={prob_sum}",
+                f"{prob_sum}",
                 color="black",
-                fontsize=12,
+                fontsize=10,
                 weight="bold",
-                alpha=0.8,
+                alpha=0.85,
                 ha="center",
                 va="center",
+                zorder=3,
             )
 
             for zone_idx, zone in enumerate(cluster.zones):
                 zone_points = zone.units[:, 1:3]
-                zone_color = cluster_color
+                zone_color = cluster_color  # Keep your style: zones match cluster color
                 ax, hull = plot_convex_hull(
                     zone_points,
                     ax,
                     color=zone_color,
-                    alpha=0.4,
+                    alpha=0.17,
                     edge_color="gray",
-                    line_width=0.8,
+                    line_width=0.5,
                 )
-
                 hull_center = np.mean(
                     zone_points if hull is None else zone_points[hull.vertices], axis=0
                 )
@@ -215,12 +273,17 @@ class PopulationSimple:
                     hull_center[1],
                     f"{zone_idx + 1}",
                     color="black",
-                    fontsize=16,
-                    alpha=0.3,
+                    fontsize=13,
+                    alpha=0.22,
                     ha="center",
                     va="center",
                     weight="bold",
+                    zorder=4,
                 )
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.set_aspect("equal")
         return ax
 
     def plot_with_samples(self, samples: NDArray, max_cols: int = 4) -> None:
