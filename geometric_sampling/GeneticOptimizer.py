@@ -1,3 +1,6 @@
+import copy
+import time
+from functools import lru_cache
 from math import isclose
 from typing import List, Optional
 
@@ -51,56 +54,91 @@ class GeneticOptimizer:
             idx += size
         return chunks
 
+    @lru_cache(maxsize=None)
+    def _chunk_ids_cached(self, ids_tuple: tuple[int, ...], n_parts: int) -> List[set]:
+        return self._chunk_ids(frozenset(ids_tuple), n_parts)
+
     def combine_n_parents(
         self,
         parents: List[DesignGenetic],
         random_pull: bool = False,
     ) -> tuple[DesignGenetic, DesignGenetic]:
+
         parents = [par.copy() for par in parents]
+
         n = len(parents)
-        leftovers: List[Optional[Sample]] = [None] * n
-        child_design = DesignGenetic(inclusions=None, rng=parents[0].rng)
-        child_design2 = DesignGenetic(inclusions=None, rng=parents[1].rng)
+        rng = parents[0].rng
 
-        while any(leftovers) or any(parent.heap for parent in parents):
-            pulled: List[Sample] = []
-            for i, par in enumerate(parents):
-                if leftovers[i] is not None:
-                    r = leftovers[i]
-                    leftovers[i] = None
-                else:
-                    r = par.pull(random_pull)
-                pulled.append(r)
+        cum_bounds: List[np.ndarray] = []
+        samples: List[List[Sample]] = []
+        all_chunks: List[List[List[set[int]]]] = []
 
-            length = min(r.probability for r in pulled)
-            if length <= 0:
-                break
+        for p in parents:
+            segs: List[Sample] = list(p.heap)
+            samples.append(segs)
+            weights = np.array([s.probability for s in segs], dtype=float)
+            bounds = np.concatenate(([0.0], weights.cumsum()))
+            cum_bounds.append(bounds)
 
-            all_chunks = [self._chunk_ids(r.ids, n) for r in pulled]
-            child_ids: set[int] = set()
-            child_ids2: set[int] = set()
+            chunks_for_parent = [
+                self._chunk_ids_cached(tuple(sorted(s.ids)), n)
+                for s in segs
+            ]
+            all_chunks.append(chunks_for_parent)
+
+        if not cum_bounds or cum_bounds[0].size <= 1:
+            empty = DesignGenetic(inclusions=None, rng=rng)
+            return empty, empty
+        #
+        # --- ۳) ادغام همهٔ مرزها و پیداکردن طول زیر-قطعه‌ها ---
+        raw = np.concatenate(cum_bounds)
+        # sort کنید
+        sorted_raw = np.sort(raw)
+        # با tol دسته‌بندی
+        tol = 1e-2  # یا هر tol معقولی که مناسب مسئله‌ی شماست
+        unified = [sorted_raw[0]]
+        for v in sorted_raw[1:]:
+            if v - unified[-1] > tol:
+                unified.append(v)
+        unified = np.array(unified)
+        # آنگاه
+        lengths = np.diff(unified)
+        valid_idx = np.where(lengths > tol)[0]
+        if valid_idx.size == 0:
+            empty = DesignGenetic(inclusions=None, rng=rng)
+            return empty, empty
+
+        seg_indices = []
+        for b in cum_bounds:
+            idxs = np.searchsorted(b, unified[valid_idx], side='right') - 1
+            seg_indices.append(idxs)
+        #
+
+        child1 = DesignGenetic(inclusions=None, rng=rng)
+        child2 = DesignGenetic(inclusions=None, rng=rng)
+
+        for pos in valid_idx:
+            L = float(lengths[pos])
+            ids_c1: set[int] = set()
+            ids_c2: set[int] = set()
+
             for i in range(n):
-                child_ids |= all_chunks[i][i]
-                child_ids2 |= all_chunks[i][(i+1)%n]
-            child = Sample(length, frozenset(child_ids), index=[child_design.step, []])
-            child2 = Sample(length, frozenset(child_ids2), index=[child_design2.step, []])
+                j = int(seg_indices[i][np.where(valid_idx == pos)[0][0]])
+                chunks = all_chunks[i][j]
+                ids_c1.update(chunks[i])
+                ids_c2.update(chunks[(i + 1) % n])
 
-            child_design.push(child)
-            child_design2.push(child2)
+            s1 = Sample(L, frozenset(ids_c1), index=[child1.step, []])
+            s2 = Sample(L, frozenset(ids_c2), index=[child2.step, []])
+            child1.push(s1)
+            child2.push(s2)
 
-            for i, r in enumerate(pulled):
-                rem = r.probability - length
-                if rem > 0:
-                    leftovers[i] = Sample(rem, r.ids, index=[-1, []])
-                else:
-                    leftovers[i] = None
+            child1.step += 1
+            child1.changes += 1
+            child2.step += 1
+            child2.changes += 1
 
-            child_design.step += 1
-            child_design.changes += 1
-            child_design2.step += 1
-            child_design2.changes += 1
-
-        return child_design, child_design2
+        return child1, child2
 
     def design_fragmentation_n(
         self, parent: DesignGenetic, n_parts: int, random_pull: bool = False
