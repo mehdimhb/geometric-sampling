@@ -252,6 +252,20 @@ class DesignGenetic(Design):
         self.sucsses += 1
         return new_r1, remaining_r1, new_r2, remaining_r2
 
+    def merge_identical(self):
+        dic = {}
+        for r in self.heap:
+            dic.setdefault(r.ids, [0, r.index[0], []])
+            dic[r.ids][0] += r.probability
+            dic[r.ids][2].extend(r.index[1] if isinstance(r.index, list) and len(r.index) > 1 else [])
+        self.heap = MaxHeap[Sample](
+            initial_heap=[
+                Sample(length, ids, [index0, index1])
+                for ids, (length, index0, index1) in dic.items()
+            ],
+            rng=self.rng,
+        )
+
     def iterate(
         self,
         random_pull: bool = False,
@@ -273,6 +287,8 @@ class DesignGenetic(Design):
                 partitions=partitions,
                 step=self.step,
             )
+            # if self.step%10==0 :
+            #     self.merge_identical()
 
             self.step += 1
             self.push(*new_samples)

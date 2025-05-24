@@ -163,7 +163,7 @@ class GeneticAlgorithm:
                     border_units=self.border,
                 )
             self.population = new_pop[: self.pop_size]
-            if it > 50:
+            if it > 20:
                 res = []
                 for tmp in self.population:
                     res.append(len(tmp.heap))
