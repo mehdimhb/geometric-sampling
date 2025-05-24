@@ -4,7 +4,6 @@ from numpy.typing import NDArray
 
 from . import PopulationSimple
 
-
 class KMeansSpatialSamplingSimple:
     def __init__(
         self,

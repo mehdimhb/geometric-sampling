@@ -5,21 +5,18 @@ import numpy as np
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
-from scipy.spatial import ConvexHull
+from scipy.spatial import ConvexHull, QhullError
 
 from ..clustering import DublyBalancedKMeansSimple
-
 
 @dataclass
 class Zone:
     units: NDArray
 
-
 @dataclass
 class Cluster:
     units: NDArray
     zones: list[Zone]
-
 
 class PopulationSimple:
     def __init__(
@@ -42,18 +39,10 @@ class PopulationSimple:
         self.clusters = self._generate_clusters()
 
     def _generate_clusters(self) -> list[Cluster]:
-        # kmeans = SoftBalancedKMeans(self.n_clusters, tolerance=self.tolerance)
-        # kmeans.fit(self.coords, self.probs)
-
-        # agg = AggregateBalancedKMeans(k=self.n_clusters, tolerance=self.tolerance)
-        # agg.fit(self.coords, self.probs.reshape(-1, 1), np.array([1]))
-
         dbk = DublyBalancedKMeansSimple(k=self.n_clusters, split_size=self.split_size)
         dbk.fit(self.coords, self.probs)
-
         return [
             Cluster(units=units, zones=self._generate_zones(units))
-            #            for units in agg.get_clusters()
             for units in dbk.clusters
         ]
 
@@ -71,9 +60,7 @@ class PopulationSimple:
                 zones.append(Zone(units=units))
         return zones
 
-    def _sweep(
-        self, units: NDArray, threshold: float
-    ) -> tuple[list[NDArray], list[int]]:
+    def _sweep(self, units: NDArray, threshold: float) -> list[NDArray]:
         boarder_units_remainings, zones_indices = self._generate_boarders_and_indices(
             units, threshold
         )
@@ -148,43 +135,40 @@ class PopulationSimple:
         probs_stabled *= 1 / (np.sum(probs_stabled) * np.prod(self.n_zones))
         return probs_stabled
 
-    def lighten_color(color, amount=0.5):
-        import matplotlib.colors as mc
-        import colorsys
-        try:
-            c = mc.cnames[color]
-        except:
-            c = color
-        c = np.array(mc.to_rgb(c))
-        white = np.array([1, 1, 1])
-        return tuple((1 - amount) * c + amount * white)
-
-    def plot(self, ax=None, figsize: tuple[int, int] = (8, 6), background_gdf=None) -> None:
-        import matplotlib.pyplot as plt
-        def lighten_color(color, amount=0.5):
-            import matplotlib.colors as mc
-            import colorsys
-            try:
-                c = mc.cnames[color]
-            except:
-                c = color
-            c = np.array(mc.to_rgb(c))
-            white = np.array([1, 1, 1])
-            return tuple((1 - amount) * c + amount * white)
-
-
-        if ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
-        # Make Swiss background white for max color pop
-        if background_gdf is not None:
-            background_gdf.plot(ax=ax, color="white", edgecolor="black", linewidth=1.5, zorder=0)
+    @staticmethod
+    def get_sorted_cluster_indices_by_lexico(centroids, jitter=1e-8):
+        noise = np.random.uniform(-jitter, jitter, size=centroids.shape)
+        perturbed = centroids + noise
+        sorted_order = np.lexsort((perturbed[:, 0], perturbed[:, 1]))
+        label_to_color = np.zeros_like(sorted_order)
+        for color_idx, label in enumerate(sorted_order):
+            label_to_color[label] = color_idx
+        return label_to_color, centroids[sorted_order], sorted_order
+    
+    def plot(
+        self,
+        ax=None,
+        figsize: tuple[int, int] = (8, 6),
+        background_gdf=None,
+    ) -> None:
+        # Color palette (sort order)
+        bardi_colors = [
+            "#4CAF50",  # 1. Green
+            "#2196F3",  # 2. Blue
+            "#F44336",  # 3. Red
+            "#FFEB3B",  # 4. Yellow
+            "#FF9800",  # 5. Orange
+            "#9C27B0",  # 6. Violet
+            "#E91E63",  # 7. Pink/Magenta
+            "#00BCD4",  # 8. Turquoise/Cyan
+            "#BDBDBD",  # 9. Medium Gray
+            "#FFD700"   # 10. Gold/Amber (strong yellow-gold)
+        ]
 
         def plot_convex_hull(points, ax, color, alpha=0.33, edge_color="gray", line_width=0.6):
             points = np.asarray(points)
-            # Points must be (N,2), N >= 3, and not all in a line (not all x or y the same)
             if (points.ndim != 2) or (points.shape[0] < 3) or (points.shape[1] != 2):
                 return ax, None
-            # Check if all x or all y values are the same (collinear)
             if np.allclose(points[:,0], points[0,0]) or np.allclose(points[:,1], points[0,1]):
                 return ax, None
             try:
@@ -203,24 +187,33 @@ class PopulationSimple:
             except QhullError:
                 return ax, None
 
+        if ax is None:
+            fig, ax = plt.subplots(figsize=figsize)
+
+        # Draw background
+        if background_gdf is not None:
+            background_gdf.plot(
+                ax=ax, color="white", edgecolor="black", linewidth=1.5, zorder=0
+            )
+
+        # ---- SORTING AND COLORING CLUSTERS!!! ----
         n_clusters = len(self.clusters)
-        for cluster_idx, cluster in enumerate(self.clusters):
-            # Use a warm, vivid colormap: turbo is perceptually uniform and warm!
-            cluster_color = plt.cm.autumn(cluster_idx / max(1, n_clusters-1))
-            # cluster_color = plt.cm.nipy_spectral(cluster_idx / max(1, n_clusters-1))
-            # cluster_color = plt.cm.turbo(cluster_idx / max(1, n_clusters-1))
-            # cluster_color = plt.cm.hot(cluster_idx / max(1, n_clusters-1))
-            cluster_color = lighten_color(plt.cm.plasma(cluster_idx / max(1, n_clusters-1)))
-            # cluster_color = plt.cm.inferno(cluster_idx / max(1, n_clusters-1))
-            # cluster_color = plt.cm.cividis(cluster_idx / max(1, n_clusters-1))
-            # cmap = plt.get_cmap('tab10')         
-            # n_colors = cmap.N                  
-            # cluster_color = cmap(cluster_idx % n_colors) 
-            # cluster_color = plt.cm.autumn(cluster_idx / max(1, n_clusters-1))
-        
-    
-            # cluster_color = plt.cm.Set1(cluster_idx % 8)
+        # Compute centroids for all clusters
+        centroids = np.zeros((n_clusters, 2))
+        for i, cluster in enumerate(self.clusters):
+            centroids[i] = cluster.units[:, 1:3].mean(axis=0) if len(cluster.units) > 0 else np.nan
+
+        # Get sorted indices and color mapping
+        #label_to_color, sorted_centroids = self.get_sorted_cluster_indices_by_lexico(centroids)
+
+        # ------------- PLOTTING LOOP ----------------
+        label_to_color, sorted_centroids, sorted_order = self.get_sorted_cluster_indices_by_lexico(centroids)
+        for plot_idx, cluster_idx in enumerate(sorted_order):
+            cluster = self.clusters[cluster_idx]
+            cluster_color = bardi_colors[plot_idx % len(bardi_colors)]
             cluster_points = cluster.units[:, 1:3]
+    # (rest of your plotting code as above)
+            # Cluster convex hull
             ax, _ = plot_convex_hull(
                 cluster_points,
                 ax,
@@ -229,16 +222,17 @@ class PopulationSimple:
                 edge_color="black",
                 line_width=0.9
             )
+            # Units scatter
             ax.scatter(
                 cluster_points[:, 0],
                 cluster_points[:, 1],
                 color=cluster_color,
                 edgecolors="none",
-                s=cluster.units[:, 3] * 700,
+                s=cluster.units[:, 3] * 1000,
                 alpha=0.88,
                 zorder=2,
             )
-
+            # Label
             prob_sum = round(cluster.units[:, 3].sum(), 2)
             center = cluster_points.mean(axis=0)
             ax.text(
@@ -254,9 +248,10 @@ class PopulationSimple:
                 zorder=3,
             )
 
+            # Zones (match cluster color)
             for zone_idx, zone in enumerate(cluster.zones):
                 zone_points = zone.units[:, 1:3]
-                zone_color = cluster_color  # Keep your style: zones match cluster color
+                zone_color = cluster_color
                 ax, hull = plot_convex_hull(
                     zone_points,
                     ax,
@@ -304,7 +299,7 @@ class PopulationSimple:
                 color="black",
                 marker="X",
                 alpha=0.8,
-                s=200,
+                s=5,
                 label=f"Sample {sample_idx + 1}",
             )
             ax.set_title(f"Sample {sample_idx + 1}")

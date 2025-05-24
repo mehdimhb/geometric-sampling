@@ -54,13 +54,7 @@ class DublyBalancedKMeansSimple:
             if len(assignment) > 0:
                 membership[i, assignment[np.argmax(counts)]] = 1.0
 
-        # Optionally, print out all soft shared units
-        # soft_idxs = np.where((membership > 0) & (membership < 1))
-        # units_with_soft = list(zip(soft_idxs[0], soft_idxs[1], membership[soft_idxs]))
-        # print("Units with soft (fractional) memberships:")
-        # for idx in units_with_soft:
-        #     print(f"unit {idx[0]} has {idx[2]:.2f} membership in cluster {idx[1]}")
-
+     
         # Build clusters
         clusters = []
         for j in range(self.k):
@@ -78,15 +72,3 @@ class DublyBalancedKMeansSimple:
         self.clusters = clusters
         self.membership = membership
 
-        # Sum should now be exactly sum(probs)
-        # print(probs)
-        # print(self.clusters)
-        # total_prob_sum = sum([c[:, -1].sum() for c in self.clusters])
-        # print(f"\nTotal sum of probabilities in all clusters: {total_prob_sum:.6f}")
-        # print(
-        #     f"Total sum of probs in clusters: {sum([c[:, -1].sum() for c in self.clusters]):.6f}"
-        # )
-        # print(f"Original total sum of probs: {probs.sum():.6f}")
-        # print(
-        #     f"Difference: {probs.sum() - sum([c[:, -1].sum() for c in self.clusters]):.8f}"
-        # )
