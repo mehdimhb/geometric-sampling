@@ -41,7 +41,7 @@ class MaxHeap(Generic[T]):
 
         # ۱) بازسازی لیست مقادیر واقعی و احتمال‌ها
         items = [-neg for neg in self.heap]
-        weights = [getattr(it, 'probability', it) for it in items]
+        weights = [getattr(it, "probability", it) for it in items]
         total = sum(weights)
 
         # ۲) اگر مجموع غیرمعتبر است، به pop بازگرد

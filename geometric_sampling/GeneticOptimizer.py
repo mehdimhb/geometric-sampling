@@ -80,7 +80,6 @@ class GeneticOptimizer:
     def _chunk_ids_cached(self, ids_tuple: tuple[int, ...], n_parts: int) -> List[set]:
         return self._chunk_ids(frozenset(ids_tuple), n_parts)
 
-
     def combine_n_parents(
         self,
         parents: List[DesignGenetic],
@@ -112,16 +111,18 @@ class GeneticOptimizer:
             child_ids2: set[int] = set()
             for i in range(n):
                 child_ids |= all_chunks[i][i]
-                child_ids2 |= all_chunks[i][(i+1)%n]
+                child_ids2 |= all_chunks[i][(i + 1) % n]
             child = Sample(length, frozenset(child_ids), index=[child_design.step, []])
-            child2 = Sample(length, frozenset(child_ids2), index=[child_design2.step, []])
+            child2 = Sample(
+                length, frozenset(child_ids2), index=[child_design2.step, []]
+            )
 
             child_design.push(child)
             child_design2.push(child2)
 
             for i, r in enumerate(pulled):
                 rem = r.probability - length
-                if rem >1e-12 :
+                if rem > 1e-12:
                     leftovers[i] = Sample(rem, r.ids, index=[-1, []])
                 else:
                     leftovers[i] = None

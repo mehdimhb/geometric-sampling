@@ -156,14 +156,12 @@ class DesignGenetic(Design):
         for sample in self.heap:
             ids = sample.ids
             if ids not in merged:
-                # Store total probability and a copy of the index metadata
-                merged[ids] = (sample.probability, list(sample.index[1]))
+                merged[ids] = (sample.probability, sample.index)
             else:
-                total_prob, idx = merged[ids]
-                merged[ids] = (total_prob + sample.probability, idx)
+                prob, idx = merged[ids]
+                merged[ids] = (prob + sample.probability, idx)
 
-        # Rebuild the heap with merged samples
-        new_samples = [Sample(prob, ids, [0, idx]) for ids, (prob, idx) in merged.items()]
+        new_samples = [Sample(prob, ids, idx) for ids, (prob, idx) in merged.items()]
         self.heap = MaxHeap(initial_heap=new_samples, rng=self.rng)
 
     def push_initial_design(self, inclusions: Collection[float]):
@@ -269,7 +267,6 @@ class DesignGenetic(Design):
         )
         self.sucsses += 1
         return new_r1, remaining_r1, new_r2, remaining_r2
-
 
     def iterate(
         self,

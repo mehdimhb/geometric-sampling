@@ -10,23 +10,23 @@ from geometric_sampling.design import DesignGenetic
 
 class GeneticAlgorithm:
     def __init__(
-            self,
-            inclusions: List[float],
-            auxiliary_variable: np.ndarray,
-            inclusion_probability: np.ndarray,
-            population_size: int = 100,
-            combination_rate: float = 0.2,
-            mutation_rate: float = 0.1,
-            elitism_rate: float = 0.05,
-            n_partitions: int = 2,
-            switch_coefficient: float = 0.5,
-            max_iters: int = 100,
-            random_pull: bool = False,
-            rng: np.random.Generator = np.random.default_rng(),
-            adaptive_mutation: bool = True,
-            min_mutation_rate: float = 0.05,
-            max_mutation_rate: float = 0.4,
-            early_stopping: int = 10
+        self,
+        inclusions: List[float],
+        auxiliary_variable: np.ndarray,
+        inclusion_probability: np.ndarray,
+        population_size: int = 100,
+        combination_rate: float = 0.2,
+        mutation_rate: float = 0.1,
+        elitism_rate: float = 0.05,
+        n_partitions: int = 2,
+        switch_coefficient: float = 0.5,
+        max_iters: int = 100,
+        random_pull: bool = False,
+        rng: np.random.Generator = np.random.default_rng(),
+        adaptive_mutation: bool = True,
+        min_mutation_rate: float = 0.05,
+        max_mutation_rate: float = 0.4,
+        early_stopping: int = 10,
     ):
         self.inclusions = inclusions
         self.pop_size = population_size
@@ -46,7 +46,7 @@ class GeneticAlgorithm:
         self.max_mutation_rate = max_mutation_rate
         self.early_stopping = early_stopping
         self.no_improvement_count = 0
-        self.best_ever_score = -float('inf')
+        self.best_ever_score = -float("inf")
 
         self.criterion = VarNHT(
             auxiliary_variable=auxiliary_variable,
@@ -85,10 +85,7 @@ class GeneticAlgorithm:
             probs = np.ones_like(scores) / len(scores)
         else:
             probs = scores / total
-        return list(self.rng.choice(len(scores),
-                                    size=n_parents,
-                                    replace=True,
-                                    p=probs))
+        return list(self.rng.choice(len(scores), size=n_parents, replace=True, p=probs))
 
     def _adjust_mutation_rate(self, current_best_score: float) -> None:
         if current_best_score > self.best_ever_score:
@@ -96,19 +93,19 @@ class GeneticAlgorithm:
             self.no_improvement_count = 0
             self.mut_rate = max(
                 self.min_mutation_rate,
-                self.base_mut_rate * (0.9 ** min(5, self.no_improvement_count))
+                self.base_mut_rate * (0.9 ** min(5, self.no_improvement_count)),
             )
         else:
             self.no_improvement_count += 1
             self.mut_rate = min(
                 self.max_mutation_rate,
-                self.base_mut_rate * (1.2 ** min(10, self.no_improvement_count))
+                self.base_mut_rate * (1.2 ** min(10, self.no_improvement_count)),
             )
 
     def run(self) -> Tuple[DesignGenetic, int]:
         self._initialize_population()
         self.no_improvement_count = 0
-        self.best_ever_score = -float('inf')
+        self.best_ever_score = -float("inf")
         self.mut_rate = self.base_mut_rate
 
         for it in range(self.max_iters):
@@ -121,17 +118,23 @@ class GeneticAlgorithm:
                 self._adjust_mutation_rate(best_score)
                 self.mutation_rate_history.append(self.mut_rate)
 
-            print(f"[Iter {it:3d}](VarNHT = {-best_score:.6f})|mean fitness = {np.mean(scores):.6f} | mutation rate = {self.mut_rate:.4f}")
+            print(
+                f"[Iter {it:3d}](VarNHT = {-best_score:.6f})|mean fitness = {np.mean(scores):.6f} | mutation rate = {self.mut_rate:.4f}"
+            )
 
-            if self.early_stopping > 0 and self.no_improvement_count >= self.early_stopping:
-                print(f"Early stopping after {it + 1} iterations - no improvement for {self.early_stopping} iterations")
+            if (
+                self.early_stopping > 0
+                and self.no_improvement_count >= self.early_stopping
+            ):
+                print(
+                    f"Early stopping after {it + 1} iterations - no improvement for {self.early_stopping} iterations"
+                )
                 break
 
             # elite selection
             n_elites = max(1, int(self.elitism_rate * self.pop_size))
             elite_ids = np.argsort(scores)[-n_elites:]
             new_pop = [self.population[i].copy() for i in elite_ids]
-
 
             # Crossover
             n_combis = int(self.comb_rate * self.pop_size)
@@ -140,7 +143,7 @@ class GeneticAlgorithm:
             for i in range(n_combis):
                 p1 = self.population[parents_idx[2 * i]]
                 p2 = self.population[parents_idx[2 * i + 1]]
-                c1,c2 = self.optimizer.combine_n_parents(
+                c1, c2 = self.optimizer.combine_n_parents(
                     parents=[p1, p2],
                 )
                 new_pop.append(c1)
@@ -161,15 +164,14 @@ class GeneticAlgorithm:
                         border_units=self.border,
                     )
             self.population = new_pop[: self.pop_size]
-            if it%3==0:
+            if it % 3 == 0:
                 for design in self.population:
                     design.merge_identical()
             #
-            if it %999== 0 and it>0:
-
+            if it % 999 == 0 and it > 0:
                 counter = 0
                 for design in self.population:
-                    for heap in  design:
+                    for heap in design:
                         print(heap)
                     design.show()
                     # counter+=1
@@ -177,7 +179,7 @@ class GeneticAlgorithm:
                     #     break
             #    # Debu
         #    g plotting disabled for performance
-            #    pass
+        #    pass
 
         final_scores = self._evaluate(self.population)
         best_final = int(np.argmax(final_scores))
@@ -191,25 +193,22 @@ class GeneticAlgorithm:
 
             # fitness
             iterations = range(1, len(self.best_history) + 1)
-            ax1.plot(iterations, self.best_history, 'b-')
-            ax1.set_xlabel('Iteration')
-            ax1.set_ylabel('Best Fitness')
-            ax1.set_title('Optimization Progress')
+            ax1.plot(iterations, self.best_history, "b-")
+            ax1.set_xlabel("Iteration")
+            ax1.set_ylabel("Best Fitness")
+            ax1.set_title("Optimization Progress")
             ax1.grid(True)
 
             # mutation
             if self.adaptive_mutation and self.mutation_rate_history:
-                ax2.plot(iterations, self.mutation_rate_history, 'r-')
-                ax2.set_xlabel('Iteration')
-                ax2.set_ylabel('Mutation Rate')
-                ax2.set_title('Adaptive Mutation Rate')
+                ax2.plot(iterations, self.mutation_rate_history, "r-")
+                ax2.set_xlabel("Iteration")
+                ax2.set_ylabel("Mutation Rate")
+                ax2.set_title("Adaptive Mutation Rate")
                 ax2.grid(True)
-
-
 
             plt.tight_layout()
             plt.show()
 
         except ImportError:
             print("Matplotlib is required for plotting progress")
-
