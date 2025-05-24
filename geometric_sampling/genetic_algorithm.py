@@ -81,10 +81,10 @@ class GeneticAlgorithm:
 
     def _select_parents(self, scores: np.ndarray, n_parents: int) -> List[int]:
         total = scores.sum()
-        if total <= 0:
-            probs = np.ones_like(scores) / len(scores)
-        else:
-            probs = scores / total
+        # if total <= 0:
+        #     probs = np.ones_like(scores) / len(scores)
+        # else:
+        probs = (1 / scores )/np.sum(1 / scores)
         return list(self.rng.choice(len(scores), size=n_parents, replace=True, p=probs))
 
     def _adjust_mutation_rate(self, current_best_score: float) -> None:
@@ -145,23 +145,30 @@ class GeneticAlgorithm:
                 )
                 new_pop.extend([c1, c2])
 
-            while len(new_pop) < self.pop_size:
-                idx = self._select_parents(scores, 1)[0]
-                new_pop.append(self.population[idx].copy())
+            seen: set[int] = set()
+            unique_pop: List[DesignGenetic] = []
+            for design in new_pop:
+                h = hash(design.heap)  # uses the heap’s __hash__
+                if h not in seen:
+                    seen.add(h)
+                    unique_pop.append(design)
 
-            # Mutation
-            n_mut = int(self.mut_rate * self.pop_size)
-            mutate_ids = self.rng.choice(len(new_pop), size=n_mut, replace=False)
-            mutation_strength = max(1, min(5, int(3 * self.mut_rate / self.base_mut_rate)))
-            for mid in mutate_ids:
-                for _ in range(mutation_strength):  # تطبیقی بجای ثابت
-                    new_pop[mid].iterate(
+            # 2) refill to pop_size with fresh random individuals
+            while len(unique_pop) < self.pop_size:
+                d = DesignGenetic(self.inclusions, rng=self.rng)
+                # give it a few random iterations to seed it
+                for _ in range(10):
+                    d.iterate(
                         random_pull=self.random_pull,
                         switch_coefficient=self.switch_coef,
-                        partitions=self.partition,
                         border_units=self.border,
+                        partitions=self.partition,
                     )
-            self.population = new_pop[: self.pop_size]
+                unique_pop.append(d)
+
+            self.population = unique_pop
+
+
             for design in self.population:
                 if design.changes >5:
                     design.merge_identical()
@@ -170,17 +177,17 @@ class GeneticAlgorithm:
                 print(
                     f"Initialization took {time.time() - tmp} seconds, starting optimization."
                 )
-                tmp = time.time()
-            if it%999==0 and it!=0 :
-                for design in self.population:
-                    design.show()
+            #     tmp = time.time()
+            # if it%999==0 and it!=0 :
+            #     for design in self.population:
+            #         design.show()
         #     #
-        #     if it % 999 == 0 and it > 0:
-        #         counter = 0
-        #         for design in self.population:
-        #             for heap in design:
-        #                 print(heap)
-        #             design.show()
+            if it % 999 == 0 and it > 0:
+                counter = 0
+                for design in self.population:
+                    # for heap in design:
+                    #     print(heap)
+                    design.show()
         #             # counter+=1
         #             # if counter >:
         #             #     break
