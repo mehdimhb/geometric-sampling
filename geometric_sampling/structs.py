@@ -39,34 +39,27 @@ class MaxHeap(Generic[T]):
         if not self.heap:
             raise IndexError("randompop from empty heap")
 
-        # ۱) بازسازی لیست مقادیر واقعی و احتمال‌ها
         items = [-neg for neg in self.heap]
         weights = [getattr(it, "probability", it) for it in items]
         total = sum(weights)
 
-        # ۲) اگر مجموع غیرمعتبر است، به pop بازگرد
         if total <= 0:
             return self.pop()
 
-        # ۳) عدد تصادفی در بازه [0, total)
         r = self.rng.random() * total
 
-        # ۴) پیداکردن ایندکس با جستجوی خطی (برای n کم قابل‌قبول)
         cum = 0.0
         for idx, w in enumerate(weights):
             cum += w
             if cum >= r:
-                # حذف از هیپ به‌صورت تک‌مرحله‌ای
                 chosen = items[idx]
-                last = self.heap.pop()  # آخرین عنصر را بگیرید
+                last = self.heap.pop()
                 if idx < len(self.heap):
-                    self.heap[idx] = last  # جایگزین در محل idx
-                    # بازیابی ویژگی‌های heap
+                    self.heap[idx] = last
                     heapq._siftup(self.heap, idx)
                     heapq._siftdown(self.heap, 0, idx)
                 return chosen
 
-        # ۵) در حالت بسیار نادر خطای گردکردن
         return self.pop()
 
     def copy(self) -> MaxHeap[T]:
