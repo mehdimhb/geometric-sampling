@@ -1,5 +1,4 @@
 import time
-
 import numpy as np
 from typing import List, Tuple, Optional
 
@@ -122,8 +121,7 @@ class GeneticAlgorithm:
                 self._adjust_mutation_rate(best_score)
                 self.mutation_rate_history.append(self.mut_rate)
 
-            print(
-                f"[Iter {it:3d}](VarNHT = {-best_score:.6f})|mean fitness = {np.mean(scores):.6f} | mutation rate = {self.mut_rate:.4f}")
+            print(f"[Iter {it:3d}](VarNHT = {-best_score:.6f})|mean fitness = {np.mean(scores):.6f} | mutation rate = {self.mut_rate:.4f}")
 
             if self.early_stopping > 0 and self.no_improvement_count >= self.early_stopping:
                 print(f"Early stopping after {it + 1} iterations - no improvement for {self.early_stopping} iterations")
@@ -155,25 +153,32 @@ class GeneticAlgorithm:
             n_mut = int(self.mut_rate * self.pop_size)
             mutate_ids = self.rng.choice(len(new_pop), size=n_mut, replace=False)
             for mid in mutate_ids:
-                # for _ in range(3):
-                new_pop[mid].iterate(
-                    random_pull=self.random_pull,
-                    switch_coefficient=self.switch_coef,
-                    partitions=self.partition,
-                    border_units=self.border,
-                )
+                for _ in range(10):
+                    new_pop[mid].iterate(
+                        random_pull=self.random_pull,
+                        switch_coefficient=self.switch_coef,
+                        partitions=self.partition,
+                        border_units=self.border,
+                    )
             self.population = new_pop[: self.pop_size]
-            if it > 20:
-                res = []
-                for tmp in self.population:
-                    res.append(len(tmp.heap))
-                print(sum(res) / len(res))
-                print(max(res), min(res))
-                for tmp in self.population:
-                    tmp.show()
-
-            # if it >170 :
+            if it%3==0:
+                for design in self.population:
+                    design.merge_identical()
             #
+            if it %999== 0 and it>0:
+
+                counter = 0
+                for design in self.population:
+                    for heap in  design:
+                        print(heap)
+                    design.show()
+                    # counter+=1
+                    # if counter >:
+                    #     break
+            #    # Debu
+        #    g plotting disabled for performance
+            #    pass
+
         final_scores = self._evaluate(self.population)
         best_final = int(np.argmax(final_scores))
         return self.population[best_final], it + 1
@@ -207,3 +212,4 @@ class GeneticAlgorithm:
 
         except ImportError:
             print("Matplotlib is required for plotting progress")
+

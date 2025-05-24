@@ -147,6 +147,24 @@ class DesignGenetic(Design):
         new_design.changes = self.changes
         return new_design
 
+    def merge_identical(self) -> None:
+        """
+        Combine samples in the heap with identical sets of unit IDs,
+        summing their probabilities and preserving index metadata from the first occurrence.
+        """
+        merged: dict[frozenset[int], tuple[float, list[int]]] = {}
+        for sample in self.heap:
+            ids = sample.ids
+            if ids not in merged:
+                # Store total probability and a copy of the index metadata
+                merged[ids] = (sample.probability, list(sample.index[1]))
+            else:
+                total_prob, idx = merged[ids]
+                merged[ids] = (total_prob + sample.probability, idx)
+
+        # Rebuild the heap with merged samples
+        new_samples = [Sample(prob, ids, [0, idx]) for ids, (prob, idx) in merged.items()]
+        self.heap = MaxHeap(initial_heap=new_samples, rng=self.rng)
 
     def push_initial_design(self, inclusions: Collection[float]):
         events: list[tuple[float, str, int]] = []
@@ -252,19 +270,6 @@ class DesignGenetic(Design):
         self.sucsses += 1
         return new_r1, remaining_r1, new_r2, remaining_r2
 
-    def merge_identical(self):
-        dic = {}
-        for r in self.heap:
-            dic.setdefault(r.ids, [0, r.index[0], []])
-            dic[r.ids][0] += r.probability
-            dic[r.ids][2].extend(r.index[1] if isinstance(r.index, list) and len(r.index) > 1 else [])
-        self.heap = MaxHeap[Sample](
-            initial_heap=[
-                Sample(length, ids, [index0, index1])
-                for ids, (length, index0, index1) in dic.items()
-            ],
-            rng=self.rng,
-        )
 
     def iterate(
         self,
