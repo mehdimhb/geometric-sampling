@@ -103,6 +103,7 @@ class GeneticAlgorithm:
             )
 
     def run(self) -> Tuple[DesignGenetic, int]:
+        tmp = time.time()
         self._initialize_population()
         self.no_improvement_count = 0
         self.best_ever_score = -float("inf")
@@ -116,24 +117,20 @@ class GeneticAlgorithm:
 
             if self.adaptive_mutation:
                 self._adjust_mutation_rate(best_score)
-                self.mutation_rate_history.append(self.mut_rate)
+                self.mutation_rate_history.append(self.mut_rate)\
 
-            print(
-                f"[Iter {it:3d}](VarNHT = {-best_score:.6f})|mean fitness = {np.mean(scores):.6f} | mutation rate = {self.mut_rate:.4f}"
-            )
-
-            if (
-                self.early_stopping > 0
-                and self.no_improvement_count >= self.early_stopping
-            ):
+            if it%10==0 or it == self.max_iters - 1:
                 print(
-                    f"Early stopping after {it + 1} iterations - no improvement for {self.early_stopping} iterations"
+                    f"[Iter {it:3d}](VarNHT = {-best_score:.6f})|mean fitness = {np.mean(scores):.6f} | mutation rate = {self.mut_rate:.4f}"
                 )
+
+            if self.early_stopping > 0 and self.no_improvement_count >= self.early_stopping:
+                print(f"Early stopping after {it + 1} iterations - no improvement for {self.early_stopping} iterations")
                 break
 
             # elite selection
             n_elites = max(1, int(self.elitism_rate * self.pop_size))
-            elite_ids = np.argsort(scores)[-n_elites:]
+            elite_ids = np.argpartition(scores, -n_elites)[-n_elites:]
             new_pop = [self.population[i].copy() for i in elite_ids]
 
             # Crossover
@@ -146,8 +143,8 @@ class GeneticAlgorithm:
                 c1, c2 = self.optimizer.combine_n_parents(
                     parents=[p1, p2],
                 )
-                new_pop.append(c1)
-                new_pop.append(c2)
+                new_pop.extend([c1, c2])
+
             while len(new_pop) < self.pop_size:
                 idx = self._select_parents(scores, 1)[0]
                 new_pop.append(self.population[idx].copy())
@@ -155,8 +152,9 @@ class GeneticAlgorithm:
             # Mutation
             n_mut = int(self.mut_rate * self.pop_size)
             mutate_ids = self.rng.choice(len(new_pop), size=n_mut, replace=False)
+            mutation_strength = max(1, min(5, int(3 * self.mut_rate / self.base_mut_rate)))
             for mid in mutate_ids:
-                for _ in range(10):
+                for _ in range(mutation_strength):  # تطبیقی بجای ثابت
                     new_pop[mid].iterate(
                         random_pull=self.random_pull,
                         switch_coefficient=self.switch_coef,
@@ -164,22 +162,31 @@ class GeneticAlgorithm:
                         border_units=self.border,
                     )
             self.population = new_pop[: self.pop_size]
-            if it % 3 == 0:
-                for design in self.population:
+            for design in self.population:
+                if design.changes >5:
                     design.merge_identical()
-            #
-            if it % 999 == 0 and it > 0:
-                counter = 0
+                    design.changes = 0
+            if it ==100:
+                print(
+                    f"Initialization took {time.time() - tmp} seconds, starting optimization."
+                )
+                tmp = time.time()
+            if it%999==0 and it!=0 :
                 for design in self.population:
-                    for heap in design:
-                        print(heap)
                     design.show()
-                    # counter+=1
-                    # if counter >:
-                    #     break
-            #    # Debu
-        #    g plotting disabled for performance
-        #    pass
+        #     #
+        #     if it % 999 == 0 and it > 0:
+        #         counter = 0
+        #         for design in self.population:
+        #             for heap in design:
+        #                 print(heap)
+        #             design.show()
+        #             # counter+=1
+        #             # if counter >:
+        #             #     break
+        #     #    # Debu
+        # #    g plotting disabled for performance
+        # #    pass
 
         final_scores = self._evaluate(self.population)
         best_final = int(np.argmax(final_scores))

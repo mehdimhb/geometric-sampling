@@ -85,7 +85,16 @@ class GeneticOptimizer:
         parents: List[DesignGenetic],
         random_pull: bool = False,
     ) -> tuple[DesignGenetic, DesignGenetic]:
-        parents = [par.copy() for par in parents]
+
+        parent_heaps = [par.heap.copy() for par in parents]
+        temp_parents = []
+        for i, par in enumerate(parents):
+            temp_par = DesignGenetic(inclusions=None, rng=par.rng)
+            temp_par.heap = parent_heaps[i]
+            temp_parents.append(temp_par)
+
+        parents = temp_parents
+
         n = len(parents)
         leftovers: List[Optional[Sample]] = [None] * n
         child_design = DesignGenetic(inclusions=None, rng=parents[0].rng)
