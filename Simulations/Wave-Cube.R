@@ -6,7 +6,7 @@ input_folder <- "data_samples"
 output_folder <- "data_samples"
 
 # Specify only the files you want to process:
-selected_files <- c("random_eq.csv", "random_uneq.csv")
+selected_files <- c("swiss_uneq.csv")
 data_files <- file.path(input_folder, selected_files)
 
 for (file_path in data_files) {
