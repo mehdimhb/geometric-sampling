@@ -57,6 +57,8 @@ class PopulationSimple:
             )
             for units in units_of_basic_zones:
                 units[:, 3] = self._numerical_stabilizer(units[:, 3])
+                idx = np.lexsort((units[:, 2], units[:, 1]))
+                units = units[idx]
                 zones.append(Zone(units=units))
         return zones
 

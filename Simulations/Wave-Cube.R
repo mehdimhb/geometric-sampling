@@ -2,11 +2,12 @@ library(BalancedSampling)
 library(WaveSampling)
 
 M <- 1000
-input_folder <- "data_samples"
-output_folder <- "data_samples"
+input_folder <- "/home/divar/projects/geometric-sampling/data_samples/coords_probs"
+output_folder <- "/home/divar/projects/geometric-sampling/data_samples/samples"
 
 # Specify only the files you want to process:
 selected_files <- c("swiss_uneq.csv")
+شسبی
 data_files <- file.path(input_folder, selected_files)
 
 for (file_path in data_files) {
