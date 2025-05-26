@@ -61,6 +61,8 @@ class KMeansSpatialSamplingSimple:
                         f"but expected {np.prod(self.n_zones)} based on n_zones={self.n_zones}"
                     )
                     print(warning_msg)
-                samples[i, j] = cluster.zones[zone_index - 1].units[unit_index, 0]
-
+                zone = cluster.zones[zone_index - 1]
+                max_idx = zone.units.shape[0] - 1
+                safe_unit_index = min(unit_index, max_idx)
+                samples[i, j] = zone.units[safe_unit_index, 0]
         return samples
