@@ -205,7 +205,6 @@ class PopulationSimple:
         centroids = np.zeros((n_clusters, 2))
         for i, cluster in enumerate(self.clusters):
             centroids[i] = cluster.units[:, 1:3].mean(axis=0) if len(cluster.units) > 0 else np.nan
-
         # Get sorted indices and color mapping
         #label_to_color, sorted_centroids = self.get_sorted_cluster_indices_by_lexico(centroids)
 
