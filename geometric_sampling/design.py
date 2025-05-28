@@ -11,32 +11,38 @@ class Design:
     def __init__(
         self,
         inclusions: Optional[Collection[float]] = None,
+        perm: Optional[list[int]] = None,
         rng: np.random.Generator = np.random.default_rng(),
     ):
         self.heap = MaxHeap[Sample](rng=rng)
         self.rng = rng
         self.changes = 0
+        self.perm = perm if perm is not None else np.arange(len(inclusions)) if inclusions is not None else None
         if inclusions is not None:
-            self.push_initial_design(inclusions)
+            self.push_initial_design(inclusions, self.perm)
 
-    def push_initial_design(self, inclusions: Collection[float]):
+
+    def push_initial_design(self, inclusions: Collection[float], perm: Optional[list[int]] = None):
+        if perm is None:
+            perm = np.arange(len(inclusions))
         events: list[tuple[float, str, int]] = []
         level: float = 0
         for i, p in enumerate(inclusions):
+            original_index = int(perm[i])  # mapping from shuffled index i to original index
             next_level = level + p
             if next_level < 1 - 1e-9:
-                events.append((level, "start", i))
-                events.append((next_level, "end", i))
+                events.append((level, "start", original_index))
+                events.append((next_level, "end", original_index))
                 level = next_level
             elif next_level > 1 + 1e-9:
-                events.append((level, "start", i))
-                events.append((1, "end", i))
-                events.append((0, "start", i))
-                events.append((next_level - 1, "end", i))
+                events.append((level, "start", original_index))
+                events.append((1, "end", original_index))
+                events.append((0, "start", original_index))
+                events.append((next_level - 1, "end", original_index))
                 level = next_level - 1
             else:
-                events.append((level, "start", i))
-                events.append((1, "end", i))
+                events.append((level, "start", original_index))
+                events.append((1, "end", original_index))
                 level = 0
 
         events.sort()
@@ -50,8 +56,9 @@ class Design:
                 if last_point != point:
                     self.push(Sample(round(point - last_point, 9), frozenset(active)))
                 active.remove(bar_index)
-
             last_point = point
+
+
 
     def copy(self) -> Design:
         new_design = Design(
