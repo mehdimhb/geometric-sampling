@@ -40,7 +40,6 @@ class AStar:
         criteria: Criteria,
         *,
         switch_coefficient: float = 0.5,
-        show_results: int = 0,
         random_pull: bool = False,
         threshold: float = 1e-2,
         rng: np.random.Generator = np.random.default_rng(),
@@ -48,25 +47,13 @@ class AStar:
         self.initial_design = initial_design
         self.criteria = criteria
         self.switch_coefficient = switch_coefficient
-        self.show_results = show_results
         self.random_pull = random_pull
         self.threshold = threshold
         self.rng = rng
 
-        # Compute initial criteria and diagnostics
-        _ = self.criteria(self.initial_design)
-        self.initial_criteria_value = self.criteria.var_NHT
-        self.initial_var_NHT = self.criteria.var_NHT
-        self.initial_var_NHT_y = self.criteria.var_NHT_y
-
+        self.initial_criteria_value = self.criteria(self.initial_design)
         self.best_design = self.initial_design
         self.best_criteria_value = self.initial_criteria_value
-        self.best_cost = self.initial_var_NHT
-        self.best_cost_y = self.initial_var_NHT_y
-
-        # To use these for printing efficiency, user must define threshold_x/y
-        self.threshold_x = getattr(self, "threshold_x", 1.0)
-        self.threshold_y = getattr(self, "threshold_y", 1.0)
 
     def iterate_design(self, design: Design, num_changes: int) -> Design:
         new_design = design.copy()
@@ -92,17 +79,12 @@ class AStar:
         num_new_nodes: int,
         max_open_set_size: int,
         num_changes: int,
-        show_results: int = 1,
     ):
-        initial_efficiency_x = np.round(self.threshold_x / self.initial_var_NHT, 3)
-        initial_efficiency_y = np.round(self.threshold_y / self.initial_var_NHT_y, 3)
-
         closed_set = set()
         open_set = RedBlackTree[Node]()
-        open_set.insert(Node(self.initial_var_NHT, self.initial_design))
+        open_set.insert(Node(self.initial_criteria_value, self.initial_design))
 
         for it in range(max_iterations):
-            print(f"\rProgress: {it/max_iterations:.1%}", end=" ")
             if not open_set:
                 break
             mn = open_set.get_min()
@@ -115,10 +97,7 @@ class AStar:
             for new_design in self.neighbors(
                 current_design, num_new_nodes, num_changes
             ):
-                _ = self.criteria(new_design)   # float return, diagnostics stored as attributes
-                new_criteria_value = self.criteria.var_NHT
-                new_var_NHT = self.criteria.var_NHT
-                new_var_NHT_y = self.criteria.var_NHT_y
+                new_criteria_value = self.criteria(new_design)
 
                 if new_design in closed_set:
                     continue
@@ -134,44 +113,7 @@ class AStar:
                 if new_criteria_value < self.best_criteria_value:
                     self.best_design = new_design
                     self.best_criteria_value = new_criteria_value
-                    self.best_cost = new_var_NHT
-                    self.best_cost_y = new_var_NHT_y
 
-                if new_criteria_value < self.initial_var_NHT:
-                    if self.random_pull:
-                        if self.rng.random() < self.switch_coefficient:
-                            self.best_design = new_design
-                            self.best_criteria_value = new_criteria_value
-                            self.best_cost = new_var_NHT
-                            self.best_cost_y = new_var_NHT_y
-                    else:
-                        self.best_design = new_design
-                        self.best_criteria_value = new_criteria_value
-                        self.best_cost = new_var_NHT
-                        self.best_cost_y = new_var_NHT_y
-
-                        if show_results == 1:
-                            print(
-                                "\n 0eff_x", initial_efficiency_x,
-                                "feff_x", np.round(self.threshold_x / self.best_cost, 3),
-                                "0eff_y", initial_efficiency_y,
-                                "feff_y", np.round(self.threshold_y / self.best_cost_y, 4),
-                                "alpha", self.switch_coefficient,
-                                "deep", getattr(new_design, "changes", "NA"),
-                                "D", len(getattr(new_design, "heap", []))
-                            )
-
-                if self.best_criteria_value < self.threshold:
-                    return it
-        print(
-            "AStar",
-            "\n 0eff_x", initial_efficiency_x,
-            "feff_x", np.round(self.threshold_x / self.best_cost, 3),
-            "0eff_y", initial_efficiency_y,
-            "feff_y", np.round(self.threshold_y / self.best_cost_y, 4),
-            "alpha", self.switch_coefficient,
-            "deep", getattr(new_design, "changes", "NA"),
-            "D", len(getattr(new_design, "heap", []))
-        )
-
+                    if self.best_criteria_value < self.threshold:
+                        return it
         return max_iterations

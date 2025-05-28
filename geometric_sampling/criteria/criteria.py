@@ -8,6 +8,7 @@ from ..design import Design
 
 @dataclass
 class Criteria:
+    main_variable: NDArray
     auxiliary_variable: NDArray
     inclusion_probability: NDArray
 
