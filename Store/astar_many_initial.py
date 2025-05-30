@@ -116,9 +116,6 @@ class AStar:
         max_open_set_size: int,
         num_changes: int,
         show_results: int = 1,
-        random_restart_period: int = 200,   # how often to inject random designs
-        random_injection_count: int = 2,    # how many random designs to inject
-        prune_fraction: float = 0.9         # what fraction of heap to KEEP after pruning
     ):
         initial_efficiency_x = np.round(self.threshold_x / self.initial_var_NHT, 3)
         initial_efficiency_y = np.round(self.threshold_y / self.initial_var_NHT_y, 3)
@@ -128,9 +125,10 @@ class AStar:
         open_set = set()
         counter = itertools.count()
 
+        # Add all kept initial nodes to open set
         for tup in self.initial_nodes:
             heapq.heappush(open_heap, tup)
-            open_set.add(tup[2])
+            open_set.add(tup[2])  # .design
 
         self.best_criteria_value = self.initial_criteria_value
         self.best_cost = self.initial_var_NHT
@@ -159,14 +157,15 @@ class AStar:
                 new_var_NHT = self.criteria.var_NHT
                 new_var_NHT_y = self.criteria.var_NHT_y
 
+                # Only keep a limited open set size
                 tie_id = next(counter)
                 heapq.heappush(open_heap, (new_criteria_value, tie_id, new_design))
                 open_set.add(new_design)
-                # Maintain a hard cap, as before:
                 if len(open_heap) > max_open_set_size:
                     _, _, removed_design = heapq.heappop(open_heap)
                     open_set.discard(removed_design)
 
+                # Only update best if this is better
                 if new_criteria_value < self.best_criteria_value:
                     self.best_design = new_design
                     self.best_criteria_value = new_criteria_value
@@ -187,46 +186,21 @@ class AStar:
                             f"  Design Size (|D|):   {len(getattr(new_design, 'heap', []))}\n"
                             f"  Open set size:       {len(open_set)}\n"
                         )
-            # === RANDOM RESTART/RE-INJECTION ===
-            if it > 0 and it % random_restart_period == 0:
-                for _ in range(random_injection_count):
-                    perm = self.rng.permutation(len(self.inclusions))
-                    shuffled_inclusions = self.inclusions[perm]
-                    perm_list = [int(v) for v in perm]
-                    new_design = Design(inclusions=shuffled_inclusions, perm=perm_list, rng=self.rng)
-                    _ = self.criteria(new_design)
-                    var_nht = self.criteria.var_NHT
-                    tie_id = next(counter)
-                    heapq.heappush(open_heap, (var_nht, tie_id, new_design))
-                    open_set.add(new_design)
-                if show_results:
-                    print(f"\nInjected {random_injection_count} random designs (restart) at iter {it}.")
-
-            # === PRUNING (Batching) ===
-            if len(open_heap) > max_open_set_size:
-                n_keep = max(int(len(open_heap) * prune_fraction), 1)
-                open_heap.sort()
-                open_heap = open_heap[:n_keep]
-                open_set = set(tup[2] for tup in open_heap)
-                heapq.heapify(open_heap)
-                if show_results:
-                    print(f"\nPruned open heap; kept top {n_keep} nodes at iter {it}.")
-
-            if self.best_criteria_value < self.threshold_x:
-                print("\nEarly stopping due to threshold!\n")
-                if show_results == 1 and (it % 10 == 0 or it == max_iterations - 1):
-                    print(
-                        f"\n=== Best Solution Updated at Iteration {it} ===\n"
-                        f"  Best Cost (x):       {np.round(self.best_cost, 3)}\n"
-                        f"  Best Cost (y):       {np.round(self.best_cost_y, 4)}\n"
-                        f"  Criteria Value:      {np.round(self.best_criteria_value, 3)}\n"
-                        f"  Efficiency x (0→f):  {initial_efficiency_x} → {np.round(self.threshold_x / self.best_cost, 3)}\n"
-                        f"  Efficiency y (0→f):  {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 4)}\n"
-                        f"  Alpha:               {self.switch_coefficient}\n"
-                        f"  Design Depth:        {getattr(self.best_design, 'changes', 'NA')}\n"
-                        f"  Design Size (|D|):   {len(getattr(self.best_design, 'heap', []))}\n"
-                        f"  Open set size:       {len(open_set)}\n"
-                    )
-                return it
+                if self.best_criteria_value < self.threshold_x:
+                    print("\nEarly stopping due to threshold!\n")
+                    if show_results == 1 and (it % 10 == 0 or it == max_iterations - 1):
+                        print(
+                            f"\n=== Best Solution Updated at Iteration {it} ===\n"
+                            f"  Best Cost (x):       {np.round(self.best_cost, 3)}\n"
+                            f"  Best Cost (y):       {np.round(self.best_cost_y, 4)}\n"
+                            f"  Criteria Value:      {np.round(self.best_criteria_value, 3)}\n"
+                            f"  Efficiency x (0→f):  {initial_efficiency_x} → {np.round(self.threshold_x / self.best_cost, 3)}\n"
+                            f"  Efficiency y (0→f):  {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 4)}\n"
+                            f"  Alpha:               {self.switch_coefficient}\n"
+                            f"  Design Depth:        {getattr(new_design, 'changes', 'NA')}\n"
+                            f"  Design Size (|D|):   {len(getattr(new_design, 'heap', []))}\n"
+                            f"  Open set size:       {len(open_set)}\n"
+                        )
+                    return it
 
         return max_iterations

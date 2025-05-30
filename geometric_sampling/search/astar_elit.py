@@ -15,7 +15,7 @@ class Node:
     def __lt__(self, other):
         return self.criteria_value < other.criteria_value
 
-class AStar:
+class AStar_elit:
     def __init__(
         self,
         inclusions: np.ndarray,
