@@ -161,10 +161,13 @@ class DesignGenetic(Design):
         summing their probabilities and preserving index metadata from the first occurrence.
         """
         merged: dict[frozenset[int], tuple[float, list[int]]] = {}
+        counter_index = 0
         for sample in self.heap:
             ids = sample.ids
             if ids not in merged:
-                merged[ids] = (sample.probability, sample.index)
+
+                merged[ids] = (sample.probability,[counter_index , []])
+                counter_index+=1
             else:
                 prob, idx = merged[ids]
                 merged[ids] = (prob + sample.probability, idx)
