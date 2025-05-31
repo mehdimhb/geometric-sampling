@@ -64,7 +64,6 @@ class GeneticAlgorithm:
         self.mutation_rate_history: List[float] = []
 
     def _initialize_population(self):
-        # generate twice as many candidates by default
         count = self.pop_size * 2
         candidates: list[tuple[float, DesignGenetic]] = []
 
@@ -73,9 +72,8 @@ class GeneticAlgorithm:
             incl_perm = np.array(self.inclusions)[perm]
             perm_list = [int(v) for v in perm]
 
-            d = DesignGenetic(inclusions=incl_perm, rng=self.rng)
-            d.perm = perm_list
-            # give it a few random iterations to diversify
+            d = DesignGenetic(perm = perm_list, inclusions=incl_perm, rng=self.rng)
+
             for _ in range(self.rng.integers(1, 5)):
                 d.iterate(
                     random_pull=self.random_pull,
@@ -83,11 +81,11 @@ class GeneticAlgorithm:
                     border_units=self.border,
                     partitions=self.partition,
                 )
-
-            score = self.criterion(d)  # lower is better
+            d.merge_identical()
+            score = self.criterion(d)
             candidates.append((score, d))
 
-        # select best pop_size designs (lowest score)
+        # select best
         candidates.sort(key=lambda x: x[0])
         self.population = [d for _, d in candidates[:self.pop_size]]
 
