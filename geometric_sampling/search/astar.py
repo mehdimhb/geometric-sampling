@@ -30,7 +30,7 @@ class AStar:
         random_pull: bool = False,
         rng: np.random.Generator = np.random.default_rng(),
         initial_design: Design = None,
-        initial_design_to_use: int = None,   # NEW parameter!
+        initial_design_to_use: int = None,
     ) -> None:
         self.inclusions = inclusions
         self.criteria = criteria
@@ -47,7 +47,6 @@ class AStar:
         self.initial_info = []
 
         if initial_design is not None:
-            # User provided an initial design
             _ = self.criteria(initial_design)
             var_nht = self.criteria.var_NHT
             var_nht_y = self.criteria.var_NHT_y
@@ -58,27 +57,29 @@ class AStar:
             )
         else:
             for idx in trange(num_initial_nodes, desc="Generating initial designs"):
-                perm = self.rng.permutation(len(inclusions))
-                shuffled_inclusions = inclusions[perm]
-                perm = [int(v) for v in perm]
-                design = Design(inclusions=shuffled_inclusions, perm=perm, rng=rng)
-                _ = self.criteria(design)  # Compute criteria on design
+                perm = self.rng.permutation(len(self.inclusions))
+                incl_perm = self.inclusions[perm]
+                perm_list = [int(v) for v in perm]
+                design = Design(
+                    inclusions=incl_perm,
+                    rng=self.rng,
+                    perm=perm_list
+                )
+                _ = self.criteria(design)
                 var_nht = self.criteria.var_NHT
                 var_nht_y = self.criteria.var_NHT_y
                 self.initial_designs.append(design)
                 self.initial_nodes.append((var_nht, idx, design))
                 self.initial_info.append(
-                    {"var_nht": var_nht, "var_nht_y": var_nht_y, "perm": perm}
+                    {"var_nht": var_nht, "var_nht_y": var_nht_y, "perm": perm_list}
                 )
             print()
-            # Sort and keep only the best 'initial_design_to_use' initial designs
-            k = initial_design_to_use or 1  # Default to 1 if not specified
+            k = initial_design_to_use or 1
             sort_idx = np.argsort([node[0] for node in self.initial_nodes])[:k]
             self.initial_designs = [self.initial_designs[i] for i in sort_idx]
             self.initial_nodes = [self.initial_nodes[i] for i in sort_idx]
             self.initial_info = [self.initial_info[i] for i in sort_idx]
 
-        # Identify best of these for stored info/reference
         initial_best_idx = np.argmin([info["var_nht"] for info in self.initial_info])
         self.initial_design = self.initial_designs[initial_best_idx]
         self.initial_criteria_value = self.initial_info[initial_best_idx]["var_nht"]
@@ -98,6 +99,7 @@ class AStar:
                 random_pull=self.random_pull,
                 switch_coefficient=self.switch_coefficient,
             )
+        new_design.merge_identical()
         return new_design
 
     def neighbors(
@@ -116,9 +118,9 @@ class AStar:
         max_open_set_size: int,
         num_changes: int,
         show_results: int = 1,
-        random_restart_period: int = 200,   # how often to inject random designs
-        random_injection_count: int = 2,    # how many random designs to inject
-        prune_fraction: float = 0.9         # what fraction of heap to KEEP after pruning
+        random_restart_period: int = 200,
+        random_injection_count: int = 2,
+        prune_fraction: float = 0.9,
     ):
         initial_efficiency_x = np.round(self.threshold_x / self.initial_var_NHT, 3)
         initial_efficiency_y = np.round(self.threshold_y / self.initial_var_NHT_y, 3)
@@ -162,7 +164,6 @@ class AStar:
                 tie_id = next(counter)
                 heapq.heappush(open_heap, (new_criteria_value, tie_id, new_design))
                 open_set.add(new_design)
-                # Maintain a hard cap, as before:
                 if len(open_heap) > max_open_set_size:
                     _, _, removed_design = heapq.heappop(open_heap)
                     open_set.discard(removed_design)
@@ -187,13 +188,19 @@ class AStar:
                             f"  Design Size (|D|):   {len(getattr(new_design, 'heap', []))}\n"
                             f"  Open set size:       {len(open_set)}\n"
                         )
+
             # === RANDOM RESTART/RE-INJECTION ===
             if it > 0 and it % random_restart_period == 0:
                 for _ in range(random_injection_count):
                     perm = self.rng.permutation(len(self.inclusions))
-                    shuffled_inclusions = self.inclusions[perm]
+                    incl_perm = self.inclusions[perm]
                     perm_list = [int(v) for v in perm]
-                    new_design = Design(inclusions=shuffled_inclusions, perm=perm_list, rng=self.rng)
+                    new_design = Design(
+                        inclusions=incl_perm,
+                        rng=self.rng,
+                        perm=perm_list
+                    )
+
                     _ = self.criteria(new_design)
                     var_nht = self.criteria.var_NHT
                     tie_id = next(counter)
@@ -202,7 +209,6 @@ class AStar:
                 if show_results:
                     print(f"\nInjected {random_injection_count} random designs (restart) at iter {it}.")
 
-            # === PRUNING (Batching) ===
             if len(open_heap) > max_open_set_size:
                 n_keep = max(int(len(open_heap) * prune_fraction), 1)
                 open_heap.sort()
