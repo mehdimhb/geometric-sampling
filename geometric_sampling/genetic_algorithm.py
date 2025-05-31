@@ -1,5 +1,6 @@
 import time
 import numpy as np
+from tqdm import trange
 from typing import List, Tuple, Optional
 
 from geometric_sampling import random
@@ -63,17 +64,32 @@ class GeneticAlgorithm:
         self.mutation_rate_history: List[float] = []
 
     def _initialize_population(self):
-        self.population = []
-        for _ in range(self.pop_size):
-            d = DesignGenetic(self.inclusions, rng=self.rng)
-            for __ in range(self.rng.integers(1, 5)):
+        # generate twice as many candidates by default
+        count = self.pop_size * 2
+        candidates: list[tuple[float, DesignGenetic]] = []
+
+        for _ in trange(count, desc="Generating initial designs"):
+            perm = self.rng.permutation(len(self.inclusions))
+            incl_perm = np.array(self.inclusions)[perm]
+            perm_list = [int(v) for v in perm]
+
+            d = DesignGenetic(inclusions=incl_perm, rng=self.rng)
+            d.perm = perm_list
+            # give it a few random iterations to diversify
+            for _ in range(self.rng.integers(1, 5)):
                 d.iterate(
                     random_pull=self.random_pull,
                     switch_coefficient=self.switch_coef,
                     border_units=self.border,
                     partitions=self.partition,
                 )
-            self.population.append(d)
+
+            score = self.criterion(d)  # lower is better
+            candidates.append((score, d))
+
+        # select best pop_size designs (lowest score)
+        candidates.sort(key=lambda x: x[0])
+        self.population = [d for _, d in candidates[:self.pop_size]]
 
     def _evaluate(self, pop: List[DesignGenetic]) -> np.ndarray:
         vals = np.array([self.criterion(design) for design in pop])
