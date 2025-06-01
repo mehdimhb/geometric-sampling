@@ -24,6 +24,7 @@ class AStar:
         *,
         num_initial_nodes: int = 1,
         x,
+        y,
         threshold_x: float = 1.0,
         threshold_y: float = 1.0,
         switch_coefficient: float = 0.5,
@@ -40,6 +41,7 @@ class AStar:
         self.show_results = show_results
         self.random_pull = random_pull
         self.x = x
+        self.y = y
         self.threshold_x = threshold_x
         self.threshold_y = threshold_y
         self.rng = rng
@@ -59,15 +61,23 @@ class AStar:
                 {"var_nht": var_nht, "var_nht_y": var_nht_y, "perm": getattr(initial_design, 'perm', None)}
             )
         else:
+            x_std = (x - np.mean(x)) / np.std(x)
+            N = len(x)
+            rho = np.corrcoef(x, y)[0, 1]  # correlation coefficient between x and y
             best_eff = -np.inf  # efficiency is threshold_x / var_nht (the higher the better)
+            best_eff_y = -np.inf
             for idx in trange(num_initial_nodes, desc="Generating initial designs"):
                 if idx == 0:
-                    print("bale")
-                    perm = np.argsort(-self.x)  # increasing order of x
+                    perm = np.argsort(self.x)  # increasing order of x
                     #perm = self.rng.permutation(len(self.inclusions))
 
+                elif idx % 2 == 0:
+                    error = rng.normal(0, 1, N)
+                    pseudo_y = rho * x_std + np.sqrt(1 - rho**2) * error
+                    perm = np.argsort(pseudo_y)
                 else:
                     perm = self.rng.permutation(len(self.inclusions))
+
                 incl_perm = self.inclusions[perm]
                 design = Design(
                     inclusions=incl_perm,
@@ -93,6 +103,10 @@ class AStar:
                 if eff > best_eff:
                     print(f"New best at idx={idx}: efficiency x = {eff:.4f} and efficiency y = {eff_y:.4f}")
                     best_eff = eff
+                # if eff_y > best_eff_y:
+                #     print(f"New best at idx={idx}: efficiency x = {eff:.4f} and efficiency y = {eff_y:.4f}")
+                #     best_eff_y = eff_y
+                
             print()
             k = initial_design_to_use or 1
             sort_idx = np.argsort([node[0] for node in self.initial_nodes])[:k]
