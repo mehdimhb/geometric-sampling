@@ -4,8 +4,8 @@ import numpy as np
 from joblib import Parallel, delayed
 from dataclasses import dataclass
 
-from ..criteria.criteria import Criteria
-from ..design import Design
+from ..geometric_sampling.criteria.criteria import Criteria
+from ..geometric_sampling.design import Design
 
 @dataclass(frozen=True, order=False, eq=False)
 class Node:
