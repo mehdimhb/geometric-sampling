@@ -86,12 +86,12 @@ class AStar:
                     perm = sorted_z_perm
                     sorting_method = 'z'
                 elif idx == 2:
-                    perm = np.argsort(z_hat)
+                    perm = np.argsort(-z_hat)
                     sorting_method = 'z/pi'
 
                 elif 3 <= idx < self.swap_iterations:
                     sorting_method = 'swap'
-                    perm = sorted_z_perm.copy()
+                    perm = np.argsort(np.array(range(N))).copy()
                     indices = self.rng.choice(N, size=self.swap_units, replace=False)
                     for i in range(self.swap_units):
                         j = indices[i]
@@ -257,7 +257,16 @@ class AStar:
 
             if it > 0 and it % random_restart_period == 0:
                 for _ in range(random_injection_count):
-                    perm = self.rng.permutation(len(self.inclusions))
+                    N = len(self.inclusions)
+                    perm = np.argsort(np.array(range(N))).copy()
+                    indices = self.rng.choice(N, size=self.swap_units, replace=False)
+                    for i in range(self.swap_units):
+                        j = indices[i]
+                        offset = self.rng.integers(-self.swap_distance, self.swap_distance + 1)
+                        k = j + offset
+                        if 0 <= k < N and k != j:
+                            perm[j], perm[k] = perm[k], perm[j]
+            
                     incl_perm = self.inclusions[perm]
                     perm_list = [int(v) for v in perm]
                     new_design = Design(
