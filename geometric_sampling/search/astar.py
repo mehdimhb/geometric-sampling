@@ -89,16 +89,16 @@ class AStar:
                     perm = np.argsort(-z_hat)
                     sorting_method = 'z/pi'
 
-                elif 3 <= idx < self.swap_iterations:
-                    sorting_method = 'swap'
-                    perm = np.argsort(np.array(range(N))).copy()
-                    indices = self.rng.choice(N, size=self.swap_units, replace=False)
-                    for i in range(self.swap_units):
-                        j = indices[i]
-                        offset = self.rng.integers(-self.swap_distance, self.swap_distance + 1)
-                        k = j + offset
-                        if 0 <= k < N and k != j:
-                            perm[j], perm[k] = perm[k], perm[j]
+                # elif 3 <= idx < self.swap_iterations:
+                #     sorting_method = 'swap'
+                #     perm = np.argsort(np.array(range(N))).copy()
+                #     indices = self.rng.choice(N, size=self.swap_units, replace=False)
+                #     for i in range(self.swap_units):
+                #         j = indices[i]
+                #         offset = self.rng.integers(-self.swap_distance, self.swap_distance + 1)
+                #         k = j + offset
+                #         if 0 <= k < N and k != j:
+                #             perm[j], perm[k] = perm[k], perm[j]
 
                 elif idx % 2 == 0 or idx % 3 == 0:
                     sorting_method = 'z_family'
@@ -119,6 +119,7 @@ class AStar:
                     rng=self.rng,
                     perm=[int(v) for v in perm]
                 )
+             
                 _ = self.criteria(design)
                 #print('injana',sorting_method, idx, np.round(_))
                 var_nht = self.criteria.var_NHT
@@ -259,13 +260,13 @@ class AStar:
                 for _ in range(random_injection_count):
                     N = len(self.inclusions)
                     perm = np.argsort(np.array(range(N))).copy()
-                    indices = self.rng.choice(N, size=self.swap_units, replace=False)
-                    for i in range(self.swap_units):
-                        j = indices[i]
-                        offset = self.rng.integers(-self.swap_distance, self.swap_distance + 1)
-                        k = j + offset
-                        if 0 <= k < N and k != j:
-                            perm[j], perm[k] = perm[k], perm[j]
+                    # indices = self.rng.choice(N, size=self.swap_units, replace=False)
+                    # for i in range(self.swap_units):
+                    #     j = indices[i]
+                    #     offset = self.rng.integers(-self.swap_distance, self.swap_distance + 1)
+                    #     k = j + offset
+                    #     if 0 <= k < N and k != j:
+                    #         perm[j], perm[k] = perm[k], perm[j]
             
                     incl_perm = self.inclusions[perm]
                     perm_list = [int(v) for v in perm]
