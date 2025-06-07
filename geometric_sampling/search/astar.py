@@ -36,6 +36,9 @@ class AStar:
         initial_design: Design = None,
         initial_design_to_use: int = None,
         var_percent_exected: float = 1,
+        swap_iterations: int = 10,
+        swap_distance: int = 3,
+        swap_units: int = 2,
     ) -> None:
         self.inclusions = inclusions
         self.criteria = criteria
@@ -51,6 +54,9 @@ class AStar:
         self.var_nht_y_0 = var_nht_y_0
         self.num_initial_nodes = num_initial_nodes
         self.var_percent_exected = var_percent_exected
+        self.swap_iterations = swap_iterations
+        self.swap_distance = swap_distance
+        self.swap_units = swap_units
         self.initial_designs = []
         self.initial_nodes = []
         self.initial_info = []
@@ -67,18 +73,38 @@ class AStar:
         else:
             z_std = (z - np.mean(z)) / np.std(z)
             N = len(z)
-            rho = np.corrcoef(z, y)[0, 1]  # correlation coefficient between x and y
-            best_eff = -np.inf  # efficiency is threshold_z / var_nht (the higher the better)
+            rho = np.corrcoef(z, y)[0, 1]
+            best_eff = -np.inf
+            sorted_z_perm = np.argsort(self.z)
             for idx in trange(num_initial_nodes, desc="Generating initial designs"):
                 if idx == 0:
-                    perm = np.argsort(np.array(range(N)))  # increasing order of x
+                    perm = np.argsort(np.array(range(N)))
+                    sorting_method = 'Original'
                 elif idx == 1:
-                    perm = np.argsort(self.z)
-                elif idx % 2 == 0:
+                    perm = sorted_z_perm
+                    sorting_method = 'z'
+                elif idx == 2:
+                    perm = np.argsort(self.z / self.inclusions)
+                    sorting_method = 'z/pi'
+
+                elif 3 <= idx < self.swap_iterations:
+                    sorting_method = 'swap'
+                    perm = sorted_z_perm.copy()
+                    indices = self.rng.choice(N, size=self.swap_units, replace=False)
+                    for i in range(self.swap_units):
+                        j = indices[i]
+                        offset = self.rng.integers(-self.swap_distance, self.swap_distance + 1)
+                        k = j + offset
+                        if 0 <= k < N and k != j:
+                            perm[j], perm[k] = perm[k], perm[j]
+
+                elif idx % 2 == 0 or idx % 3 == 0:
+                    sorting_method = 'z_family'
                     error = rng.normal(0, 1, N)
                     pseudo_y = rho * z_std + np.sqrt(1 - rho**2) * error
                     perm = np.argsort(pseudo_y)
                 else:
+                    sorting_method = 'random'
                     perm = self.rng.permutation(len(self.inclusions))
 
                 incl_perm = self.inclusions[perm]
@@ -101,18 +127,13 @@ class AStar:
                     {"var_nht": var_nht, "var_nht_y": var_nht_y, "perm": perm}
                 )
 
-                # Print the very first efficiency
                 if idx == 0:
-                    print(f"Initial design 0: efficiency x={eff:.4f}, y={eff_y:.4f}")
+                    print(f"Initial design 0: method = {sorting_method}, efficiency z = {eff:.4f}, y={eff_y:.4f}")
 
-                # Print if this is the best so far
                 if eff > best_eff:
-                    print(f"New best at idx={idx}: efficiency x = {eff:.4f} and efficiency y = {eff_y:.4f}")
+                    print(f"New best at idx={idx}: method = {sorting_method}, efficiency z = {eff:.4f} and efficiency y = {eff_y:.4f}")
                     best_eff = eff
-                # if eff_y > best_eff_y:
-                #     print(f"New best at idx={idx}: efficiency x = {eff:.4f} and efficiency y = {eff_y:.4f}")
-                #     best_eff_y = eff_y
-                
+
             print()
             k = initial_design_to_use or 1
             sort_idx = np.argsort([node[0] for node in self.initial_nodes])[:k]
@@ -132,6 +153,22 @@ class AStar:
         self.best_cost_y = self.initial_var_NHT_y
         self.best_depth = -1
 
+    def _print_best_solution(self, it, initial_efficiency_z, initial_efficiency_y, new_design, open_set):
+        print(
+            f"\n=== Best Solution Updated at Iteration {it} ===\n"
+            f"  Best Cost (z):       {np.round(self.best_cost, 3)}\n"
+            f"  Best Cost (y):       {np.round(self.best_cost_y, 4)}\n"
+            f"  rho (z, y):       {np.round(np.corrcoef(self.z, self.y)[0,1],3)}\n"
+            f"  rho (p, y):       {np.round(np.corrcoef(self.inclusions, self.y)[0,1],3)}\n"
+            f"  Criteria Value:      {np.round(self.best_criteria_value, 3)}\n"
+            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_0, 7)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost, 7)}\n"
+            f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 7)} → {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 7)}\n"
+            f"  Alpha:               {self.switch_coefficient}\n"
+            f"  Design Depth:        {getattr(new_design, 'changes', 'NA')}\n"
+            f"  Design Size (|D|):   {len(getattr(new_design, 'heap', []))}\n"
+            f"  Open set size:       {len(open_set)}\n"
+        )
+
     def iterate_design(self, design: Design, num_changes: int) -> Design:
         new_design = design.copy()
         for _ in range(num_changes):
@@ -142,12 +179,7 @@ class AStar:
         new_design.merge_identical()
         return new_design
 
-    def neighbors(
-        self,
-        design: Design,
-        num_new_nodes: int,
-        num_changes: int,
-    ) -> Generator[Design, None, None]:
+    def neighbors(self, design: Design, num_new_nodes: int, num_changes: int) -> Generator[Design, None, None]:
         for _ in range(num_new_nodes):
             yield self.iterate_design(design, num_changes)
 
@@ -182,17 +214,15 @@ class AStar:
         for it in range(max_iterations):
             if not open_heap:
                 break
-            print(f"\rProgress: {it/max_iterations:.1%}", end=" ")
+            print(f"\rProgress: {it / max_iterations:.1%}", end=" ")
 
             criteria_value, _, current_design = heapq.heappop(open_heap)
             open_set.discard(current_design)
             if current_design in closed_set:
                 continue
             closed_set.add(current_design)
-            
-            for new_design in self.neighbors(
-                current_design, num_new_nodes, num_changes
-            ):
+
+            for new_design in self.neighbors(current_design, num_new_nodes, num_changes):
                 if new_design in closed_set or new_design in open_set:
                     continue
 
@@ -216,20 +246,8 @@ class AStar:
                     self.best_depth = it
 
                     if show_results == 1 and (it % 10 == 0 or it == max_iterations - 1):
-                        print(
-                            f"\n=== Best Solution Updated at Iteration {it} ===\n"
-                            f"  Best Cost (x):       {np.round(self.best_cost, 3)}\n"
-                            f"  Best Cost (y):       {np.round(self.best_cost_y, 4)}\n"
-                            f"  Criteria Value:      {np.round(self.best_criteria_value, 3)}\n"
-                            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_0, 7)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost, 7)}\n"
-                            f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 7)} → {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 7)}\n"
-                            f"  Alpha:               {self.switch_coefficient}\n"
-                            f"  Design Depth:        {getattr(new_design, 'changes', 'NA')}\n"
-                            f"  Design Size (|D|):   {len(getattr(new_design, 'heap', []))}\n"
-                            f"  Open set size:       {len(open_set)}\n"
-                        )
+                        self._print_best_solution(it, initial_efficiency_z, initial_efficiency_y, new_design, open_set)
 
-            # === RANDOM RESTART/RE-INJECTION ===
             if it > 0 and it % random_restart_period == 0:
                 for _ in range(random_injection_count):
                     perm = self.rng.permutation(len(self.inclusions))
@@ -240,7 +258,6 @@ class AStar:
                         rng=self.rng,
                         perm=perm_list
                     )
-
                     _ = self.criteria(new_design)
                     var_nht = self.criteria.var_NHT
                     tie_id = next(counter)
@@ -260,31 +277,11 @@ class AStar:
 
             if self.best_criteria_value < (self.threshold_z * self.var_percent_exected):
                 print("\nEarly stopping due to threshold!\n")
-                if show_results == 1:# and (it % 10 == 0 or it == max_iterations - 1):
-                    print(
-                        f"\n=== Best Solution Updated at Iteration {it} ===\n"
-                        f"  Best Cost (z):       {np.round(self.best_cost, 3)}\n"
-                        f"  Best Cost (y):       {np.round(self.best_cost_y, 4)}\n"
-                        f"  Criteria Value:      {np.round(self.best_criteria_value, 3)}\n"
-                        f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_0, 7)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost, 7)}\n"
-                        f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 7)} → {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 7)}\n"
-                        f"  Alpha:               {self.switch_coefficient}\n"
-                        f"  Design Depth:        {getattr(self.best_design, 'changes', 'NA')}\n"
-                        f"  Design Size (|D|):   {len(getattr(self.best_design, 'heap', []))}\n"
-                        f"  Open set size:       {len(open_set)}\n"
-                    )
+                if show_results == 1:
+                    self._print_best_solution(it, initial_efficiency_z, initial_efficiency_y, new_design, open_set)
                 return it
+
             if show_results == 1 and (it == 1 or it == max_iterations - 1):
-                        print(
-                            f"\n=== Best Solution Updated at Iteration {it} ===\n"
-                            f"  Best Cost (z):       {np.round(self.best_cost, 3)}\n"
-                            f"  Best Cost (y):       {np.round(self.best_cost_y, 4)}\n"
-                            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_0, 7)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost, 7)}\n"
-                            f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 7)} → {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 7)}\n"
-                            f"  Alpha:               {self.switch_coefficient}\n"
-                            f"  Design Depth:        {getattr(new_design, 'changes', 'NA')}\n"
-                            f"  Design Size (|D|):   {len(getattr(new_design, 'heap', []))}\n"
-                            f"  Open set size:       {len(open_set)}\n"
-                        )
+                self._print_best_solution(it, initial_efficiency_z, initial_efficiency_y, new_design, open_set)
 
         return max_iterations

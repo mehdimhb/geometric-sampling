@@ -1,6 +1,7 @@
 
 === Run at 2025-06-01 20:24:18 ===
-y <- P85; z <- ME84; p <- S82, n = 5, efficiency of cube sampling x 3.07 
+y <- P85; z <- ME84; p <- S82, n = 5, 
+efficiency of cube sampling x 3.07 
 efficiency of cube sampling y 2.87
 max_open_set_size      = 20000
 switch_coefficient     = .5
