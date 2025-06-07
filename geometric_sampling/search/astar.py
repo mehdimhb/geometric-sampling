@@ -73,18 +73,20 @@ class AStar:
         else:
             z_std = (z - np.mean(z)) / np.std(z)
             N = len(z)
+            z_hat = self.z / self.inclusions
             rho = np.corrcoef(z, y)[0, 1]
             best_eff = -np.inf
             sorted_z_perm = np.argsort(self.z)
             for idx in trange(num_initial_nodes, desc="Generating initial designs"):
                 if idx == 0:
                     perm = np.argsort(np.array(range(N)))
+                    #perm = sorted_z_perm
                     sorting_method = 'Original'
                 elif idx == 1:
                     perm = sorted_z_perm
                     sorting_method = 'z'
                 elif idx == 2:
-                    perm = np.argsort(self.z / self.inclusions)
+                    perm = np.argsort(z_hat)
                     sorting_method = 'z/pi'
 
                 elif 3 <= idx < self.swap_iterations:
@@ -104,7 +106,11 @@ class AStar:
                     pseudo_y = rho * z_std + np.sqrt(1 - rho**2) * error
                     perm = np.argsort(pseudo_y)
                 else:
-                    sorting_method = 'random'
+                    # sorting_method = 'z_h'
+                    # sorting_method = 'z_family'
+                    # error = rng.normal(0, 1, N)
+                    # pseudo_y = rho * z_std + np.sqrt(1 - rho**2) * error
+                    # perm = np.argsort(pseudo_y)
                     perm = self.rng.permutation(len(self.inclusions))
 
                 incl_perm = self.inclusions[perm]
@@ -114,6 +120,7 @@ class AStar:
                     perm=[int(v) for v in perm]
                 )
                 _ = self.criteria(design)
+                #print('injana',sorting_method, idx, np.round(_))
                 var_nht = self.criteria.var_NHT
                 var_nht_y = self.criteria.var_NHT_y
                 if idx == 0:
@@ -130,7 +137,7 @@ class AStar:
                 if idx == 0:
                     print(f"Initial design 0: method = {sorting_method}, efficiency z = {eff:.4f}, y={eff_y:.4f}")
 
-                if eff > best_eff:
+                if eff >= best_eff:
                     print(f"New best at idx={idx}: method = {sorting_method}, efficiency z = {eff:.4f} and efficiency y = {eff_y:.4f}")
                     best_eff = eff
 
