@@ -89,16 +89,16 @@ class AStar:
                     perm = np.argsort(-z_hat)
                     sorting_method = 'z/pi'
 
-                # elif 3 <= idx < self.swap_iterations:
-                #     sorting_method = 'swap'
-                #     perm = np.argsort(np.array(range(N))).copy()
-                #     indices = self.rng.choice(N, size=self.swap_units, replace=False)
-                #     for i in range(self.swap_units):
-                #         j = indices[i]
-                #         offset = self.rng.integers(-self.swap_distance, self.swap_distance + 1)
-                #         k = j + offset
-                #         if 0 <= k < N and k != j:
-                #             perm[j], perm[k] = perm[k], perm[j]
+                elif 3 <= idx < self.swap_iterations:
+                    sorting_method = 'swap'
+                    perm = np.argsort(np.array(range(N))).copy()
+                    indices = self.rng.choice(N, size=self.swap_units, replace=False)
+                    for i in range(self.swap_units):
+                        j = indices[i]
+                        offset = self.rng.integers(-self.swap_distance, self.swap_distance + 1)
+                        k = j + offset
+                        if 0 <= k < N and k != j:
+                            perm[j], perm[k] = perm[k], perm[j]
 
                 elif idx % 2 == 0 or idx % 3 == 0:
                     sorting_method = 'z_family'
@@ -111,6 +111,7 @@ class AStar:
                     # error = rng.normal(0, 1, N)
                     # pseudo_y = rho * z_std + np.sqrt(1 - rho**2) * error
                     # perm = np.argsort(pseudo_y)
+                    #print(nothing)
                     perm = self.rng.permutation(len(self.inclusions))
 
                 incl_perm = self.inclusions[perm]
