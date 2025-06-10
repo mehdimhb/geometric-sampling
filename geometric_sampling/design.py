@@ -75,10 +75,7 @@ class Design:
                 active.remove(bar_index)
             last_point = point
 
-    # ... rest of your Design class unchanged ...
-    # (copy, pull, push, merge_identical, switch, iterate, show, __iter__, __eq__, __hash__)
-
-
+    
     def copy(self) -> Design:
         new_design = Design(
             rng=self.rng,

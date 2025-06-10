@@ -29,7 +29,10 @@ class AStar:
         var_nht_y_0: float = 1,
         threshold_z: float = 1.0,
         threshold_y: float = 1.0,
-        switch_coefficient: float = 0.5,
+        switch_lower: float = 0.3,
+        switch_upper: float = 0.7,
+        num_changes_lower: int = 1,
+        num_changes_upper: int = 3,
         show_results: int = 0,
         random_pull: bool = False,
         rng: np.random.Generator = np.random.default_rng(),
@@ -42,7 +45,10 @@ class AStar:
     ) -> None:
         self.inclusions = inclusions
         self.criteria = criteria
-        self.switch_coefficient = switch_coefficient
+        self.switch_lower = switch_lower
+        self.switch_upper = switch_upper
+        self.num_changes_lower = num_changes_lower
+        self.num_changes_upper = num_changes_upper
         self.show_results = show_results
         self.random_pull = random_pull
         self.z = z
@@ -162,7 +168,11 @@ class AStar:
         self.best_cost_y = self.initial_var_NHT_y
         self.best_depth = -1
 
-    def _print_best_solution(self, it, initial_efficiency_z, initial_efficiency_y, new_design, open_set):
+    def _print_best_solution(self, it, initial_efficiency_z, initial_efficiency_y, new_design, open_set, switch_coefficient, num_changes):
+        N = len(self.inclusions)
+        n = np.round(np.sum(self.inclusions))
+        var_srs_z = N**2 * (1-n/N) * np.var(self.z)/n
+        var_srs_y = N**2 * (1-n/N) * np.var(self.y)/n
         print(
             f"\n=== Best Solution Updated at Iteration {it} ===\n"
             f"  Best Cost (z):       {np.round(self.best_cost, 3)}\n"
@@ -170,34 +180,37 @@ class AStar:
             f"  rho (z, y):       {np.round(np.corrcoef(self.z, self.y)[0,1],3)}\n"
             f"  rho (p, y):       {np.round(np.corrcoef(self.inclusions, self.y)[0,1],3)}\n"
             f"  Criteria Value:      {np.round(self.best_criteria_value, 3)}\n"
-            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_0, 7)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost, 7)}\n"
-            f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 7)} → {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 7)}\n"
-            f"  Alpha:               {self.switch_coefficient}\n"
+            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_0, 7)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost, 2)}\n"
+            f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 7)} → {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 2)}\n"
+            f"  Efficiency z (srs):  {np.round(var_srs_z / self.var_nht_0, 7)} → {initial_efficiency_z} → {np.round(var_srs_z / self.best_cost, 2)}\n"
+            f"  Efficiency y (srs):  {np.round(var_srs_y / self.var_nht_y_0, 7)} → {initial_efficiency_y} → {np.round(var_srs_y / self.best_cost_y, 2)}\n"
+            f"  Alpha:               {switch_coefficient}\n"
+            f"  Num changes:         {num_changes}\n"
             f"  Design Depth:        {getattr(new_design, 'changes', 'NA')}\n"
             f"  Design Size (|D|):   {len(getattr(new_design, 'heap', []))}\n"
             f"  Open set size:       {len(open_set)}\n"
         )
 
-    def iterate_design(self, design: Design, num_changes: int) -> Design:
+    def iterate_design(self, design: Design):
         new_design = design.copy()
+        num_changes = self.rng.integers(self.num_changes_lower, self.num_changes_upper + 1)
+        switch_coef = self.rng.uniform(self.switch_lower, self.switch_upper)
         for _ in range(num_changes):
             new_design.iterate(
                 random_pull=self.random_pull,
-                switch_coefficient=self.switch_coefficient,
+                switch_coefficient=switch_coef,
             )
-        new_design.merge_identical()
-        return new_design
-
-    def neighbors(self, design: Design, num_new_nodes: int, num_changes: int) -> Generator[Design, None, None]:
+        return new_design, switch_coef, num_changes
+    
+    def neighbors(self, design: Design, num_new_nodes: int):
         for _ in range(num_new_nodes):
-            yield self.iterate_design(design, num_changes)
-
+            yield self.iterate_design(design)
+    
     def run(
         self,
         max_iterations: int,
         num_new_nodes: int,
         max_open_set_size: int,
-        num_changes: int,
         show_results: int = 1,
         random_restart_period: int = 200,
         random_injection_count: int = 2,
@@ -231,7 +244,7 @@ class AStar:
                 continue
             closed_set.add(current_design)
 
-            for new_design in self.neighbors(current_design, num_new_nodes, num_changes):
+            for new_design, switch_coefficient, num_changes in self.neighbors(current_design, num_new_nodes):
                 if new_design in closed_set or new_design in open_set:
                     continue
 
@@ -255,7 +268,7 @@ class AStar:
                     self.best_depth = it
 
                     if show_results == 1 and (it % 10 == 0 or it == max_iterations - 1):
-                        self._print_best_solution(it, initial_efficiency_z, initial_efficiency_y, new_design, open_set)
+                        self._print_best_solution(it, initial_efficiency_z, initial_efficiency_y, new_design, open_set, switch_coefficient, num_changes)
 
             if it > 0 and it % random_restart_period == 0:
                 for _ in range(random_injection_count):
@@ -296,10 +309,10 @@ class AStar:
             if self.best_criteria_value < (self.threshold_z * self.var_percent_exected):
                 print("\nEarly stopping due to threshold!\n")
                 if show_results == 1:
-                    self._print_best_solution(it, initial_efficiency_z, initial_efficiency_y, new_design, open_set)
+                    self._print_best_solution(it, initial_efficiency_z, initial_efficiency_y, new_design, open_set, switch_coefficient, num_changes)
                 return it
 
             if show_results == 1 and (it == 1 or it == max_iterations - 1):
-                self._print_best_solution(it, initial_efficiency_z, initial_efficiency_y, new_design, open_set)
+                self._print_best_solution(it, initial_efficiency_z, initial_efficiency_y, new_design, open_set, switch_coefficient, num_changes)
 
         return max_iterations
