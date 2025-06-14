@@ -122,7 +122,7 @@ class AStar:
 
                 incl_perm = self.inclusions[perm]
                 design = Design(
-                    inclusions=incl_perm,
+                    inclusions=self.inclusions,
                     rng=self.rng,
                     perm=[int(v) for v in perm]
                 )
@@ -180,10 +180,10 @@ class AStar:
             f"  rho (z, y):       {np.round(np.corrcoef(self.z, self.y)[0,1],3)}\n"
             f"  rho (p, y):       {np.round(np.corrcoef(self.inclusions, self.y)[0,1],3)}\n"
             f"  Criteria Value:      {np.round(self.best_criteria_value, 3)}\n"
-            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_0, 7)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost, 2)}\n"
-            f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 7)} → {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 2)}\n"
-            f"  Efficiency z (srs):  {np.round(var_srs_z / self.var_nht_0, 7)} → {initial_efficiency_z} → {np.round(var_srs_z / self.best_cost, 2)}\n"
-            f"  Efficiency y (srs):  {np.round(var_srs_y / self.var_nht_y_0, 7)} → {initial_efficiency_y} → {np.round(var_srs_y / self.best_cost_y, 2)}\n"
+            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_0, 3)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost, 4)}\n"
+            f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 3)} → {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 4)}\n"
+            f"  Efficiency z (srs):  {np.round(var_srs_z / self.var_nht_0, 3)} → {initial_efficiency_z} → {np.round(var_srs_z / self.best_cost, 4)}\n"
+            f"  Efficiency y (srs):  {np.round(var_srs_y / self.var_nht_y_0, 3)} → {initial_efficiency_y} → {np.round(var_srs_y / self.best_cost_y, 4)}\n"
             f"  Alpha:               {switch_coefficient}\n"
             f"  Num changes:         {num_changes}\n"
             f"  Design Depth:        {getattr(new_design, 'changes', 'NA')}\n"
