@@ -10,6 +10,7 @@ class Design:
         inclusions: Optional[Collection[float]] = None,
         perm: Optional[list[int]] = None,
         rng: np.random.Generator = np.random.default_rng(),
+        #balance_method = 'original'
     ):
         self.heap = MaxHeap[Sample](rng=rng)
         self.rng = rng
@@ -17,6 +18,7 @@ class Design:
 
         # Compute permutation and its inverse
         if inclusions is not None:
+            self.inclusions = np.array(inclusions).copy()
             if perm is not None:
                 self.perm = np.asarray(perm)
             else:
@@ -29,6 +31,7 @@ class Design:
             self.inverse_perm[self.perm] = np.arange(len(self.perm))
 
         else:
+            self.inclusions = None
             self.perm = None
             self.inverse_perm = None
 

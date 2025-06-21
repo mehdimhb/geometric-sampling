@@ -5,8 +5,8 @@ from typing import Generator, Any
 import numpy as np
 from tqdm import trange
 
-from ..criteria.criteria import Criteria
-from ..design import Design
+from ..geometric_sampling.criteria.criteria import Criteria
+from ..geometric_sampling.design import Design
 
 @dataclass(frozen=True, order=False, eq=False)
 class Node:
@@ -26,7 +26,6 @@ class AStar:
         z,
         y,
         var_nht_0: float = 1,
-        var_nht_z_0: float = 1,
         var_nht_y_0: float = 1,
         threshold_z: float = 1.0,
         threshold_y: float = 1.0,
@@ -58,7 +57,6 @@ class AStar:
         self.threshold_y = threshold_y
         self.rng = rng
         self.var_nht_0 = var_nht_0
-        self.var_nht_z_0 = var_nht_z_0
         self.var_nht_y_0 = var_nht_y_0
         self.num_initial_nodes = num_initial_nodes
         self.var_percent_exected = var_percent_exected
@@ -72,19 +70,18 @@ class AStar:
         if initial_design is not None:
             _ = self.criteria(initial_design)
             var_nht = self.criteria.var_NHT
-            var_nht_z = self.criteria.var_NHT_z
             var_nht_y = self.criteria.var_NHT_y
             self.initial_designs.append(initial_design)
             self.initial_nodes.append((var_nht, 0, initial_design))
             self.initial_info.append(
-                {"var_nht": var_nht, "var_nht_z": var_nht_z, "var_nht_y": var_nht_y, "perm": getattr(initial_design, 'perm', None)}
+                {"var_nht": var_nht, "var_nht_y": var_nht_y, "perm": getattr(initial_design, 'perm', None)}
             )
         else:
             z_std = (self.z - np.mean(self.z)) / np.std(self.z)
             N = len(self.z)
             z_hat = self.z / self.inclusions
             rho = np.corrcoef(self.z, self.y)[0, 1]
-            best_eff_z = -np.inf
+            best_eff = -np.inf
             sorted_z_perm = np.argsort(self.z)
             for idx in trange(num_initial_nodes, desc="Generating initial designs"):
                 if idx == 0:
@@ -131,27 +128,26 @@ class AStar:
                 )
              
                 _ = self.criteria(design)
+                #print('injana',sorting_method, idx, np.round(_))
                 var_nht = self.criteria.var_NHT
-                var_nht_z = self.criteria.var_NHT_z
                 var_nht_y = self.criteria.var_NHT_y
                 if idx == 0:
                     self.var_nht_0 = var_nht
-                    self.var_nht_z_0 = var_nht_z
                     self.var_nht_y_0 = var_nht_y
-                eff_z = self.threshold_z / var_nht_z
+                eff = self.threshold_z / var_nht
                 eff_y = float(self.threshold_y / var_nht_y)
                 self.initial_designs.append(design)
                 self.initial_nodes.append((var_nht, idx, design))
                 self.initial_info.append(
-                    {"var_nht": var_nht, "var_nht_z": var_nht_z, "var_nht_y": var_nht_y, "perm": perm}
+                    {"var_nht": var_nht, "var_nht_y": var_nht_y, "perm": perm}
                 )
 
                 if idx == 0:
-                    print(f"Initial design 0: method = {sorting_method}, efficiency z = {eff_z:.4f}, y={eff_y:.4f}")
+                    print(f"Initial design 0: method = {sorting_method}, efficiency z = {eff:.4f}, y={eff_y:.4f}")
 
-                if eff_z >= best_eff_z:
-                    print(f"New best at idx={idx}: method = {sorting_method}, efficiency z = {eff_z:.4f} and efficiency y = {eff_y:.4f}")
-                    best_eff_z = eff_z
+                if eff >= best_eff:
+                    print(f"New best at idx={idx}: method = {sorting_method}, efficiency z = {eff:.4f} and efficiency y = {eff_y:.4f}")
+                    best_eff = eff
 
             print()
             k = initial_design_to_use or 1
@@ -164,13 +160,11 @@ class AStar:
         self.initial_design = self.initial_designs[initial_best_idx]
         self.initial_criteria_value = self.initial_info[initial_best_idx]["var_nht"]
         self.initial_var_NHT = self.initial_info[initial_best_idx]["var_nht"]
-        self.initial_var_NHT_z = self.initial_info[initial_best_idx]["var_nht_z"]
         self.initial_var_NHT_y = self.initial_info[initial_best_idx]["var_nht_y"]
 
         self.best_design = self.initial_design
         self.best_criteria_value = self.initial_criteria_value
         self.best_cost = self.initial_var_NHT
-        self.best_cost_z = self.initial_var_NHT_z
         self.best_cost_y = self.initial_var_NHT_y
         self.best_depth = -1
 
@@ -181,14 +175,14 @@ class AStar:
         var_srs_y = N**2 * (1-n/N) * np.var(self.y)/n
         print(
             f"\n=== Best Solution Updated at Iteration {it} ===\n"
-            f"  Best Cost (z):       {np.round(self.best_cost_z, 3)}\n"
+            f"  Best Cost (z):       {np.round(self.best_cost, 3)}\n"
             f"  Best Cost (y):       {np.round(self.best_cost_y, 4)}\n"
             f"  rho (z, y):       {np.round(np.corrcoef(self.z, self.y)[0,1],3)}\n"
             f"  rho (p, y):       {np.round(np.corrcoef(self.inclusions, self.y)[0,1],3)}\n"
             f"  Criteria Value:      {np.round(self.best_criteria_value, 3)}\n"
-            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_z_0, 3)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost_z, 4)}\n"
+            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_0, 3)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost, 4)}\n"
             f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 3)} → {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 4)}\n"
-            f"  Efficiency z (srs):  {np.round(var_srs_z / self.var_nht_z_0, 3)} → {initial_efficiency_z} → {np.round(var_srs_z / self.best_cost_z, 4)}\n"
+            f"  Efficiency z (srs):  {np.round(var_srs_z / self.var_nht_0, 3)} → {initial_efficiency_z} → {np.round(var_srs_z / self.best_cost, 4)}\n"
             f"  Efficiency y (srs):  {np.round(var_srs_y / self.var_nht_y_0, 3)} → {initial_efficiency_y} → {np.round(var_srs_y / self.best_cost_y, 4)}\n"
             f"  Alpha:               {switch_coefficient}\n"
             f"  Num changes:         {num_changes}\n"
@@ -224,8 +218,7 @@ class AStar:
         num_top_restart_nodes: int = 10,
         stuck_fraction: float = 0.1,
     ):
-        #initial_efficiency_z = np.round(self.threshold_z / self.initial_var_NHT, 3)
-        initial_efficiency_z = np.round(self.threshold_z / self.initial_var_NHT_z, 3)
+        initial_efficiency_z = np.round(self.threshold_z / self.initial_var_NHT, 3)
         initial_efficiency_y = np.round(self.threshold_y / self.initial_var_NHT_y, 3)
 
         closed_set = set()
@@ -240,7 +233,6 @@ class AStar:
 
         self.best_criteria_value = self.initial_criteria_value
         self.best_cost = self.initial_var_NHT
-        self.best_cost_z = self.initial_var_NHT_z
         self.best_cost_y = self.initial_var_NHT_y
         self.best_depth = 0
 
@@ -264,7 +256,6 @@ class AStar:
                 _ = self.criteria(new_design)
                 new_criteria_value = self.criteria.var_NHT
                 new_var_NHT = self.criteria.var_NHT
-                new_var_NHT_z = self.criteria.var_NHT_z
                 new_var_NHT_y = self.criteria.var_NHT_y
 
                 tie_id = next(counter)
@@ -278,7 +269,6 @@ class AStar:
                     self.best_design = new_design
                     self.best_criteria_value = new_criteria_value
                     self.best_cost = new_var_NHT
-                    self.best_cost_z = new_var_NHT_z
                     self.best_cost_y = new_var_NHT_y
                     self.best_depth = it
                     improved_this_iteration = True
