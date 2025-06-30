@@ -30,10 +30,13 @@ class AStar:
         var_nht_y_0: float = 1,
         threshold_z: float = 1.0,
         threshold_y: float = 1.0,
+        threshold_z_cube: float = 1.0,
+        threshold_y_cube: float = 1.0,
         switch_lower: float = 0.3,
         switch_upper: float = 0.7,
         num_changes_lower: int = 1,
         num_changes_upper: int = 3,
+        balance_method: str = 'origine',
         show_results: int = 0,
         random_pull: bool = False,
         rng: np.random.Generator = np.random.default_rng(),
@@ -56,7 +59,10 @@ class AStar:
         self.y = y
         self.threshold_z = threshold_z
         self.threshold_y = threshold_y
+        self.threshold_z_cube = threshold_z_cube
+        self.threshold_y_cube = threshold_y_cube
         self.rng = rng
+        self.balance_method = balance_method
         self.var_nht_0 = var_nht_0
         self.var_nht_z_0 = var_nht_z_0
         self.var_nht_y_0 = var_nht_y_0
@@ -174,20 +180,24 @@ class AStar:
         self.best_cost_y = self.initial_var_NHT_y
         self.best_depth = -1
 
-    def _print_best_solution(self, it, initial_efficiency_z, initial_efficiency_y, new_design, open_set, switch_coefficient, num_changes):
+    def _print_best_solution(self, it, initial_efficiency_z, initial_efficiency_y, new_E_NHT_z, new_E_NHT_y, num_new_nodes, new_design, open_set, switch_coefficient, num_changes):
         N = len(self.inclusions)
         n = np.round(np.sum(self.inclusions))
         var_srs_z = N**2 * (1-n/N) * np.var(self.z)/n
         var_srs_y = N**2 * (1-n/N) * np.var(self.y)/n
         print(
             f"\n=== Best Solution Updated at Iteration {it} ===\n"
+            f"  Balancing Method:    {self.balance_method}\n"
+            f"  Real and E(.) z,y:   {np.round(np.sum(self.z),2)}→{np.round(new_E_NHT_z,2)}, {np.round(np.sum(self.y),2)}→{np.round(new_E_NHT_y,2)}\n"
             f"  Best Cost (z):       {np.round(self.best_cost_z, 3)}\n"
             f"  Best Cost (y):       {np.round(self.best_cost_y, 4)}\n"
-            f"  rho (z, y):       {np.round(np.corrcoef(self.z, self.y)[0,1],3)}\n"
-            f"  rho (p, y):       {np.round(np.corrcoef(self.inclusions, self.y)[0,1],3)}\n"
+            f"  number of new noded: {num_new_nodes}\n"
+            f"  rho (z, y):          {np.round(np.corrcoef(self.z, self.y)[0,1],3)}\n"
+            f"  rho (z_hat, y_hat):  {np.round(np.corrcoef(self.z/self.inclusions, self.y/self.inclusions)[0,1],3)}\n"
+            f"  rho (p, y):          {np.round(np.corrcoef(self.inclusions, self.y)[0,1],3)}\n"
             f"  Criteria Value:      {np.round(self.best_criteria_value, 3)}\n"
-            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_z_0, 3)} → {initial_efficiency_z} → {np.round(self.threshold_z / self.best_cost_z, 4)}\n"
-            f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 3)} → {initial_efficiency_y} → {np.round(self.threshold_y / self.best_cost_y, 4)}\n"
+            f"  Efficiency z (0→f):  {np.round(self.threshold_z / self.var_nht_z_0, 3)} → {initial_efficiency_z} → dsd {np.round(self.threshold_z / self.best_cost_z, 4)}→ cube {np.round(self.threshold_z_cube / self.best_cost_z, 4)}\n"
+            f"  Efficiency y (0→f):  {np.round(self.threshold_y / self.var_nht_y_0, 3)} → {initial_efficiency_y} → dsd {np.round(self.threshold_y / self.best_cost_y, 4)}→ cube {np.round(self.threshold_y_cube / self.best_cost_y, 4)}\n"
             f"  Efficiency z (srs):  {np.round(var_srs_z / self.var_nht_z_0, 3)} → {initial_efficiency_z} → {np.round(var_srs_z / self.best_cost_z, 4)}\n"
             f"  Efficiency y (srs):  {np.round(var_srs_y / self.var_nht_y_0, 3)} → {initial_efficiency_y} → {np.round(var_srs_y / self.best_cost_y, 4)}\n"
             f"  Alpha:               {switch_coefficient}\n"
@@ -266,7 +276,8 @@ class AStar:
                 new_var_NHT = self.criteria.var_NHT
                 new_var_NHT_z = self.criteria.var_NHT_z
                 new_var_NHT_y = self.criteria.var_NHT_y
-
+                new_E_NHT_y = self.criteria.E_NHT_estimator_y
+                new_E_NHT_z = self.criteria.E_NHT_estimator_z
                 tie_id = next(counter)
                 heapq.heappush(open_heap, (new_criteria_value, tie_id, new_design))
                 open_set.add(new_design)
@@ -285,7 +296,7 @@ class AStar:
 
                     if show_results == 1 and (it % 10 == 0 or it == max_iterations - 1):
                         self._print_best_solution(
-                            it, initial_efficiency_z, initial_efficiency_y,
+                            it, initial_efficiency_z, initial_efficiency_y,  new_E_NHT_z, new_E_NHT_y, num_new_nodes,
                             new_design, open_set, switch_coefficient, num_changes
                         )
 
@@ -337,18 +348,18 @@ class AStar:
                     print(f"\nPruned open heap; kept top {n_keep} nodes at iter {it}.")
 
             # ---- Early stopping (threshold) ----
-            if self.best_criteria_value < (self.threshold_z * self.var_percent_exected):
-                print("\nEarly stopping due to threshold!\n")
-                if show_results == 1:
-                    self._print_best_solution(
-                        it, initial_efficiency_z, initial_efficiency_y,
-                        self.best_design, open_set, switch_coefficient, num_changes
-                    )
-                return it
+            # if self.best_criteria_value < (self.threshold_z * self.var_percent_exected):
+            #     print("\nEarly stopping due to threshold!\n")
+            #     if show_results == 1:
+            #         self._print_best_solution(
+            #             it, initial_efficiency_z, initial_efficiency_y,  new_E_NHT_z, new_E_NHT_y,
+            #             self.best_design, open_set, switch_coefficient, num_changes
+            #         )
+            #     return it
 
             if show_results == 1 and (it == 1 or it == max_iterations - 1):
                 self._print_best_solution(
-                    it, initial_efficiency_z, initial_efficiency_y,
+                    it, initial_efficiency_z, initial_efficiency_y, new_E_NHT_z, new_E_NHT_y, num_new_nodes,
                     self.best_design, open_set, None, None
                 )
 

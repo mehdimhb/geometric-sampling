@@ -1,0 +1,2 @@
+bardia_balance_method,num_new_nodes,num_changes_lower,num_changes_upper,max_open_set_size,switch_lower,switch_upper,max_iterations,num_initial_nodes,initial_design_to_use,num_top_restart_nodes,stuck_fraction,swap_iterations,swap_distance,swap_units,show_results,random_restart_period,random_injection_count,prune_fraction,var_percent_exected
+origin,30,1,3,200000,0.1,0.9,5000,3000,100,10,0.99,2100,3,20,1,10000,500,0.9,0.1
