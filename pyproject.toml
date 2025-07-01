@@ -1,7 +1,7 @@
 [project]
-name = "geometric-sampling"
+name = "graphical-sampling"
 version = "0.4.3"
-description = "Python package for Geometric Sampling Method"
+description = "Python package for Graphical Sampling Method"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -36,4 +36,4 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["geometric_sampling"]
+packages = ["graphical_sampling"]

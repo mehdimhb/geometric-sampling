@@ -1,4 +1,4 @@
-from geometric_sampling.structs import Sample
+from graphical_sampling.structs import Sample
 
 
 def test_almost_zero():

@@ -1,5 +1,5 @@
 import numpy as np
-import geometric_sampling as gs
+import graphical_sampling as gs
 
 
 def test_population():
