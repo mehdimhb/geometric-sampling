@@ -170,3 +170,5 @@ cython_debug/
 
 temp_*
 *.png
+
+.DS_Store
