@@ -1,9 +1,9 @@
 
-# Geometric Sampling Method - Python Package
+# Graphical Sampling Method - Python Package
 
-The Geometric Sampling Method, introduced by Panahbehagh (2024), presents an innovative approach to finite population sampling based on a unique geometric framework. This method allows researchers to visually depict first-order inclusion probabilities (FIP) as bars on a two-dimensional graph. By adjusting the positions of these bars, users can explore a wide range of sampling designs while controlling second-order inclusion probabilities (SIP).
+The Graphical Sampling Method, introduced by Panahbehagh (2025), presents an innovative approach to finite population sampling based on a unique graphical framework. This method allows researchers to visually depict first-order inclusion probabilities (FIP) as bars on a two-dimensional graph. By adjusting the positions of these bars, users can explore a wide range of sampling designs while controlling second-order inclusion probabilities (SIP).
 
-This package, `geometric_sampling`, provides tools for implementing the Geometric Sampling Method and is available on PyPI.
+This package, `graphical_sampling`, provides tools for implementing the Graphical Sampling Method and is available on PyPI.
 
 ---
 
@@ -16,7 +16,7 @@ This package, `geometric_sampling`, provides tools for implementing the Geometri
 
 Install the package via pip:
 ```bash
-pip install geometric_sampling
+pip install graphical_sampling
 ```
 
 ## How to Use
@@ -26,7 +26,7 @@ The package includes core classes and methods to facilitate sampling design crea
 ### Example Usage
 
 ```python
-import geometric_sampling as gm
+import graphical_sampling as gs
 import numpy as np
 
 # Set up random generator and sample data
@@ -40,9 +40,9 @@ inclusion = rng.random(N)
 inclusion *= n / inclusion.sum()
 
 # Define initial sampling design and evaluation criteria
-initial_design = gm.Design(inclusion)
-nht = gm.criteria.VarNHT(x, inclusion)
-astar = gm.search.AStar(initial_design, nht, switch_coefficient=1)
+initial_design = gs.Design(inclusion)
+nht = gs.criteria.VarNHT(x, inclusion)
+astar = gs.search.AStar(initial_design, nht, switch_coefficient=1)
 
 # Display initial criteria and design
 print("Initial criteria value:", astar.initial_criteria_value)
@@ -66,4 +66,4 @@ astar.best_design.show()
 
 ---
 
-For more details, consult the official paper: Panahbehagh, B. (2024). Geometric Sampling Method.
+For more details, consult the official paper: Panahbehagh, B. (2025). Graphical Sampling Method.
