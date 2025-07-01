@@ -19,36 +19,29 @@ class Density:
         kde.fit(coords)
         return kde
 
-    def scale(self, scores):
-        scaled_scores = np.zeros_like(scores)
-        limit = np.sin(np.pi / 8) / np.sin(np.pi / 4)
-        for i, score in enumerate(scores):
-            if score >= 0:
-                scaled_scores[i] = min(score, limit) / limit
-            else:
-                scaled_scores[i] = max(score, -limit) / limit
-        return scaled_scores
+    def scale(self, scores, scaling_factor):
+        return np.clip(scores/scaling_factor, -1, 1)
 
-    def _density(self, shifted_coords: NDArray) -> float:
+    def _density(self, shifted_coords: NDArray):
         shifted_kde = self._kde(shifted_coords)
         density = np.exp(self.kde.score_samples(self.coords))
         shifted_density = np.exp(shifted_kde.score_samples(shifted_coords))
         spread = np.mean(
             self.scale(
-                (density - shifted_density) / np.sqrt(density**2 + shifted_density**2)
+                (density - shifted_density) / (np.sqrt(2) * np.sqrt(density**2 + shifted_density**2)),
+                np.sin(np.pi/8)
             )
         )
         var = np.mean(
-            1
-            - (density + shifted_density)
-            / (np.sqrt(2) * np.sqrt(density**2 + shifted_density**2))
+            self.scale(
+                1 - (density + shifted_density) / (np.sqrt(2) * np.sqrt(density**2 + shifted_density**2)),
+                1 - np.cos(np.pi/8)
+            )
         )
-        scale_for_var = 1 - np.cos(np.pi / 8)
-        var_scaled = min(var, scale_for_var) / scale_for_var
         measure = [
-            #spread,
-            #var_scaled,
-            spread + (np.sign(spread) - spread) * var_scaled,
+            spread,
+            var,
+            spread + (np.sign(spread) - spread) * var,
             # spread + (np.sign(spread) - spread) * var_scaled**2
         ]
         return density, shifted_density, measure
