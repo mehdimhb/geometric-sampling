@@ -57,8 +57,26 @@ class PopulationSimple:
             )
             for units in units_of_basic_zones:
                 units[:, 3] = self._numerical_stabilizer(units[:, 3])
+                # 1. Lexicographical: first x (col 1), then y (col 2)
                 idx = np.lexsort((units[:, 2], units[:, 1]))
-                idx = np.random.permutation(units.shape[0])
+
+                # # 2. Lexicographical: first y (col 2), then x (col 1)
+                # idx = np.lexsort((units[:, 1], units[:, 2]))
+
+                # # 3. Euclidean distance to origin using x (col 1), y (col 2)
+                # idx = np.argsort(np.linalg.norm(units[:, 1:3], axis=1))
+
+                # # 4. Angle from origin (atan2) using x (col 1), y (col 2)
+                # idx = np.argsort(np.arctan2(units[:, 2], units[:, 1]))
+
+                # # 5. Manhattan (L1) distance to origin using x (col 1), y (col 2)
+                # idx = np.argsort(np.abs(units[:, 1]) + np.abs(units[:, 2]))
+
+                # # 6. Projection along [1,1] using x (col 1) and y (col 2)
+                # idx = np.argsort(units[:, 1] + units[:, 2])
+
+                # # 7. Random order
+                # idx = np.random.permutation(units.shape[0])
                 units = units[idx]
                 zones.append(Zone(units=units))
         return zones
