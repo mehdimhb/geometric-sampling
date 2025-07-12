@@ -61,7 +61,7 @@ class PopulationSimple:
                 idx = np.lexsort((units[:, 2], units[:, 1]))
 
                 # # 2. Lexicographical: first y (col 2), then x (col 1)
-                # idx = np.lexsort((units[:, 1], units[:, 2]))
+                idx = np.lexsort((units[:, 1], units[:, 2]))
 
                 # # 3. Euclidean distance to origin using x (col 1), y (col 2)
                 # idx = np.argsort(np.linalg.norm(units[:, 1:3], axis=1))
