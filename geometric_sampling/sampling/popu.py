@@ -75,8 +75,9 @@ class PopulationSimple:
                 # # 6. Projection along [1,1] using x (col 1) and y (col 2)
                 # idx = np.argsort(units[:, 1] + units[:, 2])
 
-                # # 7. Random order
+                # 7. Random order
                 # idx = np.random.permutation(units.shape[0])
+          
                 units = units[idx]
                 zones.append(Zone(units=units))
         return zones
