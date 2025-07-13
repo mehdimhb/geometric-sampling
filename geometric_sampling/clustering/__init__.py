@@ -2,7 +2,7 @@ from .soft_balanced_kmeans import SoftBalancedKMeans
 from .aggregate import AggregateBalancedKMeans
 from .one_boundary import OneBoundaryBalancedKMeans
 from .dubly_balanced_clustering import DublyBalancedKMeans
-from .dubly_balanced_clustering_simple import DublyBalancedKMeansSimple
+from .doubly_balanced_clustering_simple import DoublyBalancedKMeansSimple
 
 
 # from .agg import Agg
@@ -17,6 +17,6 @@ __all__ = [
     "AggregateBalancedKMeans",
     "OneBoundaryBalancedKMeans",
     "DublyBalancedKMeans",
-    "DublyBalancedKMeansSimple",
+    "DoublyBalancedKMeansSimple",
 ]
 # __all__ = ["SoftBalancedKMeans", "AggregateBalancingKmeans", "Agg", "AggOne", "FinalAgg", "FinalAgg2", "SwapAgg"]

@@ -12,6 +12,7 @@ dependencies = [
     "k-means-constrained>=0.7.5",
     "package-sampling>=0.3.0",
     "pandas",
+    "joblib>=1.5.0",
 ]
 authors = [
     { name = "Bardia Panahbehagh", email = "bardia.panah@gmail.com" },

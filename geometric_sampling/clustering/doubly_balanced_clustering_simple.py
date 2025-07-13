@@ -3,7 +3,7 @@ from k_means_constrained import KMeansConstrained
 from scipy.stats import mode
 
 
-class DublyBalancedKMeansSimple:
+class DoublyBalancedKMeansSimple:
     def __init__(self, k, split_size=0.001):
         self.k = k
         self.split_size = split_size
@@ -54,7 +54,7 @@ class DublyBalancedKMeansSimple:
             if len(assignment) > 0:
                 membership[i, assignment[np.argmax(counts)]] = 1.0
 
-     
+
         # Build clusters
         clusters = []
         for j in range(self.k):
@@ -71,4 +71,3 @@ class DublyBalancedKMeansSimple:
             clusters.append(units)
         self.clusters = clusters
         self.membership = membership
-
