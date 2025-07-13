@@ -14,6 +14,7 @@ class KMeansSpatialSamplingSimple:
         n_zones: int | tuple[int, int],
         tolerance: int,
         split_size: float,
+        sort_method: str = "lexico",  # Options: "lexico", "random"
     ) -> None:
         self.coords = coordinate
         self.probs = inclusion_probability
@@ -21,6 +22,7 @@ class KMeansSpatialSamplingSimple:
         self.n_zones = self._pair(n_zones)
         self.tolerance = tolerance
         self.split_size = split_size
+        self.sort_method = sort_method
 
         self.popu = PopulationSimple(
             self.coords,
@@ -29,6 +31,7 @@ class KMeansSpatialSamplingSimple:
             n_zones=n_zones,
             tolerance=self.tolerance,
             split_size=self.split_size,
+            sort_method=self.sort_method, 
         )
         self.rng = np.random.default_rng()
 

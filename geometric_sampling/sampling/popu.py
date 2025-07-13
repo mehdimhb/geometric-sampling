@@ -28,6 +28,7 @@ class PopulationSimple:
         n_zones: tuple[int, int],
         tolerance: int,
         split_size: float,
+        sort_method: str = "lexico",
     ) -> None:
         self.coords = coordinate
         self.probs = inclusion_probability
@@ -35,7 +36,7 @@ class PopulationSimple:
         self.n_zones = n_zones
         self.tolerance = tolerance
         self.split_size = split_size
-
+        self.sort_method = sort_method
         self.clusters = self._generate_clusters()
 
     def _generate_clusters(self) -> list[Cluster]:
@@ -51,35 +52,27 @@ class PopulationSimple:
             units[np.argsort(units[:, 1])], 1 / self.n_zones[0]
         )
         zones = []
-        for zone in vertical_zones:
-            units_of_basic_zones = self._sweep(
-                zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
-            )
-            for units in units_of_basic_zones:
-                units[:, 3] = self._numerical_stabilizer(units[:, 3])
-                # 1. Lexicographical: first x (col 1), then y (col 2)
-                idx = np.lexsort((units[:, 2], units[:, 1]))
+        if self.sort_method == "lexico":
+            for zone in vertical_zones:
+                units_of_basic_zones = self._sweep(
+                    zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
+                )
+                for units in units_of_basic_zones:
+                    units[:, 3] = self._numerical_stabilizer(units[:, 3])
+                    idx = np.lexsort((units[:, 1], units[:, 2]))
+                    units = units[idx]
+                    zones.append(Zone(units=units))
+        elif self.sort_method == "random":
+            for zone in vertical_zones:
+                units_of_basic_zones = self._sweep(
+                    zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
+                )
+                for units in units_of_basic_zones:
+                    units[:, 3] = self._numerical_stabilizer(units[:, 3])
+                    idx = np.random.permutation(units.shape[0])
+                    units = units[idx]
+                    zones.append(Zone(units=units))
 
-                # # 2. Lexicographical: first y (col 2), then x (col 1)
-                idx = np.lexsort((units[:, 1], units[:, 2]))
-
-                # # 3. Euclidean distance to origin using x (col 1), y (col 2)
-                # idx = np.argsort(np.linalg.norm(units[:, 1:3], axis=1))
-
-                # # 4. Angle from origin (atan2) using x (col 1), y (col 2)
-                # idx = np.argsort(np.arctan2(units[:, 2], units[:, 1]))
-
-                # # 5. Manhattan (L1) distance to origin using x (col 1), y (col 2)
-                # idx = np.argsort(np.abs(units[:, 1]) + np.abs(units[:, 2]))
-
-                # # 6. Projection along [1,1] using x (col 1) and y (col 2)
-                # idx = np.argsort(units[:, 1] + units[:, 2])
-
-                # 7. Random order
-                # idx = np.random.permutation(units.shape[0])
-          
-                units = units[idx]
-                zones.append(Zone(units=units))
         return zones
 
     def _sweep(self, units: NDArray, threshold: float) -> list[NDArray]:
@@ -328,3 +321,19 @@ class PopulationSimple:
 
         for ax in axes[n_samples:]:
             fig.delaxes(ax)
+
+
+# # 3. Euclidean distance to origin using x (col 1), y (col 2)
+# idx = np.argsort(np.linalg.norm(units[:, 1:3], axis=1))
+
+# # 4. Angle from origin (atan2) using x (col 1), y (col 2)
+# idx = np.argsort(np.arctan2(units[:, 2], units[:, 1]))
+
+# # 5. Manhattan (L1) distance to origin using x (col 1), y (col 2)
+# idx = np.argsort(np.abs(units[:, 1]) + np.abs(units[:, 2]))
+
+# # 6. Projection along [1,1] using x (col 1) and y (col 2)
+# idx = np.argsort(units[:, 1] + units[:, 2])
+
+# 7. Random order
+# idx = np.random.permutation(units.shape[0])
