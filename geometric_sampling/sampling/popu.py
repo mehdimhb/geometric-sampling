@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from scipy.spatial import ConvexHull, QhullError
 
-from ..clustering import DublyBalancedKMeansSimple
+from ..clustering import DoublyBalancedKMeansSimple
 
 @dataclass
 class Zone:
@@ -40,7 +40,7 @@ class PopulationSimple:
         self.clusters = self._generate_clusters()
 
     def _generate_clusters(self) -> list[Cluster]:
-        dbk = DublyBalancedKMeansSimple(k=self.n_clusters, split_size=self.split_size)
+        dbk = DoublyBalancedKMeansSimple(k=self.n_clusters, split_size=self.split_size)
         dbk.fit(self.coords, self.probs)
         return [
             Cluster(units=units, zones=self._generate_zones(units))
@@ -59,9 +59,10 @@ class PopulationSimple:
                 )
                 for units in units_of_basic_zones:
                     units[:, 3] = self._numerical_stabilizer(units[:, 3])
-                    idx = np.lexsort((units[:, 1], units[:, 2]))
+                    idx = np.lexsort((units[:, 2], units[:, 1]))
                     units = units[idx]
                     zones.append(Zone(units=units))
+        
         elif self.sort_method == "random":
             for zone in vertical_zones:
                 units_of_basic_zones = self._sweep(
@@ -70,6 +71,38 @@ class PopulationSimple:
                 for units in units_of_basic_zones:
                     units[:, 3] = self._numerical_stabilizer(units[:, 3])
                     idx = np.random.permutation(units.shape[0])
+                    units = units[idx]
+                    zones.append(Zone(units=units))
+
+        elif self.sort_method == "angel_0":
+            for zone in vertical_zones:
+                units_of_basic_zones = self._sweep(
+                    zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
+                )
+                for units in units_of_basic_zones:
+                    units[:, 3] = self._numerical_stabilizer(units[:, 3])
+                    idx = np.argsort(np.linalg.norm(units[:, 1:3], axis=1))
+                    units = units[idx]
+                    zones.append(Zone(units=units))
+        
+        elif self.sort_method == "distance_0":
+            for zone in vertical_zones:
+                units_of_basic_zones = self._sweep(
+                    zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
+                )
+                for units in units_of_basic_zones:
+                    units[:, 3] = self._numerical_stabilizer(units[:, 3])
+                    idx = np.argsort(np.linalg.norm(units[:, 1:3], axis=1))
+                    units = units[idx]
+                    zones.append(Zone(units=units))
+        elif self.sort_method == "projection":
+            for zone in vertical_zones:
+                units_of_basic_zones = self._sweep(
+                    zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
+                )
+                for units in units_of_basic_zones:
+                    units[:, 3] = self._numerical_stabilizer(units[:, 3])
+                    idx = np.argsort(units[:, 1] + units[:, 2])
                     units = units[idx]
                     zones.append(Zone(units=units))
 
@@ -323,17 +356,3 @@ class PopulationSimple:
             fig.delaxes(ax)
 
 
-# # 3. Euclidean distance to origin using x (col 1), y (col 2)
-# idx = np.argsort(np.linalg.norm(units[:, 1:3], axis=1))
-
-# # 4. Angle from origin (atan2) using x (col 1), y (col 2)
-# idx = np.argsort(np.arctan2(units[:, 2], units[:, 1]))
-
-# # 5. Manhattan (L1) distance to origin using x (col 1), y (col 2)
-# idx = np.argsort(np.abs(units[:, 1]) + np.abs(units[:, 2]))
-
-# # 6. Projection along [1,1] using x (col 1) and y (col 2)
-# idx = np.argsort(units[:, 1] + units[:, 2])
-
-# 7. Random order
-# idx = np.random.permutation(units.shape[0])
