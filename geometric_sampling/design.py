@@ -119,6 +119,9 @@ class Design:
     def __iter__(self) -> Iterator[Sample]:
         return iter(self.heap)
 
+    def __len__(self) -> int:
+        return len(self.heap)
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Design):
             return NotImplemented

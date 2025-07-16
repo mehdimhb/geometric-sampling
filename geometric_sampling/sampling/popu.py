@@ -37,14 +37,15 @@ class PopulationSimple:
         self.tolerance = tolerance
         self.split_size = split_size
         self.sort_method = sort_method
+        self.dbk = None
         self.clusters = self._generate_clusters()
 
     def _generate_clusters(self) -> list[Cluster]:
-        dbk = DoublyBalancedKMeansSimple(k=self.n_clusters, split_size=self.split_size)
-        dbk.fit(self.coords, self.probs)
+        self.dbk = DoublyBalancedKMeansSimple(k=self.n_clusters, split_size=self.split_size)
+        self.dbk.fit(self.coords, self.probs)
         return [
             Cluster(units=units, zones=self._generate_zones(units))
-            for units in dbk.clusters
+            for units in self.dbk.clusters
         ]
 
     def _generate_zones(self, units) -> list[Zone]:
@@ -62,7 +63,7 @@ class PopulationSimple:
                     idx = np.lexsort((units[:, 2], units[:, 1]))
                     units = units[idx]
                     zones.append(Zone(units=units))
-        
+
         elif self.sort_method == "random":
             for zone in vertical_zones:
                 units_of_basic_zones = self._sweep(
@@ -84,7 +85,7 @@ class PopulationSimple:
                     idx = np.argsort(np.linalg.norm(units[:, 1:3], axis=1))
                     units = units[idx]
                     zones.append(Zone(units=units))
-        
+
         elif self.sort_method == "distance_0":
             for zone in vertical_zones:
                 units_of_basic_zones = self._sweep(
@@ -192,7 +193,7 @@ class PopulationSimple:
         for color_idx, label in enumerate(sorted_order):
             label_to_color[label] = color_idx
         return label_to_color, centroids[sorted_order], sorted_order
-    
+
     def plot(
         self,
         ax=None,
@@ -347,12 +348,11 @@ class PopulationSimple:
                 color="black",
                 marker="X",
                 alpha=0.8,
-                s=5,
+                s=100,
                 label=f"Sample {sample_idx + 1}",
+                zorder=5
             )
             ax.set_title(f"Sample {sample_idx + 1}")
 
         for ax in axes[n_samples:]:
             fig.delaxes(ax)
-
-
