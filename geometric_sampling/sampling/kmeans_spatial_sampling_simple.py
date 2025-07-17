@@ -151,6 +151,8 @@ class KMeansSpatialSamplingSimple:
         samples = []
         samples_probs = []
         for sample_obj in self.design:
+            if len(sample_obj.ids) < self.n:
+                continue
             samples.append(list(sample_obj.ids))
             samples_probs.append(sample_obj.probability)
         return np.array(samples), np.array(samples_probs)
