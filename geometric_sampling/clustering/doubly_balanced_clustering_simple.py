@@ -27,7 +27,7 @@ class DoublyBalancedKMeansSimple:
                 labels[i] = mode(assigned_labels, keepdims=True)[0][0]
         return labels
 
-    def fit(self, coords, probs):
+    def fit(self, coords, probs, population_ids=None):
         self.N = coords.shape[0]
         expanded_coords, expanded_idx = self._generate_expanded_coords(coords, probs)
         cluster_size = len(expanded_idx) // self.k
@@ -59,10 +59,13 @@ class DoublyBalancedKMeansSimple:
         clusters = []
         for j in range(self.k):
             ids = np.where(membership[:, j] > 0)[0]
+            units_ids = ids.copy()
+            if population_ids is not None:
+                units_ids = population_ids[ids]
             membership_weights = membership[ids, j]
             units = np.concatenate(
                 [
-                    ids.reshape(-1, 1),
+                    units_ids.reshape(-1, 1),
                     coords[ids],
                     (probs[ids] * membership_weights).reshape(-1, 1),
                 ],

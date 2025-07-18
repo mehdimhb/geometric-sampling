@@ -28,7 +28,9 @@ class PopulationSimple:
         n_zones: tuple[int, int],
         tolerance: int,
         split_size: float,
+        zone_mode: str = "sweep",
         sort_method: str = "lexico",
+        zonal_sort: str = "lexico"
     ) -> None:
         self.coords = coordinate
         self.probs = inclusion_probability
@@ -36,7 +38,9 @@ class PopulationSimple:
         self.n_zones = n_zones
         self.tolerance = tolerance
         self.split_size = split_size
+        self.zone_mode = zone_mode
         self.sort_method = sort_method
+        self.zonal_sort = zonal_sort
         self.dbk = None
         self.clusters = self._generate_clusters()
 
@@ -48,66 +52,74 @@ class PopulationSimple:
             for units in self.dbk.clusters
         ]
 
-    def _generate_zones(self, units) -> list[Zone]:
+    def _generate_zones(self, units: NDArray) -> list[Zone]:
+        match self.zone_mode:
+            case "cluster":
+                return self._generate_zones_with_cluster(units)
+            case "sweep":
+                return self._generate_zones_with_sweep(units)
+        return [Zone(units=units)]
+
+    def _generate_zones_with_cluster(self, units: NDArray) -> list[Zone]:
+        dbk = DoublyBalancedKMeansSimple(k=np.prod(self.n_zones), split_size=self.split_size)
+        dbk.fit(coords=units[:, 1:3], probs=units[:, 3], population_ids=units[:, 0])
+        zones = []
+        for zone_units in dbk.clusters:
+            zone_units[:, 3] = self._numerical_stabilizer(zone_units[:, 3])
+            zones.append(Zone(units=zone_units))
+        return self._sort_zones(zones)
+
+    def _generate_zones_with_sweep(self, units) -> list[Zone]:
         vertical_zones = self._sweep(
             units[np.argsort(units[:, 1])], 1 / self.n_zones[0]
         )
         zones = []
-        if self.sort_method == "lexico":
-            for zone in vertical_zones:
-                units_of_basic_zones = self._sweep(
-                    zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
-                )
-                for units in units_of_basic_zones:
-                    units[:, 3] = self._numerical_stabilizer(units[:, 3])
-                    idx = np.lexsort((units[:, 2], units[:, 1]))
-                    units = units[idx]
-                    zones.append(Zone(units=units))
+        for zone in vertical_zones:
+            units_of_basic_zones = self._sweep(
+                zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
+            )
+            for zone_units in units_of_basic_zones:
+                zone_units[:, 3] = self._numerical_stabilizer(zone_units[:, 3])
+                idx = self._sort_func(zone_units[:, 1:3], self.sort_method)
+                zone_units = zone_units[idx]
+                zones.append(Zone(units=zone_units))
+        return self._sort_zones(zones)
 
-        elif self.sort_method == "random":
-            for zone in vertical_zones:
-                units_of_basic_zones = self._sweep(
-                    zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
-                )
-                for units in units_of_basic_zones:
-                    units[:, 3] = self._numerical_stabilizer(units[:, 3])
-                    idx = np.random.permutation(units.shape[0])
-                    units = units[idx]
-                    zones.append(Zone(units=units))
+    def _sort_zones(self, zones: list[Zone]) -> list[Zone]:
+        zones_centroids = np.array([
+            zone.units[:, 1:3].mean(axis=0) for zone in zones
+        ])
+        sorted_zones = np.array(zones)
+        idx = self._sort_func(self._normalize(np.array(zones_centroids)), self.zonal_sort)
+        sorted_zones = sorted_zones[idx]
+        sorted_zones = sorted_zones.tolist()
+        return sorted_zones
 
-        elif self.sort_method == "angel_0":
-            for zone in vertical_zones:
-                units_of_basic_zones = self._sweep(
-                    zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
-                )
-                for units in units_of_basic_zones:
-                    units[:, 3] = self._numerical_stabilizer(units[:, 3])
-                    idx = np.argsort(np.linalg.norm(units[:, 1:3], axis=1))
-                    units = units[idx]
-                    zones.append(Zone(units=units))
+    def _normalize(self, coords: np.ndarray) -> np.ndarray:
+        return (coords - coords.min(axis=0)) / (np.ptp(coords, axis=0) + 1e-6)
 
-        elif self.sort_method == "distance_0":
-            for zone in vertical_zones:
-                units_of_basic_zones = self._sweep(
-                    zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
-                )
-                for units in units_of_basic_zones:
-                    units[:, 3] = self._numerical_stabilizer(units[:, 3])
-                    idx = np.argsort(np.linalg.norm(units[:, 1:3], axis=1))
-                    units = units[idx]
-                    zones.append(Zone(units=units))
-        elif self.sort_method == "projection":
-            for zone in vertical_zones:
-                units_of_basic_zones = self._sweep(
-                    zone[np.argsort(zone[:, 2])], 1 / (np.prod(self.n_zones))
-                )
-                for units in units_of_basic_zones:
-                    units[:, 3] = self._numerical_stabilizer(units[:, 3])
-                    idx = np.argsort(units[:, 1] + units[:, 2])
-                    units = units[idx]
-                    zones.append(Zone(units=units))
+    def _sort_func(self, units: NDArray, method: str) -> NDArray:
+        match method:
+            case "lexico":
+                return np.lexsort((units[:, 1], units[:, 0]))
+            case "random":
+                return np.random.permutation(units.shape[0])
+            case "angle_0":
+                angles = np.mod(np.arctan2(units[:, 1], units[:, 0]), 2 * np.pi)
+                return np.argsort(angles)
+            case "distance_0":
+                return np.argsort(np.linalg.norm(units, axis=1))
+            case "projection":
+                return np.argsort(units[:, 0] + units[:, 1])
+            case "center":
+                centroid = units.mean(axis=0)
+                return np.argsort(np.linalg.norm(units - centroid, axis=1))
+            case "spiral":
+                return spiral_sort_indices(units)
+            case "max":
+                return np.argsort(np.max(units, axis=1))
 
-        return zones
+        return np.arange(units.shape[0])
 
     def _sweep(self, units: NDArray, threshold: float) -> list[NDArray]:
         boarder_units_remainings, zones_indices = self._generate_boarders_and_indices(
@@ -284,18 +296,18 @@ class PopulationSimple:
             # Label
             prob_sum = round(cluster.units[:, 3].sum(), 2)
             center = cluster_points.mean(axis=0)
-            ax.text(
-                center[0],
-                center[1],
-                f"{prob_sum}",
-                color="black",
-                fontsize=10,
-                weight="bold",
-                alpha=0.85,
-                ha="center",
-                va="center",
-                zorder=3,
-            )
+            # ax.text(
+            #     center[0],
+            #     center[1],
+            #     f"{prob_sum}",
+            #     color="black",
+            #     fontsize=10,
+            #     weight="bold",
+            #     alpha=0.85,
+            #     ha="center",
+            #     va="center",
+            #     zorder=3,
+            # )
 
             # Zones (match cluster color)
             for zone_idx, zone in enumerate(cluster.zones):
@@ -356,3 +368,65 @@ class PopulationSimple:
 
         for ax in axes[n_samples:]:
             fig.delaxes(ax)
+
+
+def convex_hull_indices(points):
+    """
+    Andrew's monotonic chain algorithm.
+    Input: points as an array of shape (N, 2)
+    Output: list of indices of points forming the convex hull in CCW order.
+    """
+    N = len(points)
+    if N < 3:
+        return list(range(N))
+
+    # Sort points lexicographically by x, then y
+    sorted_idx = np.lexsort((points[:, 1], points[:, 0]))
+    pts = points[sorted_idx]
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    lower = []
+    for idx in sorted_idx:
+        while len(lower) >= 2 and cross(points[lower[-2]], points[lower[-1]], points[idx]) <= 0:
+            lower.pop()
+        lower.append(idx)
+
+    upper = []
+    for idx in reversed(sorted_idx):
+        while len(upper) >= 2 and cross(points[upper[-2]], points[upper[-1]], points[idx]) <= 0:
+            upper.pop()
+        upper.append(idx)
+
+    # Concatenate lower and upper, excluding last point of each (it's repeated)
+    hull = lower[:-1] + upper[:-1]
+    return hull
+
+
+def spiral_sort_indices(points):
+    """
+    Peel convex hull layers off the set of points until none remain.
+    Returns the concatenated list of all indices in peel order.
+    """
+    remaining = list(range(len(points)))
+    order = []
+
+    while remaining:
+        subpts = points[remaining]
+        hull = convex_hull_indices(subpts)
+        # Map hull indices within subpts back to original indices
+        hull_orig = [remaining[i] for i in hull]
+
+        # Find start: bottom-left on hull
+        coords_hull = points[hull_orig]
+        start = np.lexsort((coords_hull[:, 0], coords_hull[:, 1]))[0]
+        # Rotate hull list to start here
+        rotated = hull_orig[start:] + hull_orig[:start]
+
+        # Append and remove these indices
+        order.extend(rotated)
+        for idx in rotated:
+            remaining.remove(idx)
+
+    return order

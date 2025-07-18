@@ -19,15 +19,19 @@ class KMeansSpatialSamplingSimple:
         n_zones: int | tuple[int, int],
         tolerance: int,
         split_size: float,
-        sort_method: str = "lexico",  # Options: "lexico", "random"
+        zone_mode: str = "sweep",
+        sort_method: str = "lexico",
+        zonal_sort: str = "lexico"
     ) -> None:
-        self.coords = coordinate
+        self.coords = self._normalize_coords(coordinate)
         self.probs = inclusion_probability
         self.n = n
-        self.n_zones = self._pair(n_zones)
         self.tolerance = tolerance
         self.split_size = split_size
+        self.zone_mode = zone_mode
         self.sort_method = sort_method
+        self.zonal_sort = zonal_sort
+        self.n_zones = self._convert_n_zones(n_zones)
 
         self.popu = PopulationSimple(
             self.coords,
@@ -36,20 +40,25 @@ class KMeansSpatialSamplingSimple:
             n_zones=n_zones,
             tolerance=self.tolerance,
             split_size=self.split_size,
+            zone_mode=self.zone_mode,
             sort_method=self.sort_method,
+            zonal_sort=self.zonal_sort,
         )
         self.rng = np.random.default_rng()
 
         self.design = self._build_design()
         self.density = self._build_density()
         self.all_samples, self.all_samples_probs = self._get_all_samples_with_probs()
+        self.all_samples_probs *= 1/np.sum(self.all_samples_probs)
 
+    def _normalize_coords(self, coords: np.ndarray) -> np.ndarray:
+        return (coords - coords.min(axis=0)) / np.ptp(coords, axis=0).max()
 
-    def _pair(self, n: int | tuple[int, int]) -> tuple[int, int]:
-        if isinstance(n, int):
-            return (n, n)
-        else:
-            return n
+    def _convert_n_zones(self, n):
+        if self.zone_mode == "sweep":
+            if isinstance(n, int):
+                return n, n
+        return n
 
     def sample(self, n_samples: int):
         samples = np.zeros((n_samples, self.n), dtype=int)
@@ -150,11 +159,14 @@ class KMeansSpatialSamplingSimple:
     def _get_all_samples_with_probs(self):
         samples = []
         samples_probs = []
+        i = 0
         for sample_obj in self.design:
             if len(sample_obj.ids) < self.n:
+                i += 1
                 continue
             samples.append(list(sample_obj.ids))
             samples_probs.append(sample_obj.probability)
+        print(i, len(self.design), round(i/len(self.design), 4))
         return np.array(samples), np.array(samples_probs)
 
     @cached_property
