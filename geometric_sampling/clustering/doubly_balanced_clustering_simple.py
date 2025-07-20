@@ -32,7 +32,7 @@ class DoublyBalancedKMeansSimple:
         expanded_coords, expanded_idx = self._generate_expanded_coords(coords, probs)
         cluster_size = len(expanded_idx) // self.k
         kmeans = KMeansConstrained(
-            n_clusters=self.k, size_min=cluster_size, size_max=cluster_size + 1
+            n_clusters=self.k, size_min=cluster_size, size_max=cluster_size + 1, n_jobs=-1
         )
         labels = kmeans.fit_predict(expanded_coords)
         self.centroids = kmeans.cluster_centers_

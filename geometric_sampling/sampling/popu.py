@@ -1,4 +1,5 @@
 from itertools import pairwise
+from collections import defaultdict
 from dataclasses import dataclass
 
 import numpy as np
@@ -7,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from scipy.spatial import ConvexHull, QhullError
 
+from .border import Borders
 from ..clustering import DoublyBalancedKMeansSimple
 
 @dataclass
@@ -43,6 +45,13 @@ class PopulationSimple:
         self.zonal_sort = zonal_sort
         self.dbk = None
         self.clusters = self._generate_clusters()
+        self.borders = self._generate_borders()
+
+    def _generate_borders(self):
+        border_ids = set(np.where((self.dbk.membership > 0).sum(axis=1) > 1)[0])
+        borders = Borders(border_ids)
+        borders.build_from(self.clusters)
+        return borders
 
     def _generate_clusters(self) -> list[Cluster]:
         self.dbk = DoublyBalancedKMeansSimple(k=self.n_clusters, split_size=self.split_size)
@@ -61,11 +70,17 @@ class PopulationSimple:
         return [Zone(units=units)]
 
     def _generate_zones_with_cluster(self, units: NDArray) -> list[Zone]:
-        dbk = DoublyBalancedKMeansSimple(k=np.prod(self.n_zones), split_size=self.split_size)
-        dbk.fit(coords=units[:, 1:3], probs=units[:, 3], population_ids=units[:, 0])
+        if np.prod(self.n_zones) > 1:
+            dbk = DoublyBalancedKMeansSimple(k=np.prod(self.n_zones), split_size=self.split_size)
+            dbk.fit(coords=units[:, 1:3], probs=units[:, 3], population_ids=units[:, 0])
+            clusters = dbk.clusters
+        else:
+            clusters = [units]
         zones = []
-        for zone_units in dbk.clusters:
+        for zone_units in clusters:
             zone_units[:, 3] = self._numerical_stabilizer(zone_units[:, 3])
+            idx = self._sort_func(zone_units[:, 1:3], self.sort_method)
+            zone_units = zone_units[idx]
             zones.append(Zone(units=zone_units))
         return self._sort_zones(zones)
 
@@ -100,8 +115,10 @@ class PopulationSimple:
 
     def _sort_func(self, units: NDArray, method: str) -> NDArray:
         match method:
-            case "lexico":
+            case "lexico-yx":
                 return np.lexsort((units[:, 1], units[:, 0]))
+            case "lexico-xy":
+                return np.lexsort((units[:, 0], units[:, 1]))
             case "random":
                 return np.random.permutation(units.shape[0])
             case "angle_0":
