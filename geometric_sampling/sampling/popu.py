@@ -1,6 +1,7 @@
 from itertools import pairwise
 from collections import defaultdict
 from dataclasses import dataclass
+from hilbertcurve.hilbertcurve import HilbertCurve
 
 import numpy as np
 from numpy.typing import NDArray
@@ -113,6 +114,48 @@ class PopulationSimple:
     def _normalize(self, coords: np.ndarray) -> np.ndarray:
         return (coords - coords.min(axis=0)) / (np.ptp(coords, axis=0) + 1e-6)
 
+    def hilbert_sort_indices(units):
+        # Normalize units coordinates to the unit square and quantize to integer grid
+        min_xy = units.min(axis=0)
+        max_xy = units.max(axis=0)
+        norm = (units - min_xy) / (max_xy - min_xy + 1e-9)
+        N = 16  # Precision (2^N)
+        ints = np.floor(norm * (2**N - 1)).astype(int)
+        hilbert = HilbertCurve(N, 2)
+        distances = [hilbert.distance_from_coordinates(list(coord)) for coord in ints]
+        return np.argsort(distances)
+
+    def farthest_point_ordering(units):
+        n = len(units)
+        selected = [0]
+        distances = np.linalg.norm(units - units[0], axis=1)
+        indices = list(range(n))
+        for _ in range(1, n):
+            next_idx = np.argmax(distances)
+            selected.append(next_idx)
+            new_dist = np.linalg.norm(units - units[next_idx], axis=1)
+            distances = np.minimum(distances, new_dist)
+            distances[selected] = -np.inf
+        return np.array(selected)
+
+    def grid_partition_sort(units, grid_size=10):
+        min_xy = units.min(axis=0)
+        max_xy = units.max(axis=0)
+        norm = (units - min_xy) / (max_xy - min_xy + 1e-9)
+        bins = np.floor(norm * grid_size).astype(int)
+        # Assign indices to each cell
+        grid_indices = bins[:,0] * grid_size + bins[:,1]
+        order = np.lexsort((np.random.rand(len(units)), grid_indices))
+        return order
+
+    def radial_shell_sort(units):
+        centroid = units.mean(axis=0)
+        rel = units - centroid
+        radius = np.linalg.norm(rel, axis=1)
+        angle = np.mod(np.arctan2(rel[:,1], rel[:,0]), 2*np.pi)
+        return np.lexsort((angle, radius))
+
+    
     def _sort_func(self, units: NDArray, method: str) -> NDArray:
         match method:
             case "lexico-yx":
@@ -135,7 +178,14 @@ class PopulationSimple:
                 return spiral_sort_indices(units)
             case "max":
                 return np.argsort(np.max(units, axis=1))
-
+            case "hilbert":
+                return hilbert_sort_indices(units)   
+            case "farthest":
+                return farthest_point_ordering(units)
+            case "grid":
+                return grid_partition_sort(units)  
+            case "shell":
+                return radial_shell_sort(units) 
         return np.arange(units.shape[0])
 
     def _sweep(self, units: NDArray, threshold: float) -> list[NDArray]:
