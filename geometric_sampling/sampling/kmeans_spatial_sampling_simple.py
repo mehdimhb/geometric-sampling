@@ -308,7 +308,12 @@ class KMeansSpatialSamplingSimple:
             samples.append(list(sample_obj.ids))
             samples_probs.append(sample_obj.probability)
         return np.array(samples), np.array(samples_probs)
-
+    
+    @property
+    def cluster_membership(self) -> np.ndarray:
+        """Returns a 1D array: membership of each unit (cluster label 0-based)."""
+        return np.argmax(self.popu.dbk.membership, axis=1)
+    
     @cached_property
     def _get_density_scores(self):
         return self.density.score(self.all_samples)
