@@ -191,10 +191,10 @@ class KMeansSampler:
         if n_clusters_to_change_order_zone == 'all':
             for cluster in self.clusters:
                 cluster.apply_order(zones_order_to_apply)
-        else:
+        elif n_clusters_to_change_order_zone != 'None':
             clusters_to_change = np.random.choice(np.arange(len(self.clusters)), size=n_clusters_to_change_order_zone, replace=False)
             for i in clusters_to_change:
-                self.clusters[i].apply_order(units_order_to_apply)
+                self.clusters[i].apply_order(zones_order_to_apply)
 
 
         if n_clusters_to_change_order_units == 'all':

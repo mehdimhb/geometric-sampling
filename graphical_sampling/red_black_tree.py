@@ -19,7 +19,7 @@ class RedBlackTree(Generic[C]):
         """Initialize a new Red-Black Tree node with the given values:
         label: The value associated with this node
         color: 0 if black, 1 if red
-        parent: The parent to this node
+        parent: The parent toå this node
         left: This node's left child
         right: This node's right child
         """

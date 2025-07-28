@@ -1,5 +1,4 @@
 from importlib import metadata
-import warnings
 
 from .design import Design
 from .new_design import NewDesign
@@ -25,12 +24,4 @@ __all__ = [
     "random",
     "measure",
 ]
-
-
-warnings.filterwarnings(
-    "ignore",
-    message=r'Environment variable "R_SESSION_TMPDIR" redefined by R.*',
-    category=UserWarning,
-    module='rpy2.rinterface.__init__'
-)
 
