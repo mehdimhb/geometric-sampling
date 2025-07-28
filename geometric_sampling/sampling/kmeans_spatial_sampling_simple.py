@@ -327,3 +327,18 @@ class KMeansSpatialSamplingSimple:
         if all_samples_scores is None:
             all_samples_scores = self._get_density_scores
         return np.sum(all_samples_scores**2 * self.all_samples_probs) - self.expected_score(all_samples_scores)**2
+
+    @property
+    def min_score(self):
+        """Minimum of the raw density‐scores across all samples."""
+        return np.min(self._get_density_scores)
+
+    @property
+    def max_score(self):
+        """Maximum of the raw density‐scores across all samples."""
+        return np.max(self._get_density_scores)
+
+    @property
+    def median_score(self):
+        """Median of the raw density‐scores across all samples."""
+        return np.median(self._get_density_scores)
