@@ -16,7 +16,7 @@ This package, `geometric_sampling`, provides tools for implementing the Geometri
 
 Install the package via pip:
 ```bash
-pip install geometric_sampling
+pip install graphical_sampling
 ```
 
 ## How to Use
@@ -26,7 +26,7 @@ The package includes core classes and methods to facilitate sampling design crea
 ### Example Usage
 
 ```python
-import geometric_sampling as gm
+import graphical_sampling as gm
 import numpy as np
 
 # Set up random generator and sample data
@@ -46,7 +46,7 @@ astar = gm.search.AStar(initial_design, nht, switch_coefficient=1)
 
 # Display initial criteria and design
 print("Initial criteria value:", astar.initial_criteria_value)
-astar.initial_design.show()
+astar.initial_designs.show()
 
 # Run the A* search algorithm to optimize the design
 astar.run(max_iterations=2000, num_new_nodes=10, max_open_set_size=10000, num_changes=1)

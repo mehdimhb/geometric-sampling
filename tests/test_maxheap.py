@@ -1,4 +1,4 @@
-from geometric_sampling.structs import MaxHeap
+from graphical_sampling.structs import MaxHeap
 
 
 def test_push():

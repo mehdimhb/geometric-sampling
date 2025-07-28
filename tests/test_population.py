@@ -1,5 +1,5 @@
 import numpy as np
-import geometric_sampling as gs
+import graphical_sampling as gs
 
 
 def test_population():
@@ -19,7 +19,7 @@ def test_population():
         coordinates = rng.random_coordinates((N, 2))
         probabilities = rng.unequal_probabilities(n, N)
 
-        population = gs.sampling.Population(
+        population = gs.sampling.Organizer(
             coordinates,
             probabilities,
             n_clusters=n,

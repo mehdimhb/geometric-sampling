@@ -1,7 +1,7 @@
 [project]
-name = "geometric-sampling"
-version = "0.4.3"
-description = "Python package for Geometric Sampling Method"
+name = "graphical-sampling"
+version = "0.1.0"
+description = "Python package for Graphical Sampling Method"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -13,6 +13,8 @@ dependencies = [
     "package-sampling>=0.3.0",
     "pandas",
     "joblib>=1.5.0",
+    "rpy2>=3.6.1",
+    "tqdm>=4.67.1",
 ]
 authors = [
     { name = "Bardia Panahbehagh", email = "bardia.panah@gmail.com" },
@@ -37,7 +39,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["geometric_sampling"]
+packages = ["graphical_sampling"]
 
 [tool.ruff]
 extend-exclude = ["*.ipynb"]
