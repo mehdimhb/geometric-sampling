@@ -191,7 +191,7 @@ class KMeansSampler:
         if n_clusters_to_change_order_zone == 'all':
             for cluster in self.clusters:
                 cluster.apply_order(zones_order_to_apply)
-        elif n_clusters_to_change_order_zone != 'None':
+        else:
             clusters_to_change = np.random.choice(np.arange(len(self.clusters)), size=n_clusters_to_change_order_zone, replace=False)
             for i in clusters_to_change:
                 self.clusters[i].apply_order(zones_order_to_apply)
@@ -203,18 +203,20 @@ class KMeansSampler:
                     for zone in cluster.zones:
                         zone.apply_order(units_order_to_apply)
                 else:
-                    zones_to_change = np.random.choice(np.arange(len(self.clusters)), size=n_zones_to_change_order_units, replace=False)
+                    zones_to_change = np.random.choice(np.arange(len(cluster)), size=n_zones_to_change_order_units, replace=False)
                     for i in zones_to_change:
                         cluster.zones[i].apply_order(units_order_to_apply)
         else:
             clusters_to_change = np.random.choice(np.arange(len(self.clusters)), size=n_clusters_to_change_order_units, replace=False)
+            print(clusters_to_change)
             for i in clusters_to_change:
                 cluster = self.clusters[i]
                 if n_zones_to_change_order_units == 'all':
                     for zone in cluster.zones:
                         zone.apply_order(units_order_to_apply)
                 else:
-                    zones_to_change = np.random.choice(np.arange(len(self.clusters)), size=n_zones_to_change_order_units, replace=False)
+                    zones_to_change = np.random.choice(np.arange(len(cluster)), size=n_zones_to_change_order_units, replace=False)
+                    print(zones_to_change)
                     for j in zones_to_change:
                         cluster.zones[j].apply_order(units_order_to_apply)
 
@@ -436,6 +438,13 @@ class KMeansSampler:
         if not samples_probs_list:
             return np.array([])
         return np.array(samples_probs_list)
+
+    @cached_property
+    def fips(self) -> NDArray:
+        fip = np.zeros_like(self.probs)
+        for sample, prob in zip(self.all_samples, self.all_samples_probs):
+            fip[sample] += prob
+        return np.array(fip)
 
     @cached_property
     def density_scores(self):
