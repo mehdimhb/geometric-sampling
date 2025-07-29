@@ -231,6 +231,15 @@ class Cluster:
         return np.column_stack((u, s))
 
     @property
+    def zones_edges(self) -> np.ndarray:
+        edges = [0]
+        start = 0
+        for zone in self._zones:
+            edges.append(start + np.sum(zone.prob))
+            start += np.sum(zone.prob)
+        return np.array(edges)
+
+    @property
     def centroid(self) -> np.ndarray:
         """
         Calculates the arithmetic centroid (average coordinate) of the cluster.
