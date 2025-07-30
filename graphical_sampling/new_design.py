@@ -1,4 +1,5 @@
 from __future__ import annotations
+from copy import deepcopy
 import numpy as np
 from .sampling import KMeansSampler
 
@@ -11,6 +12,11 @@ class NewDesign:
         self.kmeans = kmeans
         self.rng = np.random.default_rng()
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, NewDesign):
+            return False
+        return self.kmeans.clusters == other.kmeans.clusters
+
     def copy(self) -> NewDesign:
         new_kmeans = KMeansSampler(
             population = self.kmeans.population,
@@ -20,7 +26,7 @@ class NewDesign:
             zone_builder=self.kmeans.zone_builder_str,
             units_order='Change',
             zones_order='Change',
-            clusters=self.kmeans.clusters,
+            clusters=deepcopy(self.kmeans.clusters),
             labels=self.kmeans.labels,
             centroids=self.kmeans.centroids,
         )
@@ -41,3 +47,6 @@ class NewDesign:
             n_changes_in_order_of_units,
             n_changes_in_order_of_zones,
         )
+
+    def __hash__(self) -> int:
+        return hash(tuple(self.kmeans.clusters))

@@ -38,6 +38,22 @@ class Zone:
         """
         return self._index_share.shape[0]
 
+    def __eq__(self, other: object) -> bool:
+        """
+        Compares two Zone objects for equality.
+
+        Two zones are considered equal if their `index_share` arrays have the same values.
+
+        Args:
+            other (object): The other object to compare with.
+
+        Returns:
+            bool: True if the zones are equal, False otherwise.
+        """
+        if not isinstance(other, Zone):
+            return NotImplemented
+        return np.array_equal(self.index_share, other.index_share)
+
     # Public properties for controlled access
     @property
     def pop(self) -> Population:
@@ -149,6 +165,12 @@ class Zone:
             # Return a new Zone object with the sorted data
             return Zone(id=self.id, _pop=self._pop, _index_share=new_index_share)
 
+    def __hash__(self) -> int:
+        data = self.index_share.tobytes()
+        return hash((self.index_share.shape,
+                     str(self.index_share.dtype),
+                     data))
+
 
 @dataclass(slots=True) # NOT frozen, to allow in-place modification by its own methods
 class Cluster:
@@ -183,6 +205,22 @@ class Cluster:
         Returns the number of zones within this cluster.
         """
         return len(self._zones)
+
+    def __eq__(self, other: object) -> bool:
+        """
+        Compares two Cluster objects for equality.
+
+        Two clusters are considered equal if they contain the same zones in the same order.
+
+        Args:
+            other (object): The other object to compare with.
+
+        Returns:
+            bool: True if the clusters are equal, False otherwise.
+        """
+        if not isinstance(other, Cluster):
+            return NotImplemented
+        return self._zones == other._zones
 
     # Public property for controlled access
     @property
@@ -232,6 +270,17 @@ class Cluster:
 
     @property
     def zones_edges(self) -> np.ndarray:
+        """
+        Calculates the cumulative sum of probabilities for zones within the cluster.
+
+        This property can be used to define "edges" or boundaries based on the
+        probabilistic contribution of each zone.
+
+        Returns:
+            np.ndarray: A 1D NumPy array representing the cumulative probabilities
+                        of zones. The first element is always 0, and the last
+                        element is the total probability of all zones in the cluster.
+        """
         edges = [0]
         start = 0
         for zone in self._zones:
@@ -312,3 +361,6 @@ class Cluster:
             new_zones = [self._zones[i] for i in sort_indices]
             # Return a new Cluster object with the sorted zones
             return Cluster(id=self.id, _zones=new_zones)
+
+    def __hash__(self) -> int:
+        return hash(tuple(self._zones))

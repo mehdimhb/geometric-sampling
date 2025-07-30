@@ -192,9 +192,13 @@ class KMeansSampler:
             for cluster in self.clusters:
                 cluster.apply_order(zones_order_to_apply)
         else:
+            # print('REORDERING ZONES')
             clusters_to_change = np.random.choice(np.arange(len(self.clusters)), size=n_clusters_to_change_order_zone, replace=False)
+            # print(clusters_to_change)
             for i in clusters_to_change:
+                # print('BEFORE', self.clusters[i])
                 self.clusters[i].apply_order(zones_order_to_apply)
+                # print('AFTER', self.clusters[i])
 
 
         if n_clusters_to_change_order_units == 'all':
@@ -207,8 +211,9 @@ class KMeansSampler:
                     for i in zones_to_change:
                         cluster.zones[i].apply_order(units_order_to_apply)
         else:
+            # print('REORDERING UNITS')
             clusters_to_change = np.random.choice(np.arange(len(self.clusters)), size=n_clusters_to_change_order_units, replace=False)
-            print(clusters_to_change)
+            # print(clusters_to_change)
             for i in clusters_to_change:
                 cluster = self.clusters[i]
                 if n_zones_to_change_order_units == 'all':
@@ -216,9 +221,13 @@ class KMeansSampler:
                         zone.apply_order(units_order_to_apply)
                 else:
                     zones_to_change = np.random.choice(np.arange(len(cluster)), size=n_zones_to_change_order_units, replace=False)
-                    print(zones_to_change)
+                    # print(zones_to_change)
                     for j in zones_to_change:
+                        # print('BEFORE', cluster.zones[j])
+                        # print('BEFORE', cluster.zones[0])
                         cluster.zones[j].apply_order(units_order_to_apply)
+                        # print('AFTER', cluster.zones[j])
+                        # print('AFTER', cluster.zones[0])
 
 
         # 3. Invalidate cached properties to force re-computation
@@ -317,6 +326,7 @@ class KMeansSampler:
         return samples
 
     @cached_property
+    # @property
     def design(self) -> Design:
         total_conceptual_zones: int
         if self.zone_builder_str == "cluster":

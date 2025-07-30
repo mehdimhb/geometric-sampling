@@ -64,6 +64,8 @@ class Change(Order):
             i, j = np.random.choice(indices.shape[0], 2)
             indices[i], indices[j] = indices[j], indices[i]
 
+            # print(i, j)
+
         return np.argsort(indices)
 
 
