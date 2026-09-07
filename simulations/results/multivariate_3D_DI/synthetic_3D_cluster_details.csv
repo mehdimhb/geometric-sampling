@@ -1,0 +1,4 @@
+cluster,population_units,medoid_ID,assigned_sample_ID,medoid_sample_distance
+1,300,50,184,0.08047671800537826
+2,300,437,391,0.08542467358008096
+3,300,894,747,0.17354565292629992

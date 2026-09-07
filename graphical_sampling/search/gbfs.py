@@ -116,6 +116,8 @@ class GreedyBestFirstSearch:
             output_details=False,
             y_main=None,
             y_aux=None,
+            stop_when=None,
+            progress_callback=None,
         ):
         # --- SHOCK / BACKTRACK SETTINGS --
         stalls = 0             
@@ -136,6 +138,7 @@ class GreedyBestFirstSearch:
         num_improvements_reservoir = 0
         self.reservoir_val = self.best_criteria_value
         self.reservoir_design = self.best_design
+        self.iterations_completed = 0
         for iteration in range(max_iterations):
             current_window = self._get(window, iteration)
             
@@ -161,7 +164,7 @@ class GreedyBestFirstSearch:
                 num_improvements = 0
                 skip_depth = random.randint(backtrack_depth, len(self.open_set))
                 print(f"\n⚡ STUCK. Purging the top {skip_depth} dead-ends to force a new path! ⚡")
-                
+
                 # 1. Permanently discard the nodes that got us stuck
                 for _ in range(skip_depth):
                     if self.open_set:
@@ -304,6 +307,19 @@ class GreedyBestFirstSearch:
                     self.best_design = new_design
                     self.best_criteria_value = new_val
 
+                    # Optional benchmark/convergence stop.  This does not alter
+                    # neighbor generation or scoring; it only ends the search
+                    # after the requested target has first been attained.
+                    if stop_when is not None and stop_when(new_design, new_val):
+                        self.iterations_completed = iteration + 1
+                        self.reservoir_design = new_design
+                        self.reservoir_val = new_val
+                        print(
+                            "--- Search target attained at iteration "
+                            f"{self.iterations_completed}: {new_val:.6f} ---"
+                        )
+                        return
+
                 self._update_top_k(new_design, new_val, top_k)
                 heapq.heappush(self.open_set, (new_val, next(self._counter), new_type, new_design))
 
@@ -317,7 +333,11 @@ class GreedyBestFirstSearch:
             if len(self.open_set) > max_open_set_size * 2:
                 self.open_set = heapq.nsmallest(max_open_set_size, self.open_set)
                 heapq.heapify(self.open_set)
-                
+
+            self.iterations_completed = iteration + 1
+            if progress_callback is not None:
+                progress_callback(self, self.iterations_completed)
+
         # =========================================================
         # END OF RUN: RESTORE THE ABSOLUTE BEST FROM RESERVOIR
         # =========================================================

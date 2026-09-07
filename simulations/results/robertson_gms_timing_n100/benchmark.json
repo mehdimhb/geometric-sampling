@@ -1,0 +1,131 @@
+{
+  "benchmark": "Robertson aggregated NMS/GMS timing",
+  "started_at": "2026-09-07T13:20:28.071291+03:30",
+  "finished_at": "2026-09-07T13:31:48.885089+03:30",
+  "population": {
+    "file": "simulations/populations/real/AggregatedPop1000.csv",
+    "N": 1000,
+    "n": 100,
+    "inclusion_probabilities": "equal",
+    "pi_i": 0.1
+  },
+  "threshold": {
+    "comparison": "strictly_less_than",
+    "moran_i": -0.69
+  },
+  "reproducibility": {
+    "seed": 20260907,
+    "commit": "046dbca432c8541d27547f25c879395660605d09",
+    "working_tree_dirty": true
+  },
+  "settings": {
+    "nms": {
+      "point_strategies": [
+        "None",
+        "lexico_xy",
+        "lexico_yx",
+        "projection",
+        "dist_from_origin",
+        "angle",
+        "spiral",
+        "hilbert",
+        "snake",
+        "knight_move",
+        "random"
+      ],
+      "zone_strategies": [
+        "None",
+        "lexico_xy",
+        "lexico_yx",
+        "projection",
+        "dist_from_origin",
+        "angle",
+        "spiral",
+        "hilbert",
+        "snake",
+        "knight_move",
+        "random"
+      ],
+      "zone_modes": [
+        "sweep_xy",
+        "sweep_yx"
+      ],
+      "num_splits": [
+        1
+      ],
+      "shift_jumps": [
+        0
+      ],
+      "num_zones_sweep": [
+        1,
+        1
+      ],
+      "centroid_grid_x": 4,
+      "r_sample_per_cluster": 1,
+      "init_clust_method": "expanded",
+      "topological": true,
+      "shuffle": false,
+      "valid_designs_evaluated": 242,
+      "selected_point_strategy": "lexico_yx",
+      "selected_zone_strategy": "None",
+      "selected_zone_mode": "sweep_xy"
+    },
+    "gms": {
+      "objective": "modified standardized Moran's I",
+      "objectives": [
+        "MI",
+        "VAR"
+      ],
+      "weights": [
+        1,
+        0
+      ],
+      "scales": {
+        "MI": 0.05,
+        "VAR": 15000
+      },
+      "max_open_set_size": 2000,
+      "top_k": 1,
+      "num_new_order_nodes": 100,
+      "num_new_exchange_nodes": 0,
+      "num_changes_range": [
+        1,
+        1
+      ],
+      "window": null,
+      "requested_n_jobs": -1,
+      "backtrack_depth": 1,
+      "stagnation_limit": 5000
+    }
+  },
+  "machine": {
+    "cpu_model": "11th Gen Intel(R) Core(TM) i9-11900H @ 2.50GHz",
+    "logical_cpu_count": 16,
+    "ram_bytes": 32822632448,
+    "ram_gib": 30.568458557128906,
+    "operating_system": "Linux-7.0.0-31-generic-x86_64-with-glibc2.43",
+    "python_version": "3.12.13",
+    "joblib_version": "1.5.3",
+    "effective_joblib_worker_count": 16
+  },
+  "results": {
+    "nms_initial_moran_i": -0.42868385295496586,
+    "final_gms_moran_i": -0.6906866248701398,
+    "gms_iterations_required": 294,
+    "nms_elapsed_seconds": 72.27413853800044,
+    "gms_elapsed_seconds": 608.5366479050008,
+    "total_elapsed_seconds": 680.8107864430012
+  },
+  "verification": {
+    "number_of_support_samples": 10,
+    "probability_mass": 1.0,
+    "sample_size_min": 100,
+    "sample_size_max": 100,
+    "sample_size_preserved": true,
+    "target_pi": 0.1,
+    "actual_pi_min": 0.10000000149011612,
+    "actual_pi_max": 0.10000000149011612,
+    "max_abs_pi_error": 1.4901161277114383e-09,
+    "first_order_inclusions_preserved_atol_1e-6": true
+  }
+}
