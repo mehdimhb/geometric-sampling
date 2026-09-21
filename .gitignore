@@ -171,6 +171,10 @@ cython_debug/
 temp_*
 #*.png
 
+# Generated prescribed-SIP run artifacts (large and reproducible)
+/prescribed_sip/results/
+/prescribed_sip/final_equal_fip/raw_runs/
+
 .DS_Store
 # *.tar.gz
 

@@ -1,0 +1,78 @@
+master_seed: 20260918
+methods:
+- Package-GFS
+- GFS-Random
+- GFS-Greedy
+- GFS-Directed
+- GFS-Advanced
+- CP2-enumerated
+- Sinha
+- DSD-structured
+ablation_methods:
+- name: GFS-Greedy
+  variant: random_epsilon
+  epsilon: random
+- name: GFS-Greedy
+  variant: fixed_epsilon
+  epsilon: fixed
+- name: GFS-Greedy
+  variant: optimal_epsilon
+  epsilon: optimal
+- name: GFS-Directed
+  variant: directed_batch10
+  batch: 10
+- name: GFS-Directed
+  variant: directed_batch50
+  batch: 50
+- name: GFS-Directed
+  variant: directed_batch100
+  batch: 100
+- name: GFS-Advanced
+  variant: advanced_three_starts
+  starts: 3
+budget:
+  evaluations: 40
+  seconds: 1.0
+  batch: 10
+exact_seconds: 20.0
+time_evaluation_ceiling: 10000000
+output: prescribed_sip/results/smoke
+scenarios:
+- experiment: small
+  N: 8
+  n: 3
+  target_type: arbitrary
+  geometry: 1d
+  replications: 2
+- experiment: small
+  N: 8
+  n: 3
+  target_type: srs
+  geometry: planar
+  replications: 1
+- experiment: moderate
+  N: 25
+  n: 5
+  target_type: srs
+  geometry: 1d
+  replications: 1
+- experiment: large
+  N: 250
+  n: 5
+  target_type: srs
+  geometry: 1d
+  replications: 1
+- experiment: sparse
+  N: 250
+  n: 5
+  target_type: srs
+  geometry: 1d
+  density: 0.01
+  pair_structure: nearby
+  replications: 1
+- experiment: ablation
+  N: 8
+  n: 3
+  target_type: arbitrary
+  geometry: 1d
+  replications: 1

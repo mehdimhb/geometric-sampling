@@ -1,0 +1,9 @@
+Interpretation and exact initialization conventions
+
+GFS methods begin at the shared standard original-order GFS probability design p0. The permuted target-generating design is not a reconstruction starting design.
+
+The competitors retain their existing native initializations: CP(2) receives p0 as its recovery/reference baseline, and its exponential-family dual begins at zero parameters after FIP-only calibration of the uniform enumerated family. DSD fits 250 projection orders, first the original unit order and then reproducible random orders. The exact LP/QP oracle solves the existing sparse probability constraints with HiGHS; it is a feasibility certificate rather than an iterative reconstruction from a supplied design. Every reported recovery uses the SAME original-order GFS p0 baseline. These conventions preserve the existing competitor implementations and their allowed sampling families.
+
+SD measures stochastic reconstruction variation conditional on the one fixed population and frozen target in each scenario. Runtime is algorithm wall time under parallel load. The auxiliary Task wall seconds field includes setup and method execution, and is recorded before the final independent audit and serialization. Peak process RSS is a process-lifetime high-water mark; workers are reused between tasks.
+
+The active working notebook is preserved. Final study budgets are the explicit overrides in configs/study.json, not the notebook's earlier interactive/demo run settings. The source copy in configs/code is for reproduction; final numerical results are in raw_runs, tables and validation.

@@ -1,0 +1,119 @@
+"""Additional exchange-search comparisons; package GBFS remains primary."""
+from itertools import combinations
+import numpy as np
+from prescribed_sip.core.design import exchange_direction,InvariantError
+from prescribed_sip.core.runtime import Monitor,BudgetStop
+
+
+def random_candidate(support,rng):
+    samples=list(support.mass)
+    if len(samples)<2: return None
+    ia,ib=rng.choice(len(samples),2,replace=False)
+    a,b=samples[ia],samples[ib]
+    A,B=set(a),set(b); da=sorted(A-B); db=sorted(B-A)
+    if not da or not db: return None
+    return a,b,int(rng.choice(da)),int(rng.choice(db))
+
+
+def directed_candidate(support,objective,rng,top):
+    # Pair selection uses residuals, then tests sample membership necessary for
+    # the intended sign. The objective still computes the complete exact direction.
+    t=int(rng.choice(top)); i,j=int(objective.i[t]),int(objective.j[t])
+    if rng.random()<.5: i,j=j,i
+    increase=objective.residual[t]<0
+    first=[]; second=[]
+    for s in support.mass:
+        has_i=i in s; has_j=j in s
+        if increase:
+            if has_i and not has_j: first.append(s)
+            if has_j and not has_i: second.append(s)
+        else:
+            if has_i and has_j: first.append(s)
+            if not has_i and not has_j: second.append(s)
+    if not first or not second: return random_candidate(support,rng)
+    a=first[int(rng.integers(len(first)))]; b=second[int(rng.integers(len(second)))]
+    ls=sorted((set(b)-set(a))-{j})
+    if not ls: return random_candidate(support,rng)
+    return a,b,i,int(rng.choice(ls))
+
+
+def run_exchange(initial,objective,pi,seed,evaluations,seconds,method,
+                 batch=10,epsilon='optimal',starts=3,shock_every=20,initializer=None,rmse_stop=1e-10,stop_inclusive=False,**kwargs):
+    if not np.isfinite(rmse_stop) or rmse_stop < 0:
+        raise ValueError('Raw RMSE stopping threshold must be finite and nonnegative.')
+    def recovered(value):
+        return value <= rmse_stop if stop_inclusive else value < rmse_stop
+    rng=np.random.default_rng(seed)
+    monitor=Monitor(objective,initial,pi,evaluations,seconds)
+    advanced=method=='GFS-Advanced'; start_count=starts if advanced else 1
+    per_start=max(1,evaluations//start_count)
+    starts_completed=0; shocks=0; generation_attempts=0; status='completed'; reason=''
+    working=initial.copy()
+    try:
+        for start in range(start_count):
+            if method=='GFS-Directed' and recovered(monitor.best_metrics['target_RMSE2']):
+                reason='recovery_tolerance'; break
+            monitor.guard()
+            if start:
+                # No target probabilities used; randomized graphical FIP-only start,
+                # or mass-preserving random perturbations when no factory supplied.
+                working=initializer(int(rng.integers(2**63-1))) if initializer else initial.copy()
+                if initializer is None:
+                    for _ in range(min(5,per_start)):
+                        monitor.guard(); generation_attempts+=1
+                        candidate=random_candidate(working,rng)
+                        if candidate is None: continue
+                        a,b,k,l=candidate; direction=exchange_direction(a,b,k,l)
+                        objective.initialize(working)
+                        e,_=objective.step(direction,min(working.mass[a],working.mass[b]),'random',rng)
+                        monitor.candidates+=1
+                        if e>0:
+                            working.exchange(a,b,k,l,e); objective.apply(direction,e); monitor.accepted+=1; monitor.validate(working)
+                objective.initialize(working)
+            limit=min(evaluations,(start+1)*per_start) if start<start_count-1 else evaluations
+            stalls=0; iterations=0
+            while monitor.candidates<limit:
+                monitor.guard(); iterations+=1
+                if method in ('GFS-Directed','GFS-Advanced'):
+                    count=min(50,len(objective.target))
+                    top=np.argpartition(abs(objective.residual),-count)[-count:]
+                else: top=None
+                shock=advanced and stalls>=shock_every
+                width=1 if method=='GFS-Random' or shock else batch
+                best=None
+                for _ in range(min(width,limit-monitor.candidates)):
+                    monitor.guard(); generation_attempts+=1
+                    candidate=directed_candidate(working,objective,rng,top) if top is not None and not shock else random_candidate(working,rng)
+                    if candidate is None: break
+                    a,b,k,l=candidate; c=exchange_direction(a,b,k,l)
+                    policy='random' if shock else epsilon
+                    e,delta=objective.step(c,min(working.mass[a],working.mass[b]),policy,rng)
+                    monitor.candidates+=1
+                    if best is None or delta<best[0]: best=(delta,e,c,candidate)
+                    monitor.record(working,objective.metrics())
+                if best is None: reason='no_valid_candidates'; break
+                delta,e,c,(a,b,k,l)=best
+                if e>0 and (delta < -1e-20 or method=='GFS-Random' or shock):
+                    working.exchange(a,b,k,l,e); objective.apply(c,e); monitor.accepted+=1
+                    error=objective.recompute_error(working) if monitor.accepted%25==0 else 0.
+                    monitor.validate(working,error)
+                    metrics=objective.metrics(); monitor.incumbent(working,metrics)
+                    stalls=0 if delta<0 else stalls+1
+                    if shock: shocks+=1; stalls=0
+                else: stalls+=1
+                if recovered(objective.metrics()['target_RMSE2']):
+                    reason='recovery_tolerance'; break
+            starts_completed+=1
+            if recovered(monitor.best_metrics['target_RMSE2']): break
+    except BudgetStop as e:
+        reason=str(e); status='timeout' if reason=='time_budget' else 'budget_exhausted'
+    except (InvariantError,RuntimeError) as e:
+        reason=f'{type(e).__name__}: {e}'; status='numerical_failure'
+    monitor.validate(working,objective.recompute_error(working))
+    final=working if method=='GFS-Random' else monitor.best
+    # Final independent recomputation is mandatory even for short runs.
+    objective.initialize(final); monitor.validate(final,objective.recompute_error(final))
+    return monitor.finish(final,status,reason,{'starts_completed':starts_completed,'random_shocks':shocks,
+                          'generation_attempts':generation_attempts,'epsilon_policy':epsilon,
+                          'candidate_batch':batch,'raw_RMSE_stop':float(rmse_stop),
+                          'raw_RMSE_stop_inclusive':bool(stop_inclusive),'accepted_definition':'applied mass exchanges'})

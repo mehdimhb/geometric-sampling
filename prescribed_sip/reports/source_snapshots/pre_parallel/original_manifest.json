@@ -1,0 +1,355 @@
+{
+  "config_SHA256": "01ffe0e8736e6a6856f6fdbe99a7ebc47f567120a66190a515e79a2ce8ab7a43",
+  "config": {
+    "master_seed": 20260918,
+    "methods": [
+      "Package-GFS",
+      "GFS-Random",
+      "GFS-Greedy",
+      "GFS-Directed",
+      "GFS-Advanced",
+      "CP2-enumerated",
+      "Sinha",
+      "DSD-structured"
+    ],
+    "ablation_methods": [
+      {
+        "name": "GFS-Greedy",
+        "variant": "random_epsilon",
+        "epsilon": "random"
+      },
+      {
+        "name": "GFS-Greedy",
+        "variant": "fixed_epsilon",
+        "epsilon": "fixed"
+      },
+      {
+        "name": "GFS-Greedy",
+        "variant": "optimal_epsilon",
+        "epsilon": "optimal"
+      },
+      {
+        "name": "GFS-Directed",
+        "variant": "directed_batch10",
+        "batch": 10
+      },
+      {
+        "name": "GFS-Directed",
+        "variant": "directed_batch50",
+        "batch": 50
+      },
+      {
+        "name": "GFS-Directed",
+        "variant": "directed_batch100",
+        "batch": 100
+      },
+      {
+        "name": "GFS-Advanced",
+        "variant": "advanced_three_starts",
+        "starts": 3
+      }
+    ],
+    "budget": {
+      "evaluations": 1000,
+      "seconds": 10.0,
+      "batch": 10
+    },
+    "exact_seconds": 20.0,
+    "time_evaluation_ceiling": 10000000,
+    "output": "prescribed_sip/results/paper",
+    "stages": {
+      "small": {
+        "sizes": [
+          [
+            8,
+            3
+          ],
+          [
+            10,
+            3
+          ],
+          [
+            10,
+            4
+          ],
+          [
+            12,
+            4
+          ],
+          [
+            14,
+            4
+          ]
+        ],
+        "targets": [
+          "arbitrary",
+          "sparse_support",
+          "diffuse",
+          "srs",
+          "conditional_poisson",
+          "dsd",
+          "perturbed_small",
+          "perturbed_moderate",
+          "perturbed_large"
+        ],
+        "geometries": [
+          "planar",
+          "1d"
+        ],
+        "replications": 50,
+        "budget": {
+          "evaluations": 1000,
+          "seconds": 10.0,
+          "batch": 10
+        },
+        "regimes": [
+          "evaluations",
+          "time"
+        ]
+      },
+      "moderate": {
+        "sizes": [
+          [
+            25,
+            5
+          ],
+          [
+            50,
+            5
+          ],
+          [
+            50,
+            10
+          ],
+          [
+            100,
+            5
+          ],
+          [
+            100,
+            10
+          ],
+          [
+            100,
+            20
+          ]
+        ],
+        "targets": [
+          "srs",
+          "stratified",
+          "random_equal",
+          "random_unequal",
+          "conditional_poisson",
+          "dsd"
+        ],
+        "geometries": [
+          "planar",
+          "1d"
+        ],
+        "replications": 30,
+        "budget": {
+          "evaluations": 10000,
+          "seconds": 60.0,
+          "batch": 50
+        },
+        "regimes": [
+          "evaluations",
+          "time"
+        ]
+      },
+      "large": {
+        "sizes": [
+          [
+            250,
+            5
+          ],
+          [
+            250,
+            25
+          ],
+          [
+            500,
+            10
+          ],
+          [
+            500,
+            25
+          ],
+          [
+            500,
+            50
+          ],
+          [
+            1000,
+            20
+          ],
+          [
+            1000,
+            50
+          ],
+          [
+            1000,
+            100
+          ]
+        ],
+        "targets": [
+          "srs",
+          "stratified",
+          "random_equal",
+          "random_unequal",
+          "dsd"
+        ],
+        "geometries": [
+          "planar",
+          "1d"
+        ],
+        "replications": 10,
+        "budget": {
+          "evaluations": 10000,
+          "seconds": 60.0,
+          "batch": 50
+        },
+        "regimes": [
+          "evaluations",
+          "time"
+        ]
+      },
+      "sparse": {
+        "sizes": [
+          [
+            250,
+            5
+          ],
+          [
+            500,
+            25
+          ],
+          [
+            1000,
+            50
+          ]
+        ],
+        "targets": [
+          "srs",
+          "random_equal",
+          "random_unequal",
+          "dsd"
+        ],
+        "geometries": [
+          "planar",
+          "1d"
+        ],
+        "replications": 10,
+        "densities": [
+          1.0,
+          0.25,
+          0.1,
+          0.01
+        ],
+        "pair_structures": [
+          "random",
+          "nearby"
+        ],
+        "budget": {
+          "evaluations": 10000,
+          "seconds": 60.0,
+          "batch": 50
+        },
+        "regimes": [
+          "evaluations",
+          "time"
+        ]
+      },
+      "ablation": {
+        "sizes": [
+          [
+            8,
+            3
+          ],
+          [
+            12,
+            4
+          ]
+        ],
+        "targets": [
+          "arbitrary"
+        ],
+        "geometries": [
+          "1d"
+        ],
+        "replications": 30,
+        "budget": {
+          "evaluations": 1000,
+          "seconds": 10.0,
+          "batch": 10
+        },
+        "regimes": [
+          "evaluations"
+        ]
+      }
+    }
+  },
+  "environment": {
+    "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.43",
+    "processor": "",
+    "CPU_count": 16,
+    "dependencies": {
+      "numpy": "2.4.4",
+      "scipy": "1.17.1",
+      "matplotlib": "3.10.8",
+      "pandas": "3.0.2",
+      "pytest": "9.0.2",
+      "osqp": "1.1.3",
+      "PyYAML": "6.0.3",
+      "graphical-sampling": "0.1.0",
+      "package-sampling": "0.3.0"
+    },
+    "git_commit": "dc2881af84a41e4f7658b6d21401e58470871b55",
+    "git_status": " M graphical_sampling/criteria/__init__.py\n M graphical_sampling/criteria/criteria.py\n M graphical_sampling/search/gbfs.py\n?? prescribed_sip/\n?? simulations/jupyters/14_gfs_3d_auxiliary_balance.ipynb\n?? simulations/jupyters/15_simple_gbfs_vs_dsd.ipynb\n?? simulations/jupyters/16_inverse_gfs_sip_matching.ipynb\n?? tests/\n",
+    "original_source_SHA256": {
+      "graphical_sampling/design.py": "eaaf3a973a2a9bf9127639f6802630cf87d2afb73bdb8bc3d6bb04c051c9ec8a",
+      "graphical_sampling/order.py": "30e2563b1381d9f002b3205690afe3f40d0b9cf9a146e1ebf3dc204a0fb130d6",
+      "graphical_sampling/structs.py": "5df373a8157fa3d67ddfdb17327d54cb97e554b7902b8846c06b9c3e6fadd00b",
+      "graphical_sampling/criteria/__init__.py": "a3d6b9ec37b0046fbc684b31873c9cd3d2cf9aa265708df81e26cad81040d6ca",
+      "graphical_sampling/criteria/criteria.py": "b9cd3c246e551ac05496359a5c6aa4ec5b1474976c6ccdbb42e08d761e22acf7",
+      "graphical_sampling/search/gbfs.py": "c4425ca56608c0772a9ec4a873a8faea0c7893ba0fc087986ab2123692412625"
+    },
+    "simulation_source_SHA256": {
+      "prescribed_sip/run_all.py": "4781e8574e368e1f26222198ed39cb337b27c8a6608f066f5d700a390b20439f",
+      "prescribed_sip/__init__.py": "28fcb7751448ff95649ab85ce43816a5d3cea05be827a39dbac95a01ae4f9300",
+      "prescribed_sip/experiments/diagnostics.py": "a0f63ef0c06b395bc3a3cab468fae30ae01c6acee20842094ec5c5cde9a12d6e",
+      "prescribed_sip/experiments/profile.py": "75abf682364aebf9d3fe163b0eb1b8514d7c4eecc9e97b7cf98bc329d2030bda",
+      "prescribed_sip/experiments/targets.py": "5a4b408dccfd87628d5498f1bf37fd42c82647ba3d411b45f8926b055c880f0b",
+      "prescribed_sip/experiments/artifacts.py": "a28191b00cf9a01e111abcad7d5def2213ba6f9ed253fc66d8a2bce171771ed8",
+      "prescribed_sip/tests/test_pipeline.py": "07d7eb0e68044d843a1ce201607d981f91751b809f1e1c47ee84190fd0facac8",
+      "prescribed_sip/tests/test_reporting.py": "5ea5b583cd51077f380df2223208fd6f58d57e3efa8a8123eaa72a90dee96d05",
+      "prescribed_sip/tests/test_core.py": "511ed24f331d85c40b2818abb72f7cc84b811d6e7c6b8680647ce333fe89c1ea",
+      "prescribed_sip/tests/test_package.py": "196769e7c3b205462fce10864b57528767afb04123f64b04b39494b73bb222a6",
+      "prescribed_sip/tests/test_regressions.py": "2c7e219e9e4bf16def20bf5bc707bcaf13f1f837a9204f3ad35edae0578f6c84",
+      "prescribed_sip/tests/test_diagnostics.py": "f05e814a029abfd54adf1d77390aeba95909b7b920901910da7b52d0933d15a4",
+      "prescribed_sip/tests/test_competitors.py": "2e19261e157f8d79468f564aaeb42f7dd9e0d3eb426dc7fc4f6ae568af3a33a0",
+      "prescribed_sip/tests/test_targets.py": "5cc914ac153487c590785afe1a3d53c9378ddf632a3e3a12997f181413eea674",
+      "prescribed_sip/tests/test_search.py": "a58f22d6d2decc6c86a213cc24411aa50e87469b5916c1ef0fbffb86a5e55dfe",
+      "prescribed_sip/tests/test_profile.py": "0826a8027f5213221ccaf10e198cbd17c471a540c07efda0cd91a45255b3b2eb",
+      "prescribed_sip/methods/cp2.py": "54e4177a556cde38e68b3416458edc86b877419fec130ffb5bc2e9b17d691681",
+      "prescribed_sip/methods/sinha.py": "cf1c4fe3fe80fa182c780b5dcf32ca928ebd6716535e41c7df2460fcb21872d5",
+      "prescribed_sip/methods/dsd.py": "6b1d22d122b730c5c2256c06d207c472ea2e7685e2c897ebf56d12d18c52fab5",
+      "prescribed_sip/methods/exact.py": "ac1f904d41940cdd90079168235950e9fafd383b1b8855689274068adbe73439",
+      "prescribed_sip/methods/exchange_search.py": "d4929bd9ec6a236e6fbbcc367bfdb7ed51fb08ea6431a1fe4752c080f9204cfc",
+      "prescribed_sip/methods/benchmarks.py": "b0e41ba1a1420d5a27a83cfac6050127f68b81c4dcf1bc32162a89982dfe64ea",
+      "prescribed_sip/methods/package_gfs.py": "6678668ccddcd2f0365d1db3ce4001e2f1eef46f6ef854f32462f35c629e7be1",
+      "prescribed_sip/core/runtime.py": "b26f46334aae87020a9d09f023100871a89b7dc2fa6b986121a3d9bafd2cd531",
+      "prescribed_sip/core/objective.py": "3d8b108fff51bb0692755438c22eb2b4c69689ac5801bc49f9bed7ff4b20e9e0",
+      "prescribed_sip/core/design.py": "d87d1699530eacb46ff79f1f205fa132e148b32f85c90b8272121fb02be11334"
+    },
+    "thread_environment": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1"
+    }
+  },
+  "primary_method": "Package-GFS",
+  "status": "running",
+  "executed_stages": []
+}

@@ -1,0 +1,189 @@
+master_seed: 20260918
+methods:
+- Package-GFS
+- GFS-Random
+- GFS-Greedy
+- GFS-Directed
+- GFS-Advanced
+- CP2-enumerated
+- Sinha
+- DSD-structured
+ablation_methods:
+- name: GFS-Greedy
+  variant: random_epsilon
+  epsilon: random
+- name: GFS-Greedy
+  variant: fixed_epsilon
+  epsilon: fixed
+- name: GFS-Greedy
+  variant: optimal_epsilon
+  epsilon: optimal
+- name: GFS-Directed
+  variant: directed_batch10
+  batch: 10
+- name: GFS-Directed
+  variant: directed_batch50
+  batch: 50
+- name: GFS-Directed
+  variant: directed_batch100
+  batch: 100
+- name: GFS-Advanced
+  variant: advanced_three_starts
+  starts: 3
+budget:
+  evaluations: 1000
+  seconds: 10.0
+  batch: 10
+exact_seconds: 20.0
+time_evaluation_ceiling: 10000000
+output: prescribed_sip/results/paper
+stages:
+  small:
+    sizes:
+    - - 8
+      - 3
+    - - 10
+      - 3
+    - - 10
+      - 4
+    - - 12
+      - 4
+    - - 14
+      - 4
+    targets:
+    - arbitrary
+    - sparse_support
+    - diffuse
+    - srs
+    - conditional_poisson
+    - dsd
+    - perturbed_small
+    - perturbed_moderate
+    - perturbed_large
+    geometries:
+    - planar
+    - 1d
+    replications: 50
+    budget:
+      evaluations: 1000
+      seconds: 10.0
+      batch: 10
+    regimes:
+    - evaluations
+    - time
+  moderate:
+    sizes:
+    - - 25
+      - 5
+    - - 50
+      - 5
+    - - 50
+      - 10
+    - - 100
+      - 5
+    - - 100
+      - 10
+    - - 100
+      - 20
+    targets:
+    - srs
+    - stratified
+    - random_equal
+    - random_unequal
+    - conditional_poisson
+    - dsd
+    geometries:
+    - planar
+    - 1d
+    replications: 30
+    budget:
+      evaluations: 10000
+      seconds: 60.0
+      batch: 50
+    regimes:
+    - evaluations
+    - time
+  large:
+    sizes:
+    - - 250
+      - 5
+    - - 250
+      - 25
+    - - 500
+      - 10
+    - - 500
+      - 25
+    - - 500
+      - 50
+    - - 1000
+      - 20
+    - - 1000
+      - 50
+    - - 1000
+      - 100
+    targets:
+    - srs
+    - stratified
+    - random_equal
+    - random_unequal
+    - dsd
+    geometries:
+    - planar
+    - 1d
+    replications: 10
+    budget:
+      evaluations: 10000
+      seconds: 60.0
+      batch: 50
+    regimes:
+    - evaluations
+    - time
+  sparse:
+    sizes:
+    - - 250
+      - 5
+    - - 500
+      - 25
+    - - 1000
+      - 50
+    targets:
+    - srs
+    - random_equal
+    - random_unequal
+    - dsd
+    geometries:
+    - planar
+    - 1d
+    replications: 10
+    densities:
+    - 1.0
+    - 0.25
+    - 0.1
+    - 0.01
+    pair_structures:
+    - random
+    - nearby
+    budget:
+      evaluations: 10000
+      seconds: 60.0
+      batch: 50
+    regimes:
+    - evaluations
+    - time
+  ablation:
+    sizes:
+    - - 8
+      - 3
+    - - 12
+      - 4
+    targets:
+    - arbitrary
+    geometries:
+    - 1d
+    replications: 30
+    budget:
+      evaluations: 1000
+      seconds: 10.0
+      batch: 10
+    regimes:
+    - evaluations

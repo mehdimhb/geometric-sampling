@@ -1,0 +1,43 @@
+{
+  "notebook": "/home/bardia/projects/graphical-sampling/prescribed_sip/final_equal_fip/configs/code/working_notebook.ipynb",
+  "master_seed": 20260918,
+  "workers": 6,
+  "fip_type": "equal",
+  "scenarios": [
+    {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    }
+  ],
+  "target_exchanges": 10000,
+  "directed_repetitions": 30,
+  "directed_evaluations": 100000,
+  "directed_batch": 50,
+  "original_repetitions": 5,
+  "original_evaluations": 20000,
+  "dsd_trials": 250,
+  "cp2_evaluations": 50000,
+  "cp2_seconds": 60,
+  "exact_seconds": 60,
+  "enumeration_limit": 200000,
+  "raw_rmse_stop": 1e-10,
+  "rho_boundary_tol": 1e-12,
+  "validation_tolerance": 1e-10,
+  "smoke": false,
+  "original_N30_seconds_per_run": 1800,
+  "runtime_measurement": "method wall time under six-process independent-run load, not isolated hardware timing"
+}

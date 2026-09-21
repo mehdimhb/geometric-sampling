@@ -4,7 +4,8 @@ from .criteria import (
     MoranCriteria,
     DensityDisparityCriteria,
     VoronoiCriteria,
-    LocalBalanceCriteria
+    LocalBalanceCriteria,
+    SIPMatchingCriteria
 )
 
 from .multi_objective import MultiObjectiveCriteria
@@ -23,6 +24,8 @@ __all__ = [
     'VoronoiCriteria',
 
     'LocalBalanceCriteria',
+
+    'SIPMatchingCriteria',
 
     'MultiObjectiveCriteria',
 ]

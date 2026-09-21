@@ -1,0 +1,15 @@
+\begin{table}
+\caption{N=30, n=5. Means ± sample SD; single-run SD omitted. Max SIP error is the maximum across runs.}
+\begin{tabular}{lllllllll}
+\toprule
+Method & RMSE & RMSE\_rho & Recovery\_rho & Max SIP error & Runtime & Evaluations & Support size & Entropy \\
+\midrule
+Initial design & 6.954e-02 & 5.007e-01 & 0.00 & 1.667e-01 & 0.000e+00 & 0.000e+00 & 6.000e+00 & 1.792e+00 \\
+Original GFS + restarts & 2.356e-02 ± 6.297e-04 & 1.697e-01 ± 4.534e-03 & 66.11 ± 0.91 & 1.033e-01 & 6.259e+02 ± 3.776e+01 & 2.000e+04 ± 0.000e+00 & 2.470e+03 ± 2.440e+02 & 7.237e+00 ± 1.542e-01 \\
+GFS-Directed & 5.181e-04 ± 8.352e-05 & 3.731e-03 ± 6.013e-04 & 99.25 ± 0.12 & 2.644e-03 & 5.256e+01 ± 3.779e+00 & 1.000e+05 ± 0.000e+00 & 1.078e+03 ± 3.425e+01 & 4.359e+00 ± 3.088e-02 \\
+CP(2) — enumerated fit & 1.740e-06 & 1.253e-05 & 100.00 & 7.552e-06 & 6.496e+01 & 4.984e+03 & 1.425e+05 & 4.370e+00 \\
+DSD — projection/order fit & 3.863e-02 & 2.781e-01 & 44.45 & 1.524e-01 & 2.345e+00 & 2.500e+02 & 1.015e+04 & 8.959e+00 \\
+Exact LP/QP oracle & NA & NA & NA & NA & NA & NA & NA & NA \\
+\bottomrule
+\end{tabular}
+\end{table}

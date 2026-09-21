@@ -1,0 +1,224 @@
+{
+  "representation_benchmark": [
+    {
+      "N": 250,
+      "n": 5,
+      "representation": "tuple",
+      "repeats": 1000,
+      "elapsed_seconds": 0.0009129509999183938,
+      "memory_bytes": 220220,
+      "difference_checksum": 9798
+    },
+    {
+      "N": 250,
+      "n": 5,
+      "representation": "integer_mask",
+      "repeats": 1000,
+      "elapsed_seconds": 8.455299939669203e-05,
+      "memory_bytes": 53860,
+      "difference_checksum": 9798
+    },
+    {
+      "N": 250,
+      "n": 5,
+      "representation": "frozenset",
+      "repeats": 1000,
+      "elapsed_seconds": 0.000499538000440225,
+      "memory_bytes": 868868,
+      "difference_checksum": 9798
+    },
+    {
+      "N": 500,
+      "n": 25,
+      "representation": "tuple",
+      "repeats": 1000,
+      "elapsed_seconds": 0.003913400999408623,
+      "memory_bytes": 940940,
+      "difference_checksum": 47466
+    },
+    {
+      "N": 500,
+      "n": 25,
+      "representation": "integer_mask",
+      "repeats": 1000,
+      "elapsed_seconds": 8.97150002856506e-05,
+      "memory_bytes": 90216,
+      "difference_checksum": 47466
+    },
+    {
+      "N": 500,
+      "n": 25,
+      "representation": "frozenset",
+      "repeats": 1000,
+      "elapsed_seconds": 0.002187953000429843,
+      "memory_bytes": 2966964,
+      "difference_checksum": 47466
+    },
+    {
+      "N": 1000,
+      "n": 50,
+      "representation": "tuple",
+      "repeats": 1000,
+      "elapsed_seconds": 0.006063516000722302,
+      "memory_bytes": 1841840,
+      "difference_checksum": 95062
+    },
+    {
+      "N": 1000,
+      "n": 50,
+      "representation": "integer_mask",
+      "repeats": 1000,
+      "elapsed_seconds": 0.00011916999937966466,
+      "memory_bytes": 156964,
+      "difference_checksum": 95062
+    },
+    {
+      "N": 1000,
+      "n": 50,
+      "representation": "frozenset",
+      "repeats": 1000,
+      "elapsed_seconds": 0.0035330999999132473,
+      "memory_bytes": 3667664,
+      "difference_checksum": 95062
+    },
+    {
+      "N": 2000,
+      "n": 100,
+      "representation": "tuple",
+      "repeats": 1000,
+      "elapsed_seconds": 0.01316329799919913,
+      "memory_bytes": 3643640,
+      "difference_checksum": 190068
+    },
+    {
+      "N": 2000,
+      "n": 100,
+      "representation": "integer_mask",
+      "repeats": 1000,
+      "elapsed_seconds": 0.00014243799978430616,
+      "memory_bytes": 290624,
+      "difference_checksum": 190068
+    },
+    {
+      "N": 2000,
+      "n": 100,
+      "representation": "frozenset",
+      "repeats": 1000,
+      "elapsed_seconds": 0.007814275999407982,
+      "memory_bytes": 11219208,
+      "difference_checksum": 190068
+    }
+  ],
+  "objective_storage": [
+    {
+      "N": 250,
+      "density": 1.0,
+      "pairs": 31125,
+      "approx_objective_memory_bytes": 1245000
+    },
+    {
+      "N": 250,
+      "density": 0.25,
+      "pairs": 7781,
+      "approx_objective_memory_bytes": 1041968
+    },
+    {
+      "N": 250,
+      "density": 0.1,
+      "pairs": 3112,
+      "approx_objective_memory_bytes": 446296
+    },
+    {
+      "N": 250,
+      "density": 0.01,
+      "pairs": 311,
+      "approx_objective_memory_bytes": 39160
+    },
+    {
+      "N": 500,
+      "density": 1.0,
+      "pairs": 124750,
+      "approx_objective_memory_bytes": 4990000
+    },
+    {
+      "N": 500,
+      "density": 0.25,
+      "pairs": 31188,
+      "approx_objective_memory_bytes": 4304848
+    },
+    {
+      "N": 500,
+      "density": 0.1,
+      "pairs": 12475,
+      "approx_objective_memory_bytes": 1787512
+    },
+    {
+      "N": 500,
+      "density": 0.01,
+      "pairs": 1248,
+      "approx_objective_memory_bytes": 156760
+    },
+    {
+      "N": 1000,
+      "density": 1.0,
+      "pairs": 499500,
+      "approx_objective_memory_bytes": 19980000
+    },
+    {
+      "N": 1000,
+      "density": 0.25,
+      "pairs": 124875,
+      "approx_objective_memory_bytes": 17230960
+    },
+    {
+      "N": 1000,
+      "density": 0.1,
+      "pairs": 49950,
+      "approx_objective_memory_bytes": 7416728
+    },
+    {
+      "N": 1000,
+      "density": 0.01,
+      "pairs": 4995,
+      "approx_objective_memory_bytes": 627064
+    },
+    {
+      "N": 2000,
+      "density": 1.0,
+      "pairs": 1999000,
+      "approx_objective_memory_bytes": 79960000
+    },
+    {
+      "N": 2000,
+      "density": 0.25,
+      "pairs": 499750,
+      "approx_objective_memory_bytes": 68947600
+    },
+    {
+      "N": 2000,
+      "density": 0.1,
+      "pairs": 199900,
+      "approx_objective_memory_bytes": 29676248
+    },
+    {
+      "N": 2000,
+      "density": 0.01,
+      "pairs": 19990,
+      "approx_objective_memory_bytes": 2508952
+    }
+  ],
+  "search_profiles": {
+    "Package-GFS": {
+      "runtime_seconds": 0.12654482400012057,
+      "candidate_moves": 100,
+      "status": "budget_exhausted",
+      "profile": "         231632 function calls (230854 primitive calls) in 0.128 seconds\n\n   Ordered by: cumulative time\n   List reduced from 274 to 20 due to restriction <20>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.127    0.127 /home/bardia/projects/graphical-sampling/prescribed_sip/methods/package_gfs.py:130(run_package)\n        1    0.002    0.002    0.123    0.123 /home/bardia/projects/graphical-sampling/graphical_sampling/search/gbfs.py:117(run)\n      104    0.001    0.000    0.080    0.001 /home/bardia/projects/graphical-sampling/prescribed_sip/methods/package_gfs.py:138(criterion)\n       10    0.000    0.000    0.079    0.008 /home/bardia/projects/graphical-sampling/.venv/lib/python3.12/site-packages/joblib/parallel.py:1969(__call__)\n      120    0.000    0.000    0.079    0.001 /home/bardia/projects/graphical-sampling/.venv/lib/python3.12/site-packages/joblib/parallel.py:1888(_get_sequential_output)\n      105    0.002    0.000    0.029    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/objective.py:39(initialize)\n      104    0.000    0.000    0.027    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/runtime.py:41(validate)\n      105    0.009    0.000    0.027    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/design.py:51(validate)\n      105    0.007    0.000    0.024    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/design.py:44(pair_values)\n   612/10    0.000    0.000    0.022    0.002 {method 'extend' of 'list' objects}\n      105    0.006    0.000    0.021    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/methods/package_gfs.py:106(extract_support)\n      110    0.000    0.000    0.019    0.000 /home/bardia/projects/graphical-sampling/graphical_sampling/search/gbfs.py:108(_exchange_neighbors)\n      100    0.000    0.000    0.019    0.000 /home/bardia/projects/graphical-sampling/graphical_sampling/search/gbfs.py:78(_apply_exchange)\n      122    0.005    0.000    0.019    0.000 /home/bardia/projects/graphical-sampling/graphical_sampling/search/gbfs.py:54(_design_key)\n     6330    0.002    0.000    0.017    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/objective.py:36(sample_indices)\n     6330    0.011    0.000    0.015    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/objective.py:31(indices)\n    13710    0.002    0.000    0.011    0.000 /home/bardia/projects/graphical-sampling/graphical_sampling/structs.py:77(<lambda>)\n      100    0.002    0.000    0.011    0.000 /home/bardia/projects/graphical-sampling/graphical_sampling/design.py:157(exchange)\n    14410    0.004    0.000    0.010    0.000 /home/bardia/projects/graphical-sampling/graphical_sampling/structs.py:27(__neg__)\n      105    0.007    0.000    0.009    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/design.py:38(fip)\n\n\n"
+    },
+    "GFS-Directed": {
+      "runtime_seconds": 0.02355940899997222,
+      "candidate_moves": 100,
+      "status": "completed",
+      "profile": "         24713 function calls in 0.025 seconds\n\n   Ordered by: cumulative time\n   List reduced from 117 to 20 due to restriction <20>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.001    0.001    0.024    0.024 /home/bardia/projects/graphical-sampling/prescribed_sip/methods/exchange_search.py:40(run_exchange)\n      110    0.000    0.000    0.006    0.000 /home/bardia/projects/graphical-sampling/.venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:48(_wrapfunc)\n       10    0.000    0.000    0.006    0.001 /home/bardia/projects/graphical-sampling/.venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:848(argpartition)\n       10    0.006    0.001    0.006    0.001 {method 'argpartition' of 'numpy.ndarray' objects}\n      100    0.003    0.000    0.005    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/methods/exchange_search.py:18(directed_candidate)\n       14    0.001    0.000    0.004    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/design.py:51(validate)\n       13    0.000    0.000    0.004    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/runtime.py:41(validate)\n      124    0.002    0.000    0.003    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/objective.py:79(metrics)\n      100    0.001    0.000    0.002    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/objective.py:51(step)\n      110    0.001    0.000    0.002    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/design.py:12(exchange_direction)\n      340    0.000    0.000    0.002    0.000 /home/bardia/projects/graphical-sampling/.venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:66(_wrapreduction)\n       14    0.001    0.000    0.001    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/design.py:38(fip)\n        5    0.000    0.000    0.001    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/design.py:44(pair_values)\n      440    0.001    0.000    0.001    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/objective.py:31(indices)\n      200    0.000    0.000    0.001    0.000 /home/bardia/projects/graphical-sampling/.venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3287(prod)\n      345    0.001    0.000    0.001    0.000 {method 'reduce' of 'numpy.ufunc' objects}\n      872    0.000    0.000    0.001    0.000 {built-in method builtins.any}\n      140    0.000    0.000    0.001    0.000 /home/bardia/projects/graphical-sampling/.venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3011(max)\n        3    0.000    0.000    0.001    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/objective.py:39(initialize)\n      330    0.000    0.000    0.001    0.000 /home/bardia/projects/graphical-sampling/prescribed_sip/core/objective.py:36(sample_indices)\n\n\n"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+Parameters identical to unequal-FIP experiment: YES
+
+Parameters that differ:
+FIP_TYPE: unequal -> equal
+pi vector: unequal values -> constant n/N
+  N=12, n=4: pi_i=0.33333333333333331
+  N=20, n=5: pi_i=0.25
+  N=30, n=5: pi_i=0.16666666666666666
+
+Unexpected computational-parameter differences:
+  None.
+
+The frozen notebook contents are identical.

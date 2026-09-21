@@ -1,0 +1,1289 @@
+[
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "Initial design",
+    "repetition": 1,
+    "seed": 3447125052518150233
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 1,
+    "seed": 5226908835766261391
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 2,
+    "seed": 4773596920709144378
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 3,
+    "seed": 6465410673109481481
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 4,
+    "seed": 3134573495605713966
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 5,
+    "seed": 9096305234439592009
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 1,
+    "seed": 805055889399958640
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 2,
+    "seed": 1127294211865249070
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 3,
+    "seed": 3793255809860952438
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 4,
+    "seed": 5451380217765957447
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 5,
+    "seed": 4749136153112065059
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 6,
+    "seed": 4012975433906948969
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 7,
+    "seed": 6751176239525931145
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 8,
+    "seed": 6954099638142504243
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 9,
+    "seed": 3806896516093187201
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 10,
+    "seed": 6700988346710923174
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 11,
+    "seed": 8753514264436180233
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 12,
+    "seed": 6412547090528271246
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 13,
+    "seed": 6940098058362366832
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 14,
+    "seed": 636425329630095351
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 15,
+    "seed": 2839689627603955025
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 16,
+    "seed": 5662546186839785376
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 17,
+    "seed": 5638286159569165493
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 18,
+    "seed": 8071766056602628620
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 19,
+    "seed": 3512816091952259364
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 20,
+    "seed": 651236762603544833
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 21,
+    "seed": 5587725561674906015
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 22,
+    "seed": 8663327572645039223
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 23,
+    "seed": 5919777547889631498
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 24,
+    "seed": 7543958743472235363
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 25,
+    "seed": 4847158735586277399
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 26,
+    "seed": 1642326175274148347
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 27,
+    "seed": 5555646974898574186
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 28,
+    "seed": 6061441107656479322
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 29,
+    "seed": 2064617200354765482
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "GFS-Directed",
+    "repetition": 30,
+    "seed": 5520615999389752126
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "CP(2) \u2014 enumerated fit",
+    "repetition": 1,
+    "seed": 3559427277173395295
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "DSD \u2014 projection/order fit",
+    "repetition": 1,
+    "seed": 4241916083539947077
+  },
+  {
+    "scenario": {
+      "N": 12,
+      "n": 4,
+      "population_seed": 12345,
+      "target_seed": 240930
+    },
+    "method": "Exact LP/QP oracle",
+    "repetition": 1,
+    "seed": 1792310965807368996
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "Initial design",
+    "repetition": 1,
+    "seed": 4286962378074234710
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 1,
+    "seed": 3134694144892867259
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 2,
+    "seed": 1243958062531855929
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 3,
+    "seed": 6133527592380616249
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 4,
+    "seed": 6818482762007144107
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 5,
+    "seed": 246636449915810899
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 1,
+    "seed": 1716920159243618858
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 2,
+    "seed": 8285296649720554724
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 3,
+    "seed": 4389636229020883641
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 4,
+    "seed": 4182356817828680407
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 5,
+    "seed": 887272418963685488
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 6,
+    "seed": 3006778828244403308
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 7,
+    "seed": 5007344952945052133
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 8,
+    "seed": 4059052426623025329
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 9,
+    "seed": 1137390511066897584
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 10,
+    "seed": 2036332289402335337
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 11,
+    "seed": 2328438084846252335
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 12,
+    "seed": 746040275202999756
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 13,
+    "seed": 5841928011651074354
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 14,
+    "seed": 4746926804714569319
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 15,
+    "seed": 6280583288261887815
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 16,
+    "seed": 8325109517886679006
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 17,
+    "seed": 9164009020164104114
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 18,
+    "seed": 7209305192243656041
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 19,
+    "seed": 4734543987632904456
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 20,
+    "seed": 7592597286798068430
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 21,
+    "seed": 171166884783371432
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 22,
+    "seed": 563383816259743908
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 23,
+    "seed": 5395379361960458032
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 24,
+    "seed": 7540010321154843761
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 25,
+    "seed": 4535489299004010571
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 26,
+    "seed": 2656503578173103362
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 27,
+    "seed": 1101875550018533796
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 28,
+    "seed": 3874656719927642027
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 29,
+    "seed": 437452096860174409
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "GFS-Directed",
+    "repetition": 30,
+    "seed": 3405397687308501092
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "CP(2) \u2014 enumerated fit",
+    "repetition": 1,
+    "seed": 7881943399866166691
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "DSD \u2014 projection/order fit",
+    "repetition": 1,
+    "seed": 7991458532329475646
+  },
+  {
+    "scenario": {
+      "N": 20,
+      "n": 5,
+      "population_seed": 13345,
+      "target_seed": 240938
+    },
+    "method": "Exact LP/QP oracle",
+    "repetition": 1,
+    "seed": 5025905017060520998
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "Initial design",
+    "repetition": 1,
+    "seed": 7890653172003879042
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 1,
+    "seed": 1551427889681228557
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 2,
+    "seed": 1973105359333245493
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 3,
+    "seed": 2253979845818648732
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 4,
+    "seed": 2989876170737134211
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "Original GFS + restarts",
+    "repetition": 5,
+    "seed": 160638595591000067
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 1,
+    "seed": 4440403705254049092
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 2,
+    "seed": 4832313082099125243
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 3,
+    "seed": 4860993004836669351
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 4,
+    "seed": 1664889613382497437
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 5,
+    "seed": 3826320673262120338
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 6,
+    "seed": 4678758953135673963
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 7,
+    "seed": 1831022941952814414
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 8,
+    "seed": 3326475466521317524
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 9,
+    "seed": 3387550747788056107
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 10,
+    "seed": 3473344243260071906
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 11,
+    "seed": 2580484149440082905
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 12,
+    "seed": 8075305083445545369
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 13,
+    "seed": 6924581991454690188
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 14,
+    "seed": 391763936176293464
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 15,
+    "seed": 2708399817735354292
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 16,
+    "seed": 214112547943688622
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 17,
+    "seed": 4765567767160631305
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 18,
+    "seed": 147715231311113311
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 19,
+    "seed": 2362736106616462023
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 20,
+    "seed": 3596612382389029004
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 21,
+    "seed": 5945147683702260440
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 22,
+    "seed": 1116514862792446198
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 23,
+    "seed": 3645487248699945526
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 24,
+    "seed": 5185316869288912182
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 25,
+    "seed": 8921733510257495877
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 26,
+    "seed": 2169629442465888631
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 27,
+    "seed": 4606865843816936873
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 28,
+    "seed": 7767608296636363480
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 29,
+    "seed": 1841687144685095962
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "GFS-Directed",
+    "repetition": 30,
+    "seed": 3712891409992247208
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "CP(2) \u2014 enumerated fit",
+    "repetition": 1,
+    "seed": 854330257342165112
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "DSD \u2014 projection/order fit",
+    "repetition": 1,
+    "seed": 1342118025513141556
+  },
+  {
+    "scenario": {
+      "N": 30,
+      "n": 5,
+      "population_seed": 14345,
+      "target_seed": 240948
+    },
+    "method": "Exact LP/QP oracle",
+    "repetition": 1,
+    "seed": 8534217677825301874
+  }
+]

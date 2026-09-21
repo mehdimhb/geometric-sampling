@@ -1,0 +1,20 @@
+# Final prescribed-SIP study execution plan
+
+Goal: complete the user's three fixed-target scenarios and all requested Desktop artifacts without replacing working algorithms.
+
+Specification: /home/bardia/.codex/attachments/e63ae31d-0ec1-4139-8cc3-0d070a2ed765/pasted-text.txt
+
+Architecture: a bounded final-study driver executes the existing notebook's tagged construction/search functions in isolated namespaces and uses existing Directed/CP2/DSD/exact functions. A separate artifact module reads saved per-run supports/SIP/traces, validates them independently, and creates publication tables/plots. All numerical inputs, original source, executable snippets, seeds and statuses are saved. Existing working outputs and package edits are preserved.
+
+Constraints: N12/n4, N20/n5, N30/n5 unequal FIP; 66/190/435 pairs; 495/15504/142506 samples; exactly one target and 10000 accepted package exchanges per scenario; original IDs/FIP retained; standard original-order reconstruction starts; 30 Directed runs at 100000 scores/batch50; 5 package+restart runs at 20000 scores; 250 DSD trials; current CP2 50000 evaluations/60 s; current exact 60 s; float64; rho boundary tolerance1e-12; final Directed stopping <=1e-10; six independent processes; final outputs Desktop/GFS_Prescribed_SIP_Final_Results.
+
+- [x] Task 1: reuse notebook snippets and freeze target generation. Test exact same target/support as notebook at a small override budget, correct scenario dimensions, original-ID order, immutable target checksum and independent validations.
+- [x] Task 2: execute independent reconstruction workers. Workers receive frozen pi/Pi_star and original p0 only (no p_star). Test serial/parallel repeatability, honest budgets and latest inclusive Directed threshold. Save each support, full SIP, trace, seed, runtime/status and independently recomputed metrics. Attempt CP2 at all sizes with threshold200000. Attempt optional N30 oracle with bounded60 s; record any skip/solver limit explicitly. Preserve actual completed repetitions on resume.
+- [x] Task 3: create all specified CSV/LaTeX tables and PDF/300dpi PNG plots, including Directed mean/median incumbent trajectories, with stopped states held constant and this convention documented. Audit FIP, probability sum, fixed-size identities, rho masks/recovery, support bounds and table dimensions. Test artifact completeness on a tiny full pipeline.
+- [x] Task 4: run validation, launch the full configured study on the host with local worker processes, wait for completion, then audit Desktop outputs and present only completion status/path/principal table/skips. Save runtime/concurrency limitations in README; do not claim pilot/smoke results are final.
+
+No additional approval gates or broad-study restart: the user explicitly authorized autonomous final execution and Desktop writes.
+
+Validation evidence before final launch: all 99 prescribed_sip tests passed; all three end-to-end smoke scenarios (21 genuine returned designs) passed independent audits and generated 24 PDF + 24 PNG figures. The frozen-source resume command was subsequently exercised and skipped all completed repetitions without changing the master results.
+
+Final completion: /home/bardia/Desktop/GFS_Prescribed_SIP_Final_Results/. All 90 Directed and 15 Original + restarts repetitions completed; all 15 Original runs used 20000 scores, all N20/N30 Directed runs used 100000 scores, all 30 N12 Directed runs independently satisfy raw RMSE<=1e-10. CP2 and DSD completed at all three sizes; N12/N20 exact LP returned certified solutions. Optional N30 exact LP reached the 60-second solver limit without returning a design. 116 designs passed final-distribution validation, 122 independent audits including frozen targets/reference designs; 24 PDF/24 PNG figures, all required full/compact CSV/TeX tables. Rendering/documentation revision preserved 872 numerical files byte-for-byte and is recorded with old/new source hashes and a renderer backup. Original graphical_sampling working diff matches the initial snapshot exactly.

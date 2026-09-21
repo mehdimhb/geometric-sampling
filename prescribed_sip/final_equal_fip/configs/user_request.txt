@@ -1,0 +1,365 @@
+Please now run the FINAL prescribed-SIP simulation study and save all final results, tables, plots, configurations, and target matrices to my Desktop.
+
+IMPORTANT:
+- Work autonomously and finish the mission.
+- Do NOT spend tokens narrating every step or repeatedly explaining the code to me.
+- Reuse the existing prescribed_sip code/notebook/functions wherever possible.
+- Do not rewrite working infrastructure unnecessarily.
+- Spend computation if needed, but conserve conversational/token overhead.
+- At the end give me only a concise summary and the exact output folder path.
+- Do not silently change algorithms or definitions.
+
+Create:
+
+~/Desktop/GFS_Prescribed_SIP_Final_Results/
+
+Use ONE fixed target for each scenario. Do NOT generate a new target for each reconstruction repetition.
+
+==================================================
+1. FINAL SCENARIOS
+==================================================
+
+Run these three primary scenarios:
+
+A. N=12, n=4
+B. N=20, n=5
+C. N=30, n=5
+
+Use the same unequal-FIP construction that is currently used in the working notebook/code.
+
+For each scenario print/assert:
+
+N
+n
+sum(pi)
+min(pi), max(pi)
+number of SIP pairs = N*(N-1)/2
+number of fixed-size samples = comb(N,n)
+
+Important sanity checks:
+- N=12 -> 66 SIP pairs
+- N=20 -> 190 SIP pairs
+- N=30 -> 435 SIP pairs
+
+Abort that scenario if these do not agree. This is important because a previous table was mistakenly described as N=20 although 435 pairs showed that it was actually N=30.
+
+==================================================
+2. TARGET CONSTRUCTION
+==================================================
+
+For EACH scenario construct exactly ONE frozen target as follows.
+
+1. Keep each unit's original ID and its prescribed pi_i attached.
+2. Generate one reproducible random permutation of the population order.
+3. On the permuted order, construct the standard fixed-size GFS starting design.
+4. Apply 10,000 accepted random GFS exchanges using the existing package exchange mechanism.
+5. Compute the resulting target SIP matrix Pi_star.
+6. Reorder Pi_star back to the ORIGINAL unit IDs.
+7. Freeze this Pi_star and use exactly the same target for EVERY competing reconstruction method and EVERY repetition.
+8. Reconstruction must always begin from the standard GFS design in the ORIGINAL, unpermuted order.
+
+Use fixed documented target seeds, different from reconstruction seeds.
+
+Save for each scenario:
+- pi
+- permutation
+- Pi_star
+- initial Pi
+- target-generation seed
+- target construction settings
+- initial-to-target RMSE
+- initial-to-target RMSE_rho
+- initial max SIP discrepancy
+
+Do NOT give reconstruction algorithms access to the target design probabilities p_star.
+They may receive only pi, n, and Pi_star as appropriate.
+
+==================================================
+3. METHODS
+==================================================
+
+N=12,n=4:
+- Initial design
+- Original GFS + restarts
+- GFS-Directed
+- CP(2) — enumerated fit
+- DSD — projection/order fit
+- Exact LP/QP oracle
+
+N=20,n=5:
+- Initial design
+- Original GFS + restarts
+- GFS-Directed
+- CP(2) — enumerated fit
+- DSD — projection/order fit
+- Exact LP/QP oracle
+
+For N=30,n=5:
+- Initial design
+- Original GFS + restarts
+- GFS-Directed
+- DSD — projection/order fit
+- TRY CP(2) — enumerated fit.
+
+There are comb(30,5)=142506 fixed-size samples. Increase the CP(2) enumeration threshold enough to allow this IF the current implementation can reasonably handle it.
+
+Do not silently omit CP(2). If it cannot be run because of memory/time/resource limitations, record:
+"CP(2) enumerated fit not run at N=30 due to enumeration/resource limit"
+and record the reason.
+
+For N=30, the Exact LP/QP oracle is OPTIONAL.
+Attempt it only if the existing implementation can handle 142506 sample-probability variables without excessive memory/runtime.
+Do not spend a very long time forcing it merely to fill the table.
+If skipped, explicitly record why.
+
+IMPORTANT:
+CP(2) here must continue to be labelled
+"CP(2) — enumerated fit"
+because this is our small/medium-N enumerated implementation, not a claim about the scalability limit of the published CP(2) methodology.
+
+==================================================
+4. REPETITIONS AND SEARCH BUDGETS
+==================================================
+
+GFS-Directed:
+- 30 independent reconstruction runs per scenario
+- same frozen Pi_star
+- different reconstruction seeds
+- max 100,000 scored candidate evaluations per run
+- batch size = 50
+- retain current Directed-GFS algorithm exactly
+- early stop at raw SIP RMSE <= 1e-10
+- save each repetition separately
+
+Original GFS + restarts:
+Because it is much more computationally expensive:
+- run 5 independent repetitions for each scenario if computationally reasonable
+- max 20,000 scored evaluations per repetition
+- use the current published/package exchange machinery plus our documented restart wrapper
+- do NOT relabel this as untouched "Original GFS"; table name must remain:
+  "Original GFS + restarts"
+
+If a 5-run N=30 experiment becomes excessively long, complete at least the existing reproducible run and record the number of repetitions honestly. Do not fabricate repetitions.
+
+DSD:
+Use the current implementation/settings, including 250 fitting trials unless the existing code specifies otherwise.
+
+CP(2):
+Use the current validated enumerated implementation and convergence settings.
+
+Exact LP/QP:
+Use the existing exact small-N oracle implementation.
+
+==================================================
+5. INDEPENDENT VALIDATION
+==================================================
+
+For every final returned design, independently recompute from the FINAL sample probability distribution:
+
+- sum_s p_s
+- first-order inclusion probabilities
+- second-order inclusion probabilities
+
+Do NOT merely report an internally cached objective value.
+
+Check:
+
+sum_s p_s = 1
+max_i |pi_hat_i - pi_i| approximately numerical precision
+sample size exactly n for every positive-probability sample
+
+For fixed-size designs also verify numerically:
+
+sum_{j != i} pi_ij = (n-1) pi_i
+
+for every i, within numerical tolerance.
+
+Save a validation CSV.
+
+==================================================
+6. METRICS
+==================================================
+
+Keep raw SIP RMSE:
+
+RMSE =
+sqrt(mean_{i<j} (pi_ij_hat - pi_ij_star)^2)
+
+Use the dependence-standardized quantity:
+
+rho_ij =
+(pi_ij - pi_i*pi_j) /
+sqrt(pi_i*(1-pi_i)*pi_j*(1-pi_j))
+
+and
+
+RMSE_rho =
+sqrt(mean_{included pairs}
+(rho_ij_hat-rho_ij_star)^2)
+
+Recovery_rho =
+100 * (1 - RMSE_rho_final/RMSE_rho_initial)
+
+If a pair has an undefined/unstable rho denominator because of a certainty unit, exclude it and explicitly report the included/excluded pair counts.
+
+Report:
+
+Method
+N
+n
+Repetitions
+RMSE mean
+RMSE SD
+RMSE median
+RMSE_rho mean
+RMSE_rho SD
+RMSE_rho median
+Recovery_rho mean
+Recovery_rho SD
+Max SIP error
+FIP max error
+Runtime mean
+Runtime SD
+Evaluations mean
+Evaluations SD
+Support size mean
+Support size SD
+Entropy mean
+Entropy SD
+rho pairs included
+rho pairs excluded
+
+For deterministic/single-run methods use NA for irrelevant SDs.
+
+Do NOT round internally.
+Use sensible scientific notation in displayed tables.
+
+==================================================
+7. FINAL TABLES
+==================================================
+
+Create:
+
+Table_1_N12_n4.csv
+Table_1_N12_n4.tex
+
+Table_2_N20_n5.csv
+Table_2_N20_n5.tex
+
+Table_3_N30_n5.csv
+Table_3_N30_n5.tex
+
+and
+
+Table_All_Scenarios.csv
+Table_All_Scenarios.tex
+
+Also make a compact publication-oriented table containing only:
+
+Method
+RMSE
+RMSE_rho
+Recovery_rho
+Max SIP error
+Runtime
+Evaluations
+Support size
+Entropy
+
+Save both CSV and LaTeX versions.
+
+==================================================
+8. PLOTS
+==================================================
+
+Produce publication-quality plots, saved as BOTH PDF and PNG at high resolution.
+
+For each N,n scenario make:
+
+1. RMSE_rho comparison across methods
+   - preferably log y-axis where appropriate.
+
+2. Raw RMSE comparison across methods
+   - log y-axis.
+
+3. Recovery_rho comparison across methods.
+
+4. Directed-GFS 30-repetition distribution:
+   - boxplot or dot/box plot for RMSE_rho.
+
+5. Directed-GFS convergence:
+   RMSE_rho versus scored candidate evaluations.
+   Show individual runs lightly if convenient and a clear median/mean trajectory.
+
+6. SIP comparison:
+   target Pi_star versus best/representative Directed-GFS Pi_hat.
+   Use either:
+   - target and reconstructed heatmaps, plus error heatmap,
+   OR
+   - target pi_ij versus reconstructed pi_ij scatter with y=x.
+   Ideally provide both if easy.
+
+7. For the target itself:
+   initial Pi versus target Pi_star discrepancy heatmap.
+
+Plots must have clear titles including the CORRECT N and n.
+
+==================================================
+9. OUTPUT STRUCTURE
+==================================================
+
+Use:
+
+~/Desktop/GFS_Prescribed_SIP_Final_Results/
+    README.txt
+    configs/
+    targets/
+    raw_runs/
+    tables/
+    plots/
+    validation/
+
+Save a machine-readable master results file, preferably:
+
+raw_runs/all_runs.csv
+
+and all random seeds/configurations necessary to reproduce every result.
+
+README.txt should briefly state:
+- software/code version if available
+- target-generation procedure
+- scenario settings
+- algorithms included
+- repetitions
+- stopping rules
+- enumeration limitations/skipped methods
+- timestamp
+
+==================================================
+10. IMPORTANT SCIENTIFIC GUARDRAILS
+==================================================
+
+Do NOT:
+- regenerate a target separately for each reconstruction run;
+- give p_star to reconstruction methods;
+- change Directed GFS to an unrequested new optimizer;
+- silently replace CP(2) with another method;
+- call the restart version untouched Original GFS;
+- interpret failure of our enumerated CP(2) implementation as a theoretical limitation of CP(2);
+- fabricate a result for a skipped method;
+- overwrite previous working results unless making a backup.
+
+At the end, inspect the final tables for obvious inconsistencies such as:
+- wrong N versus number of SIP pairs;
+- FIP errors larger than numerical tolerance;
+- wrong fixed sample size;
+- support exceeding comb(N,n);
+- Recovery values inconsistent with RMSE_rho.
+
+Then print only:
+1. completion status,
+2. exact Desktop output folder,
+3. one concise table of the principal results,
+4. any method that was skipped and the exact reason.
+
+Please focus on completing the computations and files rather than spending tokens explaining intermediate steps.

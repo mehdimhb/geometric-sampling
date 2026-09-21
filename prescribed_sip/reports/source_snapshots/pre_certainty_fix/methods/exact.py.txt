@@ -1,0 +1,89 @@
+"""Enumerated LP feasibility and convex QP with an independent LP gap bound."""
+from functools import lru_cache
+from itertools import combinations
+from time import perf_counter
+import numpy as np
+from scipy import sparse
+from scipy.optimize import linprog
+from prescribed_sip.core.design import Support
+
+
+class EnumeratedSpace:
+    def __init__(self,N,n):
+        self.N=N; self.n=n
+        self.samples=list(combinations(range(N),n))
+        self.pair_list=list(combinations(range(N),2))
+        lookup={p:i for i,p in enumerate(self.pair_list)}
+        ur=[]; uc=[]; pr=[]; pc=[]
+        for t,s in enumerate(self.samples):
+            for i in s: ur.append(i); uc.append(t)
+            for pair in combinations(s,2): pr.append(lookup[pair]); pc.append(t)
+        self.units=sparse.csc_matrix((np.ones(len(ur)),(ur,uc)),shape=(N,len(self.samples)))
+        self.pairs=sparse.csc_matrix((np.ones(len(pr)),(pr,pc)),shape=(len(lookup),len(self.samples)))
+        self.constraints=sparse.vstack([sparse.csc_matrix(np.ones((1,len(self.samples)))),self.units[:-1]],format='csc')
+
+    def target_matrix(self,objective):
+        idx=objective.i*(2*self.N-objective.i-1)//2+objective.j-objective.i-1
+        return self.pairs[idx]
+
+    def support(self,p):
+        return Support(self.N,self.n,{s:float(q) for s,q in zip(self.samples,p) if q>0})
+
+
+@lru_cache(maxsize=8)
+def space_for(N,n): return EnumeratedSpace(N,n)
+
+
+def exact_benchmark(N,n,pi,objective,seconds=30):
+    started=perf_counter(); space=space_for(N,n); P=space.target_matrix(objective)
+    b=np.r_[1.,pi[:-1]]
+    options={'primal_feasibility_tolerance':1e-10,'dual_feasibility_tolerance':1e-10,'time_limit':float(seconds)}
+    A=sparse.vstack([space.constraints,P],format='csc')
+    feasibility=linprog(np.zeros(len(space.samples)),A_eq=A,b_eq=np.r_[b,objective.target],bounds=(0,None),method='highs',options=options)
+    common={'LP_status':int(feasibility.status),'LP_message':feasibility.message,
+            'enumerated_samples':len(space.samples)}
+    if feasibility.success:
+        p=feasibility.x; support=space.support(p); vals=support.validate(pi)
+        residual=P@p-objective.target; loss=float(residual@residual)
+        return {**common,'feasible':True,'optimal_D2':loss,'lower_bound_D2':0.,
+                'certificate_gap':loss,'primal_error':max(vals['max_FIP_error'],vals['max_probability_sum_error']),
+                'status':'certified_feasible','runtime_seconds':perf_counter()-started,'support':support}
+    if feasibility.status!=2:
+        return {**common,'feasible':None,'optimal_D2':float('nan'),'lower_bound_D2':float('nan'),
+                'certificate_gap':float('nan'),'primal_error':float('nan'),
+                'status':'timeout' if feasibility.status==1 else 'solver_failure',
+                'runtime_seconds':perf_counter()-started,'support':None}
+    import osqp
+    S=len(space.samples); M=len(objective.target)
+    # x=(p,r), r=Pp-target: diagonal Hessian avoids dense P'P.
+    hessian=sparse.diags(np.r_[np.zeros(S),np.full(M,2.)],format='csc')
+    constraints=sparse.vstack([
+        sparse.hstack([space.constraints,sparse.csc_matrix((N,M))]),
+        sparse.hstack([P,-sparse.eye(M)]),
+        sparse.hstack([sparse.eye(S),sparse.csc_matrix((S,M))])],format='csc')
+    lower=np.r_[b,objective.target,np.zeros(S)]
+    upper=np.r_[b,objective.target,np.full(S,np.inf)]
+    solver=osqp.OSQP()
+    remaining=max(.001,seconds-(perf_counter()-started))
+    solver.setup(P=hessian,q=np.zeros(S+M),A=constraints,l=lower,u=upper,
+                 eps_abs=1e-11,eps_rel=1e-11,max_iter=100000,polishing=True,
+                 verbose=False,time_limit=remaining)
+    solution=solver.solve(raise_error=False)
+    common.update({'QP_status':solution.info.status,'QP_iterations':solution.info.iter})
+    if solution.x is None:
+        return {**common,'feasible':False,'optimal_D2':float('nan'),'lower_bound_D2':float('nan'),
+                'certificate_gap':float('nan'),'primal_error':float('nan'),'status':'solver_failure',
+                'runtime_seconds':perf_counter()-started,'support':None}
+    p=np.maximum(solution.x[:S],0.)
+    support=space.support(p)
+    primal=max(abs(p.sum()-1.),float(np.max(abs(space.units@p-pi))))
+    residual=P@p-objective.target; loss=float(residual@residual)
+    gradient=2*np.asarray(P.T@residual).ravel()
+    oracle=linprog(gradient,A_eq=space.constraints,b_eq=b,bounds=(0,None),method='highs',options=options)
+    gap=max(0.,float(gradient@p-oracle.fun)) if oracle.success else float('nan')
+    certified=primal<=1e-10 and np.isfinite(gap) and gap<=1e-7
+    return {**common,'feasible':False,'optimal_D2':loss,'lower_bound_D2':max(0.,loss-gap),
+            'certificate_gap':gap,'primal_error':primal,
+            'probability_clip_correction':float(np.max(abs(p-solution.x[:S]))),
+            'status':'certified_qp' if certified else 'uncertified_qp',
+            'runtime_seconds':perf_counter()-started,'support':support}

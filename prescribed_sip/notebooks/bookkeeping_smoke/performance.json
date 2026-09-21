@@ -1,0 +1,48 @@
+[
+  {
+    "N": 12,
+    "n": 4,
+    "FIP_TYPE": "equal",
+    "TARGET_EXCHANGES": 1000,
+    "repeats": 3,
+    "before_seconds": [
+      1.5874629190002452,
+      1.6321415799975512,
+      1.6613695970008848
+    ],
+    "after_seconds": [
+      1.0465980529988883,
+      1.0746662089950405,
+      1.151253390002239
+    ],
+    "mean_before_seconds": 1.6269913653328938,
+    "mean_after_seconds": 1.090839217332056,
+    "speedup_ratio": 1.4915042835663204,
+    "same_support_exactly": true,
+    "same_SIP_bitwise": true,
+    "same_attempted_and_accepted_counts": true
+  },
+  {
+    "N": 12,
+    "n": 4,
+    "FIP_TYPE": "unequal",
+    "TARGET_EXCHANGES": 1000,
+    "repeats": 3,
+    "before_seconds": [
+      1.7127049639966572,
+      1.7287821759964572,
+      1.8155333120012074
+    ],
+    "after_seconds": [
+      1.124763087995234,
+      1.135358081999584,
+      1.1276129809994018
+    ],
+    "mean_before_seconds": 1.752340150664774,
+    "mean_after_seconds": 1.1292447169980733,
+    "speedup_ratio": 1.5517806940227323,
+    "same_support_exactly": true,
+    "same_SIP_bitwise": true,
+    "same_attempted_and_accepted_counts": true
+  }
+]

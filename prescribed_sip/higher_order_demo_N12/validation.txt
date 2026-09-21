@@ -1,0 +1,41 @@
+GFS higher-order constrained redistribution: validation
+Selected saved Directed-GFS run: N12_n4_2_r17
+Support definition: p_s > 1e-12 (strict)
+Possible samples C(12,4): 495
+Original Directed-GFS RMSE to Pi_star: 9.5284719332677524e-11
+Original Directed-GFS max SIP error to Pi_star: 4.0903441744788438e-10
+Original Directed-GFS max FIP error to target: 3.3306690738754696e-16
+Minimum required off-diagonal achieved SIP: 0.0054184355802377538
+Minimum support during GFS-HO: 66
+Maximum support during GFS-HO: 314
+
+[Initial Directed GFS]
+Var(Vhat): 27689.314262496464
+E[Vhat]-V_HT: 7.1054273576010019e-15
+max FIP drift: 0
+SIP RMSE drift: 0
+max SIP drift: 0
+support size: 314
+support fraction: 0.63434343434343432
+
+[GFS-HO optimized]
+Var(Vhat): 12414.860610361422
+E[Vhat]-V_HT: -2.2737367544323206e-13
+max FIP drift: 5.4956039718945249e-15
+SIP RMSE drift: 2.6831071960695175e-15
+max SIP drift: 9.0066842872715824e-15
+support size: 66
+support fraction: 0.13333333333333333
+
+[Exact LP oracle]
+Var(Vhat): 12414.860610361407
+E[Vhat]-V_HT: -6.3948846218409017e-14
+max FIP drift: 4.3298697960381105e-15
+SIP RMSE drift: 1.5645977044593714e-15
+max SIP drift: 5.7315263646273706e-15
+support size: 66
+support fraction: 0.13333333333333333
+
+V_HT unchanged for all designs: 35.379242129659225
+Exact LP full constraint residual: 5.7315263646273706e-15
+VALIDATION PASSED

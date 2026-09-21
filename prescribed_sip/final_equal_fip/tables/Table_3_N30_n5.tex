@@ -1,0 +1,15 @@
+\begin{table}
+\caption{Prescribed-SIP reconstruction, N=30, n=5. One frozen target; independent reconstruction repetitions.}
+\begin{tabular}{lrrrrrrrrrrrrrrrrrrrrrrrrrll}
+\toprule
+Method & N & n & Repetitions & SIP pairs & Possible samples & RMSE mean & RMSE SD & RMSE median & RMSE\_rho mean & RMSE\_rho SD & RMSE\_rho median & Recovery\_rho mean & Recovery\_rho SD & Runtime mean & Runtime SD & Evaluations mean & Evaluations SD & Support size mean & Support size SD & Entropy mean & Entropy SD & Max SIP error & FIP max error & Rho pairs included & Rho pairs excluded & Status & Reason \\
+\midrule
+Initial design & 30 & 5 & 1 & 435 & 142506 & 6.954e-02 & NA & 6.954e-02 & 5.007e-01 & NA & 5.007e-01 & 0.000e+00 & NA & 0.000e+00 & NA & 0.000e+00 & NA & 6.000e+00 & NA & 1.792e+00 & NA & 1.667e-01 & 1.693e-15 & 435 & 0 & completed &  \\
+Original GFS + restarts & 30 & 5 & 5 & 435 & 142506 & 2.356e-02 & 6.297e-04 & 2.385e-02 & 1.697e-01 & 4.534e-03 & 1.717e-01 & 6.611e+01 & 9.056e-01 & 6.259e+02 & 3.776e+01 & 2.000e+04 & 0.000e+00 & 2.470e+03 & 2.440e+02 & 7.237e+00 & 1.542e-01 & 1.033e-01 & 1.804e-15 & 435 & 0 & candidate budget reached & candidate budget reached \\
+GFS-Directed & 30 & 5 & 30 & 435 & 142506 & 5.181e-04 & 8.352e-05 & 5.157e-04 & 3.731e-03 & 6.013e-04 & 3.713e-03 & 9.925e+01 & 1.201e-01 & 5.256e+01 & 3.779e+00 & 1.000e+05 & 0.000e+00 & 1.078e+03 & 3.425e+01 & 4.359e+00 & 3.088e-02 & 2.644e-03 & 2.165e-15 & 435 & 0 & completed & scored candidate evaluation budget reached \\
+CP(2) — enumerated fit & 30 & 5 & 1 & 435 & 142506 & 1.740e-06 & NA & 1.740e-06 & 1.253e-05 & NA & 1.253e-05 & 1.000e+02 & NA & 6.496e+01 & NA & 4.984e+03 & NA & 1.425e+05 & NA & 4.370e+00 & NA & 7.552e-06 & 5.634e-15 & 435 & 0 & timeout & time\_budget \\
+DSD — projection/order fit & 30 & 5 & 1 & 435 & 142506 & 3.863e-02 & NA & 3.863e-02 & 2.781e-01 & NA & 2.781e-01 & 4.445e+01 & NA & 2.345e+00 & NA & 2.500e+02 & NA & 1.015e+04 & NA & 8.959e+00 & NA & 1.524e-01 & 2.054e-15 & 435 & 0 & completed &  \\
+Exact LP/QP oracle & 30 & 5 & 0 & 435 & 142506 & NA & NA & NA & NA & NA & NA & NA & NA & NA & NA & NA & NA & NA & NA & NA & NA & NA & NA & 435 & 0 & timeout & Time limit reached. (HiGHS Status 13: model\_status is Time limit reached; primal\_status is None) \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,116 @@
+"""Spawn independent evaluation jobs; exclusive serial timing within each stage."""
+from collections import deque
+from concurrent.futures import ProcessPoolExecutor,wait,FIRST_COMPLETED
+import json
+import multiprocessing
+import os
+from pathlib import Path
+from prescribed_sip.run_all import execute_replication,save_json,utc_now,collect
+
+
+def case_paths(config,root,scenario,replication,regimes=None,include_exact=False):
+    N,n=scenario['N'],scenario['n'];density=scenario.get('density',1.)
+    sid=f'{scenario["experiment"]}_N{N}_n{n}_{scenario["target_type"]}_{scenario.get("geometry","planar")}_d{density:g}_{scenario.get("pair_structure","random")}'
+    methods=config.get('ablation_methods',config['methods']) if scenario['experiment']=='ablation' else config['methods']
+    paths=[]
+    for regime in (scenario.get('regimes',['evaluations']) if regimes is None else regimes):
+        for item in methods:
+            settings={'name':item} if isinstance(item,str) else item
+            paths.append(Path(root)/f'results/runs/{sid}_r{replication}_{settings["name"]}_{settings.get("variant","default")}_{regime}.json')
+    if include_exact and N<=14: paths.append(Path(root)/f'results/runs/{sid}_r{replication}_exact.json')
+    return paths
+
+
+def evaluation_job(config,root,scenario,replication,workers):
+    paths=case_paths(config,root,scenario,replication,['evaluations'],True)
+    before=sum(p.exists() for p in paths)
+    execute_replication(config,root,scenario,replication,['evaluations'],execution_workers=workers)
+    return {'saved_rows':sum(p.exists() for p in paths)-before,'worker_process_id':os.getpid()}
+
+
+class Progress:
+    def __init__(self,root,workers):
+        self.root=Path(root)
+        self.data={'status':'running','evaluation_workers':workers,'timing_workers':1,
+                   'saved_run_files':len(list((self.root/'results/runs').glob('*.json'))),
+                   'worker_process_ids':[]}
+
+    def update(self,changes):
+        self.data.update(changes);self.data['updated_UTC']=utc_now()
+        save_json(self.root/'results/progress.json',self.data)
+
+    def refresh_saved_count(self):
+        self.data['saved_run_files']=len(list((self.root/'results/runs').glob('*.json')))
+        self.update({})
+
+
+def run_staged(config,root,scenarios,workers,artifacts):
+    root=Path(root);progress=Progress(root,workers)
+    manifest_path=root/'results/manifest.json';manifest=json.loads(manifest_path.read_text())
+    manifest['execution_scheduling']={'evaluation_workers':workers,'timing_workers':1,
+        'start_method':'spawn','phase_order':'evaluation pool completely shuts down before exclusive serial timing; stages sequential'}
+    save_json(manifest_path,manifest)
+    try:
+        for stage in dict.fromkeys(s['experiment'] for s in scenarios):
+            cases=[(s,r) for s in scenarios if s['experiment']==stage for r in range(s['replications'])]
+            progress.update({'stage':stage,'phase':'legacy_resume','current_method':None})
+            # Finish interrupted legacy cases before applying a different schedule.
+            for scenario,replication in cases:
+                paths=case_paths(config,root,scenario,replication,include_exact=True)
+                existing=[p for p in paths if p.exists()]
+                if existing and len(existing)<len(paths) and all(json.loads(p.read_text())['row'].get('execution_workers',1)==1 for p in existing):
+                    print(f'[{stage}] Completing interrupted serial replication {replication+1} before parallel work.',flush=True)
+                    execute_replication(config,root,scenario,replication,progress=progress.update)
+            progress.refresh_saved_count()
+            collect(root)
+            jobs=deque((s,r) for s,r in cases if 'evaluations' in s.get('regimes',['evaluations'])
+                       and not all(p.exists() for p in case_paths(config,root,s,r,['evaluations'])))
+            total=len(jobs);done=0
+            progress.update({'phase':'evaluations','pending_evaluation_replications':total,'completed_evaluation_replications':0,
+                             'inflight_replications':0})
+            print(f'[{stage}] Evaluation phase: {total} remaining replications, {workers} process workers.',flush=True)
+            if jobs:
+                with ProcessPoolExecutor(max_workers=workers,mp_context=multiprocessing.get_context('spawn')) as pool:
+                    pending={}
+                    def fill():
+                        while jobs and len(pending)<workers:
+                            scenario,replication=jobs.popleft()
+                            pending[pool.submit(evaluation_job,config,str(root),scenario,replication,workers)]=(scenario,replication)
+                    fill()
+                    while pending:
+                        completed,_=wait(pending,timeout=10,return_when=FIRST_COMPLETED)
+                        for future in completed:
+                            scenario,replication=pending.pop(future)
+                            result=future.result();done+=1
+                            progress.data['saved_run_files']+=result['saved_rows']
+                            pid=result['worker_process_id']
+                            if pid not in progress.data['worker_process_ids']:progress.data['worker_process_ids'].append(pid)
+                            print(f'[{stage}] Evaluation replications finished: {done}/{total}.',flush=True)
+                        fill()
+                        progress.update({'completed_evaluation_replications':done,'pending_evaluation_replications':len(jobs),
+                                         'inflight_replications':len(pending)})
+                # Pool shutdown is a hard barrier before all timing measurements.
+            collect(root)
+            timed=[(s,r) for s,r in cases if 'time' in s.get('regimes',['evaluations'])
+                   and not all(p.exists() for p in case_paths(config,root,s,r,['time']))]
+            progress.update({'phase':'time','inflight_replications':0,'pending_timing_replications':len(timed),
+                             'completed_timing_replications':0})
+            print(f'[{stage}] Isolated timing phase: {len(timed)} remaining replications; evaluation workers stopped.',flush=True)
+            for index,(scenario,replication) in enumerate(timed,1):
+                execute_replication(config,root,scenario,replication,['time'],execution_workers=1,progress=progress.update)
+                progress.update({'completed_timing_replications':index,'pending_timing_replications':len(timed)-index})
+                if index%10==0:progress.refresh_saved_count()
+            collect(root);progress.refresh_saved_count()
+            manifest=json.loads(manifest_path.read_text())
+            manifest.setdefault('completed_stages',[])
+            if stage not in manifest['completed_stages']:manifest['completed_stages'].append(stage)
+            save_json(manifest_path,manifest)
+            if artifacts:
+                from prescribed_sip.experiments.artifacts import generate
+                generate(root)
+        progress.update({'status':'completed','phase':'finished','inflight_replications':0})
+    except BaseException as error:
+        progress.update({'status':'interrupted' if isinstance(error,KeyboardInterrupt) else 'failed','error':repr(error)})
+        manifest=json.loads(manifest_path.read_text());manifest['status']='interrupted' if isinstance(error,KeyboardInterrupt) else 'execution_failed'
+        save_json(manifest_path,manifest)
+        raise

@@ -1,0 +1,30 @@
+{
+  "N": 6,
+  "n": 3,
+  "prescribed_fip": [
+    0.25,
+    0.35,
+    0.45,
+    0.55,
+    0.65,
+    0.75
+  ],
+  "number_of_samples": 20,
+  "exchange_count": 10000,
+  "initial_support_size": 4,
+  "exchanged_support_size": 20,
+  "theoretical_support_size": 20,
+  "initial_probability_sum_error": 1.1102230246251565e-16,
+  "exchanged_probability_sum_error": 0.0,
+  "theoretical_probability_sum_error": 1.1102230246251565e-16,
+  "initial_fip_error": 1.1102230246251565e-16,
+  "exchanged_fip_error": 1.1102230246251565e-16,
+  "theoretical_fip_error": 1.057376408652999e-12,
+  "initial_entropy": 1.205628232488719,
+  "exchanged_entropy": 2.6923213270948168,
+  "theoretical_entropy": 2.6940275930314925,
+  "entropy_ceiling": 2.995732273553991,
+  "initial_effective_support": 3.3388559971346603,
+  "exchanged_effective_support": 14.765912680894692,
+  "theoretical_effective_support": 14.791128761277816
+}

@@ -1,0 +1,15 @@
+\begin{table}
+\caption{Prescribed-SIP reconstruction, N=12, n=4. One frozen target; independent reconstruction repetitions.}
+\begin{tabular}{lrrrrrrrrrrrrrrrrrrrrrrrrrll}
+\toprule
+Method & N & n & Repetitions & SIP pairs & Possible samples & RMSE mean & RMSE SD & RMSE median & RMSE\_rho mean & RMSE\_rho SD & RMSE\_rho median & Recovery\_rho mean & Recovery\_rho SD & Runtime mean & Runtime SD & Evaluations mean & Evaluations SD & Support size mean & Support size SD & Entropy mean & Entropy SD & Max SIP error & FIP max error & Rho pairs included & Rho pairs excluded & Status & Reason \\
+\midrule
+Initial design & 12 & 4 & 1 & 66 & 495 & 1.679e-01 & NA & 1.679e-01 & 7.553e-01 & NA & 7.553e-01 & 0.000e+00 & NA & 0.000e+00 & NA & 0.000e+00 & NA & 3.000e+00 & NA & 1.099e+00 & NA & 3.128e-01 & 2.776e-16 & 66 & 0 & completed &  \\
+Original GFS + restarts & 12 & 4 & 5 & 66 & 495 & 1.861e-02 & 3.884e-03 & 1.607e-02 & 8.373e-02 & 1.748e-02 & 7.232e-02 & 8.891e+01 & 2.314e+00 & 1.569e+02 & 2.171e+01 & 2.000e+04 & 0.000e+00 & 2.506e+02 & 6.870e+01 & 4.711e+00 & 1.447e-01 & 7.193e-02 & 4.996e-16 & 66 & 0 & candidate budget reached & candidate budget reached \\
+GFS-Directed & 12 & 4 & 30 & 66 & 495 & 9.855e-11 & 1.105e-12 & 9.877e-11 & 4.435e-10 & 4.974e-12 & 4.445e-10 & 1.000e+02 & 6.586e-10 & 1.063e+01 & 2.887e+00 & 3.782e+04 & 9.353e+03 & 3.118e+02 & 1.317e+01 & 3.922e+00 & 5.366e-02 & 4.318e-10 & 8.327e-16 & 66 & 0 & completed & raw SIP RMSE <= 1e-10 (recovery\_tolerance) \\
+CP(2) — enumerated fit & 12 & 4 & 1 & 66 & 495 & 3.301e-09 & NA & 3.301e-09 & 1.485e-08 & NA & 1.485e-08 & 1.000e+02 & NA & 6.420e-02 & NA & 8.100e+01 & NA & 4.950e+02 & NA & 4.803e+00 & NA & 8.090e-09 & 3.886e-16 & 66 & 0 & completed &  \\
+DSD — projection/order fit & 12 & 4 & 1 & 66 & 495 & 6.509e-02 & NA & 6.509e-02 & 2.929e-01 & NA & 2.929e-01 & 6.122e+01 & NA & 1.506e-01 & NA & 2.500e+02 & NA & 8.100e+01 & NA & 4.394e+00 & NA & 1.256e-01 & 2.220e-16 & 66 & 0 & completed &  \\
+Exact LP/QP oracle & 12 & 4 & 1 & 66 & 495 & 5.540e-16 & NA & 5.540e-16 & 2.493e-15 & NA & 2.493e-15 & 1.000e+02 & NA & 2.997e-02 & NA & 0.000e+00 & NA & 6.600e+01 & NA & 3.543e+00 & NA & 3.476e-15 & 1.332e-15 & 66 & 0 & certified\_feasible & Optimization terminated successfully. (HiGHS Status 7: Optimal) \\
+\bottomrule
+\end{tabular}
+\end{table}

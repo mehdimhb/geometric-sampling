@@ -1,0 +1,79 @@
+master_seed: 20260918
+methods:
+- Package-GFS
+- GFS-Random
+- GFS-Greedy
+- GFS-Directed
+- GFS-Advanced
+- CP2-enumerated
+- Sinha
+- DSD-structured
+ablation_methods:
+- name: GFS-Greedy
+  variant: random_epsilon
+  epsilon: random
+- name: GFS-Greedy
+  variant: fixed_epsilon
+  epsilon: fixed
+- name: GFS-Greedy
+  variant: optimal_epsilon
+  epsilon: optimal
+- name: GFS-Directed
+  variant: directed_batch10
+  batch: 10
+- name: GFS-Directed
+  variant: directed_batch50
+  batch: 50
+- name: GFS-Directed
+  variant: directed_batch100
+  batch: 100
+- name: GFS-Advanced
+  variant: advanced_three_starts
+  starts: 3
+budget:
+  evaluations: 200
+  seconds: 3.0
+  batch: 10
+exact_seconds: 5.0
+time_evaluation_ceiling: 10000000
+output: prescribed_sip/results/small_validation
+stages:
+  small:
+    sizes:
+    - - 8
+      - 3
+    - - 10
+      - 3
+    - - 10
+      - 4
+    - - 12
+      - 4
+    - - 14
+      - 4
+    targets:
+    - arbitrary
+    - sparse_support
+    - diffuse
+    - srs
+    - conditional_poisson
+    - dsd
+    - perturbed_small
+    - perturbed_moderate
+    - perturbed_large
+    geometries:
+    - planar
+    - 1d
+    replications: 2
+  ablation:
+    sizes:
+    - - 8
+      - 3
+    - - 12
+      - 4
+    targets:
+    - arbitrary
+    - sparse_support
+    - diffuse
+    geometries:
+    - 1d
+    replications: 2

@@ -1,0 +1,28 @@
+{
+  "method": "Original GFS + restarts",
+  "RMSE": 0.020736830227085078,
+  "Recovery %": 41.43158173348718,
+  "evaluations": 20000,
+  "runtime": 60.46495108200179,
+  "status": "candidate budget reached",
+  "restarts": 1,
+  "validation": {
+    "FIP max error": 6.106226635438361e-16,
+    "Probability sum error": 0.0,
+    "Min probability": 1.2956837979051026e-14,
+    "SIP recomputation error": 0.0,
+    "Fixed-size row error": 2.9976021664879227e-15,
+    "Pair-total error": 0.0
+  },
+  "baseline_RMSE": 0.03540616400586936,
+  "previous_saved_RMSE": 0.02083564204,
+  "previous_saved_evaluations": 13425,
+  "restart_history": [
+    {
+      "restart": 1,
+      "reason": "frontier exhausted",
+      "evaluations": 13425,
+      "best_RMSE": 0.02083564204429043
+    }
+  ]
+}

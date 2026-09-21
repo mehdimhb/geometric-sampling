@@ -1,0 +1,36 @@
+"""Read-only study monitor; execute with Python, independently of the simulation."""
+import json
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+root = Path('prescribed_sip/results/paper')
+log = Path('prescribed_sip/results/paper_execution.log')
+while True:
+    try:
+        progress = json.loads((root / 'results/progress.json').read_text())
+        phase = progress.get('phase', 'starting')
+        if phase == 'evaluations':
+            completed = progress.get('completed_evaluation_replications', 0)
+            remaining = progress.get('pending_evaluation_replications', 0) + progress.get('inflight_replications', 0)
+            workers = progress.get('evaluation_workers', 1)
+        elif phase == 'time':
+            completed = progress.get('completed_timing_replications', 0)
+            remaining = progress.get('pending_timing_replications', 0)
+            workers = 1
+        else:
+            completed = remaining = None
+            workers = progress.get('evaluation_workers', 1)
+        timestamp = datetime.now(timezone.utc).strftime('%H:%M:%S UTC')
+        message = f'[{timestamp}] {progress.get("stage", "?")} / {phase}: '
+        if completed is not None:
+            message += f'{completed} replications completed since phase restart; {remaining} remaining in this phase; '
+        message += f'{workers} workers; {progress.get("saved_run_files", 0)} saved method/benchmark results; status={progress.get("status", "?")}.'
+        with log.open('a') as handle:
+            handle.write(message + '\n')
+        print(message, flush=True)
+        if progress.get('status') in {'completed', 'failed', 'interrupted'}:
+            break
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+    time.sleep(10)

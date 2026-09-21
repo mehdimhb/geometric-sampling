@@ -1,0 +1,17 @@
+[
+  {
+    "original": "simulations/jupyters/GFS_prescribed_SIP_demo.ipynb",
+    "backup": "prescribed_sip/notebooks/backups/before_rho_metrics_20260918T162722/0_GFS_prescribed_SIP_demo.ipynb",
+    "sha256": "d0b5347579d37aebf37f07fd5248177bab5284a5765771cab57b24c545ed57d7"
+  },
+  {
+    "original": "simulations/jupyters/GFS_prescribed_SIP_demo_simple.ipynb",
+    "backup": "prescribed_sip/notebooks/backups/before_rho_metrics_20260918T162722/1_GFS_prescribed_SIP_demo_simple.ipynb",
+    "sha256": "e7a2aadd2cbce5dfab07c32065246e700726b6d48cdedccdcf691468d2788a7f"
+  },
+  {
+    "original": "prescribed_sip/notebooks/GFS_prescribed_SIP_demo.ipynb",
+    "backup": "prescribed_sip/notebooks/backups/before_rho_metrics_20260918T162722/2_GFS_prescribed_SIP_demo.ipynb",
+    "sha256": "8c7c31ee3dda72bb460b9920fe8419f9fe74698cd5ab4288e0d3d5c6ec69a53f"
+  }
+]

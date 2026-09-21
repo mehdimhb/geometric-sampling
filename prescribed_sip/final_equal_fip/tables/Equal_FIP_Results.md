@@ -1,0 +1,22 @@
+Reconstruction of prescribed second-order inclusion probabilities under equal first-order inclusion probabilities.
+
+| N | n | Method | RMSE_pi2 | Recovery (%) | Max SIP error | Time (s) | Eval. | Support |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 12 | 4 | Initial design | 1.679e-01 | 0.00 | 3.128e-01 | 0.000e+00 | 0.000e+00 | 3.000e+00 |
+| 12 | 4 | Original GFS + restarts | 1.861e-02 ± 3.884e-03 | 88.91 ± 2.31 | 7.193e-02 | 1.569e+02 ± 2.171e+01 | 2.000e+04 ± 0.000e+00 | 2.506e+02 ± 6.870e+01 |
+| 12 | 4 | GFS-Directed | 9.855e-11 ± 1.105e-12 | 100.00 ± 0.00 | 4.318e-10 | 1.063e+01 ± 2.887e+00 | 3.782e+04 ± 9.353e+03 | 3.118e+02 ± 1.317e+01 |
+| 12 | 4 | CP(2) — enumerated fit | 3.301e-09 | 100.00 | 8.090e-09 | 6.420e-02 | 8.100e+01 | 4.950e+02 |
+| 12 | 4 | DSD — projection/order fit | 6.509e-02 | 61.22 | 1.256e-01 | 1.506e-01 | 2.500e+02 | 8.100e+01 |
+| 12 | 4 | Exact LP/QP oracle | 5.540e-16 | 100.00 | 3.476e-15 | 2.997e-02 | 0.000e+00 | 6.600e+01 |
+| 20 | 5 | Initial design | 1.191e-01 | 0.00 | 2.498e-01 | 0.000e+00 | 0.000e+00 | 4.000e+00 |
+| 20 | 5 | Original GFS + restarts | 3.234e-02 ± 8.427e-04 | 72.84 ± 0.71 | 1.162e-01 | 4.054e+02 ± 5.366e+01 | 2.000e+04 ± 0.000e+00 | 1.284e+03 ± 2.037e+02 |
+| 20 | 5 | GFS-Directed | 6.613e-04 ± 1.232e-04 | 99.44 ± 0.10 | 2.973e-03 | 4.066e+01 ± 1.698e+00 | 1.000e+05 ± 0.000e+00 | 5.924e+02 ± 3.529e+01 |
+| 20 | 5 | CP(2) — enumerated fit | 3.858e-09 | 100.00 | 1.359e-08 | 2.132e+00 | 9.170e+02 | 1.550e+04 |
+| 20 | 5 | DSD — projection/order fit | 6.187e-02 | 48.05 | 1.760e-01 | 4.072e-01 | 2.500e+02 | 1.024e+03 |
+| 20 | 5 | Exact LP/QP oracle | 8.615e-16 | 100.00 | 7.279e-15 | 2.708e+00 | 0.000e+00 | 1.900e+02 |
+| 30 | 5 | Initial design | 6.954e-02 | 0.00 | 1.667e-01 | 0.000e+00 | 0.000e+00 | 6.000e+00 |
+| 30 | 5 | Original GFS + restarts | 2.356e-02 ± 6.297e-04 | 66.11 ± 0.91 | 1.033e-01 | 6.259e+02 ± 3.776e+01 | 2.000e+04 ± 0.000e+00 | 2.470e+03 ± 2.440e+02 |
+| 30 | 5 | GFS-Directed | 5.181e-04 ± 8.352e-05 | 99.25 ± 0.12 | 2.644e-03 | 5.256e+01 ± 3.779e+00 | 1.000e+05 ± 0.000e+00 | 1.078e+03 ± 3.425e+01 |
+| 30 | 5 | CP(2) — enumerated fit | 1.740e-06 | 100.00 | 7.552e-06 | 6.496e+01 | 4.984e+03 | 1.425e+05 |
+| 30 | 5 | DSD — projection/order fit | 3.863e-02 | 44.45 | 1.524e-01 | 2.345e+00 | 2.500e+02 | 1.015e+04 |
+| 30 | 5 | Exact LP/QP oracle | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable |

@@ -1,0 +1,29 @@
+master_seed: 20260918
+output: prescribed_sip/results/recovery_validation
+methods:
+- Package-GFS
+- GFS-Greedy
+- GFS-Directed
+- GFS-Advanced
+- CP2-enumerated
+budget:
+  evaluations: 10000
+  seconds: 15.0
+  batch: 50
+exact_seconds: 10.0
+stages:
+  small:
+    sizes:
+    - - 8
+      - 3
+    - - 10
+      - 4
+    - - 12
+      - 4
+    targets:
+    - arbitrary
+    - sparse_support
+    - srs
+    geometries:
+    - 1d
+    replications: 3

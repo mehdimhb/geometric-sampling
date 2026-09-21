@@ -1,0 +1,10 @@
+{
+  "parameters_identical": true,
+  "parameter_differences": {
+    "fip_type": [
+      "unequal",
+      "equal"
+    ]
+  },
+  "notebook_contents_identical": true
+}

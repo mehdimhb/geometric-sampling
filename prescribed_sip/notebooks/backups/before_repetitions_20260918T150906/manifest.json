@@ -1,0 +1,17 @@
+[
+  {
+    "original": "simulations/jupyters/GFS_prescribed_SIP_demo.ipynb",
+    "backup": "prescribed_sip/notebooks/backups/before_repetitions_20260918T150906/0_GFS_prescribed_SIP_demo.ipynb",
+    "sha256": "cf7fdf6197d10d970afde0665b89fcc315a8b3bbd6b060a6f374c6455672d0e5"
+  },
+  {
+    "original": "simulations/jupyters/GFS_prescribed_SIP_demo_simple.ipynb",
+    "backup": "prescribed_sip/notebooks/backups/before_repetitions_20260918T150906/1_GFS_prescribed_SIP_demo_simple.ipynb",
+    "sha256": "6ac66e4adabac8d5be5e60e025b3bf47441fdf3f084136c610c6b4beb5d17dc1"
+  },
+  {
+    "original": "prescribed_sip/notebooks/GFS_prescribed_SIP_demo.ipynb",
+    "backup": "prescribed_sip/notebooks/backups/before_repetitions_20260918T150906/2_GFS_prescribed_SIP_demo.ipynb",
+    "sha256": "98fd8edf50d12a5731b792883ce4f9b9277081e2253c6bfd042e4c050b35f769"
+  }
+]

@@ -1,0 +1,35 @@
+master_seed: 20260918
+output: prescribed_sip/results/parallel_smoke
+methods:
+- Package-GFS
+- GFS-Random
+- GFS-Greedy
+- GFS-Directed
+- GFS-Advanced
+- CP2-enumerated
+- Sinha
+- DSD-structured
+budget:
+  evaluations: 1000
+  seconds: 10.0
+  batch: 10
+exact_seconds: 5.0
+scenarios:
+- experiment: small
+  N: 8
+  n: 3
+  target_type: arbitrary
+  geometry: 1d
+  replications: 8
+  regimes: [evaluations]
+- experiment: small
+  N: 6
+  n: 2
+  target_type: srs
+  geometry: 1d
+  replications: 2
+  regimes: [evaluations, time]
+  budget:
+    evaluations: 40
+    seconds: 0.1
+    batch: 10

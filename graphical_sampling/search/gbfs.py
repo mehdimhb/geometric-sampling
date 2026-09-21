@@ -3,6 +3,7 @@ from itertools import chain, count
 from typing import Generator, Callable, Literal, Any
 import random
 import pickle
+import math
 from joblib import Parallel, delayed
 from ..design import Design
 from ..criteria import Criteria
@@ -50,6 +51,24 @@ class GreedyBestFirstSearch:
         self.reservoir_val = self.best_criteria_value
 
     # All your static methods remain identical
+    @staticmethod
+    def _design_key(design):
+        """Snapshot partition probabilities; sample IDs alone do not define a design.
+
+        Aggregate duplicate support fragments without mutating the design. The
+        immutable key remains safe when criterion evaluation merges heap entries.
+        """
+        partitions = []
+        for heap in design._heaps:
+            masses = {}
+            for sample in heap:
+                ids = tuple(sorted(sample.ids))
+                masses.setdefault(ids, []).append(sample.prob)
+            partitions.append(tuple(sorted(
+                (ids, math.fsum(probs)) for ids, probs in masses.items()
+            )))
+        return tuple(partitions)
+
     @staticmethod
     def _get(x: Any | Callable, iteration: int) -> Any:
         if isinstance(x, Callable):
@@ -118,21 +137,35 @@ class GreedyBestFirstSearch:
             y_aux=None,
             stop_when=None,
             progress_callback=None,
+            output_mode: Literal["spatial", "objective", "silent"] = "spatial",
+            objective_name="Objective",
         ):
+        """Run GBFS with spatial diagnostics, objective-only output, or silence.
+
+        output_details prints every evaluated candidate; otherwise improvements
+        are reported. Non-spatial modes skip spatial/variance diagnostic costs.
+        """
+        if output_mode not in {"spatial", "objective", "silent"}:
+            raise ValueError("output_mode must be spatial, objective, or silent")
+
+        def log(*args, **kwargs):
+            if output_mode != "silent":
+                print(*args, **kwargs)
+
         # --- SHOCK / BACKTRACK SETTINGS --
         stalls = 0             
 
         # --- RESUME LOGIC ---
         if not self.open_set:
-            print("Starting fresh: Initializing Open Set.")
+            log("Starting fresh: Initializing Open Set.")
             for design in self.initial_designs:
                 val = self.criteria(design)
                 heapq.heappush(self.open_set, (val, next(self._counter), 'order_change', design))
                 self._update_top_k(design, val, top_k)
         else:
-            print(f"Resuming search with {len(self.open_set)} candidates in memory.")
+            log(f"Resuming search with {len(self.open_set)} candidates in memory.")
 
-        print(f"--- Parallel GBFS: Batch Size={num_explore}, Workers={n_jobs} ---")
+        log(f"--- Parallel GBFS: Batch Size={num_explore}, Workers={n_jobs} ---")
         new_best = 'Nothingyet'
         num_improvements = 0
         num_improvements_reservoir = 0
@@ -144,7 +177,7 @@ class GreedyBestFirstSearch:
             
             # Maintenance
             if iteration % 1000 == 0 and iteration > 0:
-                current_designs = {node[3] for node in nodes_to_explore} if 'nodes_to_explore' in locals() else set()
+                current_designs = {self._design_key(node[3]) for node in nodes_to_explore} if 'nodes_to_explore' in locals() else set()
                 self.closed_set = current_designs 
 
             num_changes = random.randint(num_changes_range[0], num_changes_range[1])
@@ -152,7 +185,7 @@ class GreedyBestFirstSearch:
             num_zones = random.randint(num_zones_range[0], num_zones_range[1])
 
             if not self.open_set:
-                print(f"Search exhausted at iteration {iteration}.")
+                log(f"Search exhausted at iteration {iteration}.")
                 break
 
             # =========================================================
@@ -163,7 +196,7 @@ class GreedyBestFirstSearch:
             if stalls >= stagnation_limit:
                 num_improvements = 0
                 skip_depth = random.randint(backtrack_depth, len(self.open_set))
-                print(f"\n⚡ STUCK. Purging the top {skip_depth} dead-ends to force a new path! ⚡")
+                log(f"\n⚡ STUCK. Purging the top {skip_depth} dead-ends to force a new path! ⚡")
 
                 # 1. Permanently discard the nodes that got us stuck
                 for _ in range(skip_depth):
@@ -173,7 +206,7 @@ class GreedyBestFirstSearch:
                 # 2. Grab the target node from the new frontier
                 while self.open_set and len(nodes_to_explore) < num_explore:
                     node = heapq.heappop(self.open_set)
-                    if node[3] not in self.closed_set:
+                    if self._design_key(node[3]) not in self.closed_set:
                         nodes_to_explore.append(node)
                 
                 # 3. COMMIT TO THE NEW PATH
@@ -181,7 +214,7 @@ class GreedyBestFirstSearch:
                     new_start_val = nodes_to_explore[0][0]
                     self.best_criteria_value = new_start_val
                     self.best_design = nodes_to_explore[0][3]
-                    print(f"Adopted new working baseline: {new_start_val:.6f}. Ready to improve little by little!\n")
+                    log(f"Adopted new working baseline: {new_start_val:.6f}. Ready to improve little by little!\n")
                 
                 stalls = 0
                 # ---> ADD THESE 4 LINES TO FIX THE JUPYTER MEMORY ERROR <---
@@ -190,7 +223,7 @@ class GreedyBestFirstSearch:
                 # Normal Greedy Extraction
                 while self.open_set and len(nodes_to_explore) < num_explore:
                     node = heapq.heappop(self.open_set)
-                    if node[3] not in self.closed_set:
+                    if self._design_key(node[3]) not in self.closed_set:
                         nodes_to_explore.append(node)
 
             if not nodes_to_explore: continue
@@ -198,7 +231,7 @@ class GreedyBestFirstSearch:
             # 2. Sequential Neighbor Generation
             all_neighbors = []
             for val, _, node_type, current_design in nodes_to_explore:
-                self.closed_set.add(current_design)
+                self.closed_set.add(self._design_key(current_design))
 
                 neighbors = self._exchange_neighbors(
                     current_design, self._get(num_new_exchange_nodes, iteration),
@@ -217,14 +250,16 @@ class GreedyBestFirstSearch:
             # 3. Deduplication
             unique_neighbors = {}
             for n_type, n_design in all_neighbors:
-                if n_design not in self.closed_set and n_design not in unique_neighbors:
-                    unique_neighbors[n_design] = n_type
+                key = self._design_key(n_design)
+                if key not in self.closed_set and key not in unique_neighbors:
+                    unique_neighbors[key] = (n_design, n_type)
 
             if not unique_neighbors: 
                 stalls += 1 
                 continue
                 
-            designs_to_eval = list(unique_neighbors.keys())
+            designs_to_eval = [item[0] for item in unique_neighbors.values()]
+            neighbor_types = [item[1] for item in unique_neighbors.values()]
 
             # 4. Parallel Evaluation
             criteria_values = Parallel(n_jobs=n_jobs)(delayed(self.criteria)(d) for d in designs_to_eval)
@@ -232,12 +267,15 @@ class GreedyBestFirstSearch:
             # 5. Process Results
             improved_this_iter = False
             
-            for new_design, new_val in zip(designs_to_eval, criteria_values):
-                new_type = unique_neighbors[new_design]
-                act_c = len(new_design.order.clusters)
-                act_z = len(new_design.order.clusters[0].zones) if act_c > 0 else 0
-                if output_details:
-                    print(
+            for new_design, new_val, new_type in zip(designs_to_eval, criteria_values, neighbor_types):
+                if output_mode == "spatial":
+                    act_c = len(new_design.order.clusters)
+                    act_z = len(new_design.order.clusters[0].zones) if act_c > 0 else 0
+                if output_details and output_mode == "objective":
+                    log(f"ITR {iteration:4d} | {objective_name} {new_val:.8f} | "
+                        f"BEST {min(self.reservoir_val, new_val):.8f}")
+                if output_details and output_mode == "spatial":
+                    log(
                             f"ITR {iteration:4d} | "
                             f"IMP {num_improvements}-{num_improvements_reservoir} | "
                             # f"current_window: {current_window} | "
@@ -251,12 +289,12 @@ class GreedyBestFirstSearch:
                 # ==========================================
                 # 🛡️ 1. CHECK THE IMMORTAL RESERVOIR
                 # ==========================================
-                # if round(new_val, 9) < round(self.reservoir_val, 9):
-                #     num_improvements_reservoir += 1
-                #     self.reservoir_val = new_val
-                #     self.reservoir_design = new_design
-                #     print(f"🏆 WOWW! RESERVOIR UPDATED! Absolute Best: {new_val:.6f} 🏆")
-                #     print(
+                if round(new_val, 9) < round(self.reservoir_val, 9):
+                    num_improvements_reservoir += 1
+                    self.reservoir_val = new_val
+                    self.reservoir_design = new_design
+                #     log(f"🏆 WOWW! RESERVOIR UPDATED! Absolute Best: {new_val:.6f} 🏆")
+                #     log(
                 #         f"ITR {iteration:4d} | "
                 #         f"IMP {num_improvements:3d}-{num_improvements_reservoir:3d} | "
                 #         f"RSV {self.reservoir_val:.6f} | "
@@ -271,37 +309,41 @@ class GreedyBestFirstSearch:
                 # 🚶 2. CHECK THE CURRENT WORKING PATH
                 # ==========================================
                 if round(new_val, 9) < round(self.best_criteria_value, 9):
-                    if hasattr(new_design, "_swap_info"):
+                    if output_mode == "spatial" and hasattr(new_design, "_swap_info"):
                         gaps = [s["gap"] for s in new_design._swap_info]
-                        print(f"    GAP USED: {gaps}")
+                        log(f"    GAP USED: {gaps}")
                     num_improvements += 1
                     improved_this_iter = True
                     new_best = new_type
-                    var_main = (
-                        nht_variance_for_variable(new_design, y_main)
-                        if y_main is not None
-                        else np.nan
-                    )
-
-                    var_aux = (
-                        nht_variance_for_variable(new_design, y_aux)
-                        if y_aux is not None
-                        else new_design.nht_variance
-                    )
-
-                    mi_val = new_design.moran[0]
-                    
-                    # Clean print statement ONLY when we find an improvement
-                    print(
-                            f"ITR/SuccR {iteration:4d}/{num_improvements/(iteration+1):.3f} | "
-                            f"OBJ {new_val:.6f} | "
-                            f"VAR_main {var_main/10000:.6f} | "
-                            f"VAR_aux {var_aux/10000:.6f} | "
-                            f"MI {mi_val:.5f} | "
-                            f"{act_c:2d}C x {act_z:2d}Z | "
-                            f"SIZ {len(new_design.all_samples_and_probs[1]):3d} | "
-                            f"ENT {new_design.entropy:.4f}"
+                    if output_mode == "objective" and not output_details:
+                        log(f"ITR {iteration:4d} | {objective_name} {new_val:.8f} | "
+                            f"BEST {self.reservoir_val:.8f}")
+                    if output_mode == "spatial":
+                        var_main = (
+                            nht_variance_for_variable(new_design, y_main)
+                            if y_main is not None
+                            else np.nan
                         )
+
+                        var_aux = (
+                            nht_variance_for_variable(new_design, y_aux)
+                            if y_aux is not None
+                            else new_design.nht_variance
+                        )
+
+                        mi_val = new_design.moran[0]
+                    
+                        # Clean print statement ONLY when we find an improvement
+                        log(
+                                f"ITR/SuccR {iteration:4d}/{num_improvements/(iteration+1):.3f} | "
+                                f"OBJ {new_val:.6f} | "
+                                f"VAR_main {var_main/10000:.6f} | "
+                                f"VAR_aux {var_aux/10000:.6f} | "
+                                f"MI {mi_val:.5f} | "
+                                f"{act_c:2d}C x {act_z:2d}Z | "
+                                f"SIZ {len(new_design.all_samples_and_probs[1]):3d} | "
+                                f"ENT {new_design.entropy:.4f}"
+                            )
                     
                     # Update local baseline
                     self.best_design = new_design
@@ -314,7 +356,7 @@ class GreedyBestFirstSearch:
                         self.iterations_completed = iteration + 1
                         self.reservoir_design = new_design
                         self.reservoir_val = new_val
-                        print(
+                        log(
                             "--- Search target attained at iteration "
                             f"{self.iterations_completed}: {new_val:.6f} ---"
                         )
@@ -343,4 +385,4 @@ class GreedyBestFirstSearch:
         # =========================================================
         self.best_design = self.reservoir_design
         self.best_criteria_value = self.reservoir_val
-        print(f"--- Search Complete. Final All-Time Best (from Reservoir): {self.reservoir_val:.6f} ---")
+        log(f"--- Search Complete. Final All-Time Best (from Reservoir): {self.reservoir_val:.6f} ---")

@@ -1,0 +1,307 @@
+Now add a FINAL real-population experiment using the MU284 dataset.
+
+Save everything under:
+
+~/Desktop/GFS_Prescribed_SIP_Final_Results/MU284/
+
+Do not spend tokens narrating intermediate work. Work autonomously, reuse the existing prescribed-SIP infrastructure, and focus on completing the computation, validation, tables, and plots.
+
+==================================================
+MU284 DATA
+==================================================
+
+Use the SAME MU284 preprocessing as in my published GFS paper:
+
+- original MU284 population: 284 Swedish municipalities
+- remove the same 3 outliers used in the paper
+- therefore assert N = 281
+
+Use the same cleaned data and unit IDs as the existing GFS/MU284 code if available.
+
+For the main prescribed-SIP experiment use:
+
+N = 281
+n = 15
+
+Use an unequal prescribed FIP vector based on the same reasonable MU284 auxiliary-size construction already available in the project. Preserve:
+
+sum(pi) = n
+0 < pi_i < 1
+
+Print and save:
+N, n, min(pi), max(pi), sum(pi),
+number of SIP pairs = N*(N-1)/2 = 39,340.
+
+==================================================
+TARGET CONSTRUCTION
+==================================================
+
+Construct ONE frozen target only.
+
+1. Attach each original unit ID permanently to its pi_i.
+2. Randomly permute the population order with a fixed target seed.
+3. Build the standard fixed-size GFS design on the permuted order.
+4. Apply a LONG random GFS exchange walk.
+
+For MU284 use:
+
+TARGET_ACCEPTED_EXCHANGES = 100,000
+
+Save checkpoints after:
+
+1,000
+5,000
+10,000
+25,000
+50,000
+100,000
+
+At every checkpoint compute:
+- raw SIP RMSE from the original-order initial design
+- RMSE_rho
+- max SIP discrepancy
+- entropy
+- support size
+
+Do NOT assume that more exchanges automatically mean a more distant target.
+
+Choose the final target as the checkpoint with the largest RMSE_rho from the original reconstruction baseline, unless the 100,000-exchange target is essentially equally distant.
+
+Record exactly which checkpoint was selected.
+
+Then reorder Pi_star back to original unit IDs and FREEZE it.
+
+Reconstruction methods may receive pi, n, and Pi_star only.
+They must NOT receive the target sample-probability distribution or target exchange history.
+
+==================================================
+METHODS
+==================================================
+
+Run:
+
+1. Initial GFS baseline
+2. Original GFS + restarts
+3. GFS-Directed
+4. DSD — projection/order fit
+
+Do NOT run:
+- Exact LP/QP enumeration
+- our enumerated CP(2) fit
+
+because comb(281,15) is far beyond the feasible enumeration range of those current implementations.
+
+State this explicitly in README and tables as an implementation/enumeration limitation, NOT a theoretical limitation of CP(2).
+
+==================================================
+GFS-DIRECTED: LARGE SEARCH
+==================================================
+
+MU284 requires substantially more search than the small-N cases.
+
+Use:
+
+DIRECTED_MAX_EVALUATIONS = 2,000,000
+DIRECTED_BATCH_SIZE = 100
+
+Save convergence checkpoints at:
+
+10,000
+25,000
+50,000
+100,000
+250,000
+500,000
+1,000,000
+1,500,000
+2,000,000
+
+Do NOT restart from zero at each checkpoint.
+Run one continuous search and record the best design at those cumulative budgets.
+
+Stopping:
+- allow early stopping only if raw SIP RMSE <= 1e-10
+- otherwise use the full 2,000,000 candidate-evaluation budget
+
+Run 10 independent Directed-GFS reconstruction seeds on the SAME frozen target.
+
+If 10 runs are computationally excessive, complete at least 5 full independent runs.
+Do not fabricate missing runs.
+
+For each run save:
+- seed
+- final RMSE
+- RMSE_rho
+- Recovery_rho
+- max SIP error
+- FIP max error
+- runtime
+- evaluations
+- support size
+- entropy
+- full convergence trace
+
+==================================================
+ORIGINAL GFS + RESTARTS
+==================================================
+
+Original GFS is much more computationally expensive.
+
+Do not attempt millions of package-level evaluations.
+
+Use:
+
+max 20,000 scored evaluations initially
+
+and run at least 1 full reproducible run.
+
+If runtime is reasonable, run 3 independent repetitions.
+
+If 20,000 evaluations already require excessive runtime, stop honestly and report achieved budget/runtime.
+
+Keep the method label exactly:
+
+"Original GFS + restarts"
+
+==================================================
+DSD
+==================================================
+
+Run the existing DSD projection/order fitting implementation.
+
+Use at least the current 250 fitting trials.
+
+If inexpensive, increase to 1,000 trials for MU284.
+
+Record the exact number of trials.
+
+==================================================
+VALIDATION
+==================================================
+
+Independently reconstruct the final FIP and SIP from each returned design.
+
+Verify:
+
+sum_s p_s = 1
+max_i |pi_hat_i - pi_i|
+fixed sample size exactly n
+sum_{j != i} pi_ij = (n-1) pi_i
+
+for every i within numerical tolerance.
+
+Do not rely only on cached objective values.
+
+==================================================
+METRICS
+==================================================
+
+Report:
+
+RMSE
+RMSE_rho
+Recovery_rho
+Max SIP error
+FIP max error
+Runtime
+Evaluations
+Support size
+Entropy
+Repetitions
+SDs across Directed-GFS repetitions
+
+Use:
+
+rho_ij =
+(pi_ij - pi_i*pi_j) /
+sqrt(pi_i(1-pi_i) pi_j(1-pi_j))
+
+and report excluded rho pairs if any.
+
+==================================================
+PLOTS
+==================================================
+
+Create publication-quality PDF + PNG versions of:
+
+1. Directed-GFS RMSE_rho versus candidate evaluations
+   - median trajectory across runs
+   - optionally individual runs lightly in background
+
+2. Recovery_rho versus candidate evaluations
+
+3. Final method comparison:
+   Initial vs Original GFS + restarts vs GFS-Directed vs DSD
+
+4. Target Pi_star heatmap
+
+5. Best Directed reconstructed Pi heatmap
+
+6. Directed minus target SIP error heatmap
+
+7. Target SIP versus reconstructed SIP scatter plot with y=x
+
+8. Target-generation distance versus number of accepted random exchanges
+
+9. Distribution of final RMSE_rho over independent Directed runs
+
+==================================================
+FILES
+==================================================
+
+Save:
+
+MU284/config/
+MU284/target/
+MU284/raw_runs/
+MU284/tables/
+MU284/plots/
+MU284/validation/
+
+Create:
+
+MU284_Final_Table.csv
+MU284_Final_Table.tex
+MU284_Directed_All_Runs.csv
+MU284_Directed_Convergence.csv
+MU284_Target_Checkpoints.csv
+README_MU284.txt
+
+README must record:
+- exact MU284 preprocessing
+- N=281 and n=15
+- FIP construction
+- target permutation seed
+- selected target checkpoint
+- target accepted exchanges
+- all reconstruction seeds
+- search budgets
+- methods omitted and reasons
+- runtime/environment information
+
+==================================================
+IMPORTANT
+==================================================
+
+This is a large-N experiment.
+
+Do not waste time trying to enumerate comb(281,15).
+
+Do not silently simplify the problem.
+
+Do not create a different target for each repetition.
+
+Do not expose p_star to reconstruction algorithms.
+
+Do not alter the Directed-GFS algorithm unless required to fix an actual bug.
+
+If memory becomes a problem, optimize storage of the sparse GFS design rather than reducing N.
+
+Most importantly, use the full large Directed-GFS budget where feasible.
+
+At completion print only:
+1. completion status,
+2. output folder,
+3. final compact result table,
+4. number of Directed runs completed,
+5. whether the convergence curves were still improving at 2,000,000 evaluations.

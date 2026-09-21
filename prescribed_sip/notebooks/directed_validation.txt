@@ -1,0 +1,6 @@
+......                                                                   [100%]
+6 passed in 3.99s
+
+Updated default N=12,n=4 notebook executed in Jupyter with zero error outputs.
+Original GFS RMSE: 0.02313428988; Directed RMSE: 0.0005039626371.
+No large-population search executed. Original package edits preserved.
