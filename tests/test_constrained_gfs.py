@@ -5,17 +5,26 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
+import graphical_sampling.constrained as constrained_module
+from graphical_sampling import Design
 from graphical_sampling.constrained import (
     ConstraintSystem,
     DesignDiagnostics,
     GroupCapacity,
+    _Float64Design,
+    build_madow_design,
     compute_fip,
     compute_sip,
     design_entropy,
     infeasible_mass,
     is_feasible,
+    propose_gfs_exchange,
+    role_rng,
+    seeded_madow_order,
     validate_probability_mass,
 )
+from graphical_sampling.maxent.finite_population import design_probability_mass
+from graphical_sampling.structs import _Sample
 
 
 CONSTRAINTS = ConstraintSystem(
@@ -25,6 +34,10 @@ CONSTRAINTS = ConstraintSystem(
         {frozenset({0, 1}), frozenset({2, 3}), frozenset({4, 5})}
     ),
     group_capacities=(GroupCapacity(frozenset({6, 7, 8}), 2),),
+)
+PI = np.array([0.55, 0.45, 0.50, 0.40, 0.35, 0.35, 0.40, 0.35, 0.35, 0.30])
+COORDINATES = np.column_stack(
+    [np.arange(10, dtype=np.float64), np.arange(10, dtype=np.float64) % 3]
 )
 
 
@@ -139,3 +152,120 @@ def test_probability_mass_validation_rejects_broken_designs(
             SMALL_CONSTRAINTS,
             require_feasible=False,
         )
+
+
+def test_role_zero_generates_the_predeclared_madow_order():
+    np.testing.assert_array_equal(
+        seeded_madow_order(10, 12345),
+        [4, 8, 1, 3, 7, 9, 6, 0, 2, 5],
+    )
+
+
+def test_role_streams_are_replayable_and_isolated():
+    entropy_before = role_rng(12345, 2).random(8)
+    role_rng(12345, 1).random(10_000)
+    np.testing.assert_array_equal(role_rng(12345, 2).random(8), entropy_before)
+    assert not np.array_equal(
+        role_rng(12345, 2).random(8), role_rng(12345, 3).random(8)
+    )
+
+
+@pytest.mark.parametrize(
+    "bad_fip",
+    [
+        np.array([[0.5, 0.5]]),
+        np.array([0.5, np.nan, 0.5]),
+        np.array([0.5, np.inf, 0.5]),
+        np.array([0.5, 0.0, 0.5]),
+        np.array([0.5, -0.1, 0.6]),
+        np.array([1.1, 0.4, 0.5]),
+        np.array([0.4, 0.4, 0.4]),
+    ],
+)
+def test_invalid_fips_fail_before_population_construction(monkeypatch, bad_fip):
+    class UnexpectedPopulation:
+        def __init__(self, *args, **kwargs):
+            raise AssertionError("Population construction must not be reached")
+
+    monkeypatch.setattr(constrained_module, "Population", UnexpectedPopulation)
+    coordinates = np.zeros((bad_fip.size, 2), dtype=np.float64)
+    with pytest.raises(ValueError, match="prescribed_fip"):
+        build_madow_design(bad_fip, coordinates, np.arange(bad_fip.size))
+
+
+def test_seeded_madow_design_preserves_fips_and_starts_with_violations():
+    design = build_madow_design(
+        PI,
+        COORDINATES,
+        seeded_madow_order(10, 12345),
+    )
+    assert isinstance(design, _Float64Design)
+    assert _Float64Design.exchange is Design.exchange
+    assert _Float64Design._switch is Design._switch
+
+    mass = design_probability_mass(design)
+    assert all(len(sample) == 4 for sample in mass)
+    np.testing.assert_allclose(compute_fip(mass, 10), PI, atol=1e-12, rtol=0.0)
+    assert infeasible_mass(mass, CONSTRAINTS) == pytest.approx(0.9, abs=1e-12)
+
+
+def make_production_madow_design():
+    return build_madow_design(
+        PI,
+        COORDINATES,
+        seeded_madow_order(10, 12345),
+    )
+
+
+def test_proposal_calls_inherited_exchange_without_mutating_input(monkeypatch):
+    design = make_production_madow_design()
+    before_mass = design_probability_mass(design)
+    before_heaps = [tuple(heap.heap) for heap in design._heaps]
+    calls = []
+    original = Design.exchange
+
+    def counted_exchange(self, *args, **kwargs):
+        calls.append((args, kwargs))
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(Design, "exchange", counted_exchange)
+    proposal = propose_gfs_exchange(
+        design,
+        PI,
+        CONSTRAINTS,
+        rng=role_rng(12345, 1),
+        exchange_coef=0.5,
+    )
+
+    assert calls == [((), {"partitions": 1, "pull_strategy": "random", "exchange_coef": 0.5})]
+    assert design_probability_mass(design) == before_mass
+    assert [tuple(heap.heap) for heap in design._heaps] == before_heaps
+    assert proposal.candidate is not None
+    assert proposal.diagnostics is not None
+    assert not proposal.no_op
+
+
+def test_inherited_full_exchange_can_be_an_aggregated_structural_no_op():
+    design = make_production_madow_design()
+    first = _Sample(0.3, frozenset({1, 2, 3, 4}))
+    second = _Sample(0.3, frozenset({1, 2, 3, 5}))
+    pieces = design._switch(first, second, 1.0, zone_idx=0)
+    aggregated = {}
+    for piece in pieces:
+        aggregated[piece.ids] = aggregated.get(piece.ids, 0.0) + piece.prob
+    assert aggregated == pytest.approx({first.ids: 0.3, second.ids: 0.3})
+
+
+def test_proposal_rejects_unchanged_aggregate_as_structural_no_op(monkeypatch):
+    design = make_production_madow_design()
+    monkeypatch.setattr(Design, "exchange", lambda self, *args, **kwargs: None)
+    proposal = propose_gfs_exchange(
+        design,
+        PI,
+        CONSTRAINTS,
+        rng=role_rng(12345, 1),
+        exchange_coef=1.0,
+    )
+    assert proposal.no_op is True
+    assert proposal.candidate is None
+    assert proposal.diagnostics is None
