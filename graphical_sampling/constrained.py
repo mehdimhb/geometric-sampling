@@ -12,7 +12,7 @@ from itertools import combinations
 from math import fsum
 from time import perf_counter
 from types import MappingProxyType
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Literal, Mapping, Sequence
 
 import numpy as np
 from scipy.optimize import linprog, minimize
@@ -1200,4 +1200,195 @@ def solve_numerical_maxent(
         max_equality_error=max_equality_error,
         success=True,
         message=str(solution.message),
+    )
+
+
+def attainable_pair_score(
+    mass: Mapping[tuple[int, ...], float],
+    pairs: Iterable[tuple[int, int]],
+    *,
+    offset: float = 1e-12,
+) -> float:
+    """Score only the supplied marginal-attainable unordered pairs."""
+
+    if not np.isfinite(offset) or offset <= 0.0:
+        raise ValueError("offset must be finite and positive")
+    if not isinstance(mass, Mapping):
+        raise TypeError("mass must be a mapping from samples to probabilities")
+    normalized_pairs: list[tuple[int, int]] = []
+    for raw_pair in pairs:
+        try:
+            units = tuple(_as_unit(unit, context="pairs") for unit in raw_pair)
+        except TypeError:
+            raise
+        except Exception as exc:
+            raise TypeError("pairs must contain two-element iterables") from exc
+        if len(units) != 2 or units[0] == units[1]:
+            raise ValueError("each attainable pair must contain two distinct units")
+        pair = tuple(sorted(units))
+        if pair[0] < 0:
+            raise ValueError("attainable pair indices must be nonnegative")
+        normalized_pairs.append(pair)
+    if len(set(normalized_pairs)) != len(normalized_pairs):
+        raise ValueError("attainable pairs must not contain duplicates")
+
+    support: list[tuple[frozenset[int], float]] = []
+    for raw_sample, raw_probability in mass.items():
+        raw_units = tuple(raw_sample)
+        sample = frozenset(
+            _as_unit(unit, context="support sample") for unit in raw_units
+        )
+        if len(sample) != len(raw_units):
+            raise ValueError("support sample units must be distinct")
+        probability = float(raw_probability)
+        if not np.isfinite(probability) or probability < 0.0:
+            raise ValueError("sample probabilities must be finite and nonnegative")
+        support.append((sample, probability))
+
+    terms = []
+    for pair in normalized_pairs:
+        pair_set = frozenset(pair)
+        sip = fsum(
+            probability
+            for sample, probability in support
+            if pair_set <= sample
+        )
+        terms.append(float(np.log(float(sip) + float(offset))))
+    score = float(fsum(terms))
+    if not np.isfinite(score):
+        raise ValueError("attainable-pair score is nonfinite")
+    return score
+
+
+def run_feasible_gfs_search(
+    initial_design: Design,
+    prescribed_fip: Sequence[float],
+    constraints: ConstraintSystem,
+    *,
+    objective: Literal["entropy", "sip"],
+    attainable_pairs: Iterable[tuple[int, int]] = (),
+    proposals: int,
+    seed: int | np.random.SeedSequence,
+    checkpoint_every: int = 100,
+    tolerance: float = 1e-12,
+) -> GfsSearchResult:
+    """Hill-climb a hard-feasible design using inherited GFS exchanges only."""
+
+    proposals, checkpoint_every, tolerance = _validate_search_controls(
+        proposals, checkpoint_every, tolerance
+    )
+    if not isinstance(initial_design, Design):
+        raise TypeError("initial_design must be a Design")
+    target = np.asarray(prescribed_fip, dtype=np.float64)
+    current = initial_design.copy()
+    try:
+        current_diagnostics = validate_probability_mass(
+            design_probability_mass(current),
+            target,
+            constraints,
+            require_feasible=True,
+            tolerance=tolerance,
+        )
+    except ValueError as exc:
+        raise ValueError(
+            "Stage 2 requires a feasible initial design with valid invariants"
+        ) from exc
+    if objective not in ("entropy", "sip"):
+        raise ValueError("objective must be either 'entropy' or 'sip'")
+    normalized_pairs = tuple(attainable_pairs)
+
+    rng = _phase_rng(seed)
+    started = perf_counter()
+    current_objective = (
+        current_diagnostics.entropy
+        if objective == "entropy"
+        else attainable_pair_score(
+            design_probability_mass(current), normalized_pairs
+        )
+    )
+    counts = {name: 0 for name in SearchCounts.__dataclass_fields__}
+    trace: list[SearchCheckpoint] = []
+    _record_checkpoint(
+        trace,
+        proposal=0,
+        accepted=0,
+        objective=current_objective,
+        diagnostics=current_diagnostics,
+        started=started,
+    )
+
+    for proposal_index in range(1, proposals + 1):
+        counts["proposed"] += 1
+        alpha = float(rng.uniform(0.1, 0.9))
+        proposal = propose_gfs_exchange(
+            current,
+            target,
+            constraints,
+            rng=rng,
+            exchange_coef=alpha,
+            tolerance=tolerance,
+        )
+        if proposal.no_op:
+            counts["no_op"] += 1
+        else:
+            counts["structurally_valid"] += 1
+            assert proposal.candidate is not None
+            assert proposal.diagnostics is not None
+            if not proposal.constraint_feasible:
+                counts["constraint_infeasible_candidates"] += 1
+                counts["feasibility_rejected"] += 1
+            else:
+                counts["constraint_feasible_candidates"] += 1
+                candidate_objective = (
+                    proposal.diagnostics.entropy
+                    if objective == "entropy"
+                    else attainable_pair_score(
+                        design_probability_mass(proposal.candidate),
+                        normalized_pairs,
+                    )
+                )
+                if not np.isfinite(candidate_objective):
+                    raise RuntimeError("candidate objective is nonfinite")
+                if candidate_objective > current_objective + tolerance:
+                    current = proposal.candidate
+                    current_diagnostics = proposal.diagnostics
+                    current_objective = float(candidate_objective)
+                    counts["accepted"] += 1
+                    _record_checkpoint(
+                        trace,
+                        proposal=proposal_index,
+                        accepted=counts["accepted"],
+                        objective=current_objective,
+                        diagnostics=current_diagnostics,
+                        started=started,
+                    )
+                else:
+                    counts["non_improving"] += 1
+
+        if proposal_index % checkpoint_every == 0:
+            _record_checkpoint(
+                trace,
+                proposal=proposal_index,
+                accepted=counts["accepted"],
+                objective=current_objective,
+                diagnostics=current_diagnostics,
+                started=started,
+            )
+
+    _record_checkpoint(
+        trace,
+        proposal=counts["proposed"],
+        accepted=counts["accepted"],
+        objective=current_objective,
+        diagnostics=current_diagnostics,
+        started=started,
+    )
+    runtime = perf_counter() - started
+    return GfsSearchResult(
+        final_design=current,
+        trace=tuple(trace),
+        counts=_search_counts(counts),
+        runtime_seconds=float(runtime),
+        status="completed",
+        reached_feasibility=True,
     )

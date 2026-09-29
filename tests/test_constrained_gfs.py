@@ -14,6 +14,7 @@ from graphical_sampling.constrained import (
     GroupCapacity,
     _Float64Design,
     analyze_pair_attainability,
+    attainable_pair_score,
     build_madow_design,
     compute_fip,
     compute_sip,
@@ -25,6 +26,7 @@ from graphical_sampling.constrained import (
     propose_gfs_exchange,
     role_rng,
     run_constraint_repair,
+    run_feasible_gfs_search,
     seeded_madow_order,
     solve_feasibility_reference,
     solve_numerical_maxent,
@@ -549,3 +551,212 @@ def test_numerical_maxent_reference_is_feasible_and_labeled_as_a_benchmark():
     assert result.max_equality_error < 1e-9
     assert np.isfinite(result.entropy)
     assert result.entropy <= np.log(122) + 1e-12
+
+
+def test_attainable_pair_score_uses_only_the_supplied_pair_mask():
+    pairs = ((0, 1), (1, 2))
+    first_mass = {(0, 1): 0.4, (0, 2): 0.6}
+    second_mass = {(0, 1): 0.4, (0, 3): 0.6}
+    expected = np.log(0.4 + 1e-12) + np.log(1e-12)
+    assert attainable_pair_score(first_mass, pairs) == pytest.approx(expected)
+    assert attainable_pair_score(second_mass, pairs) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize("objective", ["entropy", "sip"])
+def test_stage2_rejects_an_infeasible_initial_design(objective):
+    with pytest.raises(ValueError, match="feasible initial design"):
+        run_feasible_gfs_search(
+            make_production_madow_design(),
+            PI,
+            CONSTRAINTS,
+            objective=objective,
+            attainable_pairs=(),
+            proposals=1,
+            seed=np.random.SeedSequence([12345, 2]),
+        )
+
+
+def make_repaired_production_design():
+    result = run_constraint_repair(
+        make_production_madow_design(),
+        PI,
+        CONSTRAINTS,
+        proposals=2_000,
+        seed=np.random.SeedSequence([12345, 1]),
+        checkpoint_every=250,
+    )
+    assert result.reached_feasibility
+    return result.final_design
+
+
+def assert_stage2_accounting(result):
+    counts = result.counts
+    assert counts.proposed == (
+        counts.no_op
+        + counts.invariant_failures
+        + counts.feasibility_rejected
+        + counts.accepted
+        + counts.non_improving
+    )
+    assert counts.structurally_valid == (
+        counts.feasibility_rejected + counts.accepted + counts.non_improving
+    )
+    assert counts.structurally_valid == (
+        counts.constraint_feasible_candidates
+        + counts.constraint_infeasible_candidates
+    )
+    assert counts.constraint_infeasible_candidates == counts.feasibility_rejected
+    assert counts.invariant_failures == 0
+
+
+def accepted_objectives(result):
+    values = [result.trace[0].objective]
+    previous = 0
+    for row in result.trace:
+        if row.accepted > previous:
+            assert row.accepted == previous + 1
+            values.append(row.objective)
+            previous = row.accepted
+    return np.asarray(values)
+
+
+def test_entropy_search_improves_feasibly_and_replays_exactly():
+    repaired = make_repaired_production_design()
+    initial_mass = design_probability_mass(repaired)
+    initial_entropy = design_entropy(initial_mass)
+    kwargs = dict(
+        prescribed_fip=PI,
+        constraints=CONSTRAINTS,
+        objective="entropy",
+        proposals=2_000,
+        seed=np.random.SeedSequence([12345, 2]),
+        checkpoint_every=250,
+    )
+    result = run_feasible_gfs_search(repaired, **kwargs)
+    kwargs["seed"] = np.random.SeedSequence([12345, 2])
+    replay = run_feasible_gfs_search(repaired, **kwargs)
+
+    final_mass = design_probability_mass(result.final_design)
+    diagnostics = validate_probability_mass(
+        final_mass, PI, CONSTRAINTS, require_feasible=True, tolerance=1e-10
+    )
+    assert diagnostics.max_fip_error < 1e-10
+    assert result.counts.accepted > 0
+    assert result.counts.invariant_failures == 0
+    assert diagnostics.entropy >= initial_entropy
+    assert np.all(np.diff(accepted_objectives(result)) > 1e-12)
+    assert_stage2_accounting(result)
+    assert design_probability_mass(replay.final_design) == pytest.approx(
+        final_mass, abs=0.0, rel=0.0
+    )
+    assert replay.counts == result.counts
+
+    samples = enumerate_feasible_samples(CONSTRAINTS)
+    reference = solve_numerical_maxent(PI, samples, incidence_matrix(samples, 10))
+    assert reference.entropy >= diagnostics.entropy - 1e-9
+
+
+def test_sip_search_improves_only_attainable_pairs_and_replays_exactly():
+    repaired = make_repaired_production_design()
+    samples = enumerate_feasible_samples(CONSTRAINTS)
+    incidence = incidence_matrix(samples, 10)
+    pair_analysis = analyze_pair_attainability(PI, samples, incidence, CONSTRAINTS)
+    attainable = tuple(sorted(pair_analysis.marginal_attainable))
+    initial_mass = design_probability_mass(repaired)
+    initial_score = attainable_pair_score(initial_mass, attainable)
+    kwargs = dict(
+        prescribed_fip=PI,
+        constraints=CONSTRAINTS,
+        objective="sip",
+        attainable_pairs=attainable,
+        proposals=2_000,
+        seed=np.random.SeedSequence([12345, 3]),
+        checkpoint_every=250,
+    )
+    result = run_feasible_gfs_search(repaired, **kwargs)
+    kwargs["seed"] = np.random.SeedSequence([12345, 3])
+    replay = run_feasible_gfs_search(repaired, **kwargs)
+
+    final_mass = design_probability_mass(result.final_design)
+    diagnostics = validate_probability_mass(
+        final_mass, PI, CONSTRAINTS, require_feasible=True, tolerance=1e-10
+    )
+    final_score = attainable_pair_score(final_mass, attainable)
+    assert diagnostics.max_fip_error < 1e-10
+    assert result.counts.accepted > 0
+    assert final_score >= initial_score
+    assert np.all(np.diff(accepted_objectives(result)) > 1e-12)
+    assert_stage2_accounting(result)
+    assert design_probability_mass(replay.final_design) == pytest.approx(
+        final_mass, abs=0.0, rel=0.0
+    )
+    assert replay.counts == result.counts
+    for pair in (
+        set(pair_analysis.explicit_forbidden)
+        | set(pair_analysis.other_constraint_incompatible)
+    ):
+        assert diagnostics.sip[pair] == pytest.approx(0.0, abs=1e-12)
+
+
+def test_stage2_zero_budget_and_final_checkpoint_contracts():
+    repaired = make_repaired_production_design()
+    before = design_probability_mass(repaired)
+    zero = run_feasible_gfs_search(
+        repaired,
+        PI,
+        CONSTRAINTS,
+        objective="entropy",
+        proposals=0,
+        seed=np.random.SeedSequence([12345, 2]),
+        checkpoint_every=100,
+    )
+    assert len(zero.trace) == 1
+    assert zero.trace[0].proposal == 0
+    assert zero.counts.proposed == 0
+    assert design_probability_mass(zero.final_design) == before
+
+    partial = run_feasible_gfs_search(
+        repaired,
+        PI,
+        CONSTRAINTS,
+        objective="entropy",
+        proposals=7,
+        seed=np.random.SeedSequence([12345, 2]),
+        checkpoint_every=5,
+    )
+    assert partial.trace[-1].proposal == partial.counts.proposed == 7
+
+
+def test_role_two_consumption_cannot_change_a_fresh_role_three_replay():
+    repaired = make_repaired_production_design()
+    samples = enumerate_feasible_samples(CONSTRAINTS)
+    pair_analysis = analyze_pair_attainability(
+        PI, samples, incidence_matrix(samples, 10), CONSTRAINTS
+    )
+    settings = dict(
+        prescribed_fip=PI,
+        constraints=CONSTRAINTS,
+        objective="sip",
+        attainable_pairs=tuple(sorted(pair_analysis.marginal_attainable)),
+        proposals=25,
+        checkpoint_every=100,
+    )
+    first = run_feasible_gfs_search(
+        repaired, seed=np.random.SeedSequence([12345, 3]), **settings
+    )
+    run_feasible_gfs_search(
+        repaired,
+        PI,
+        CONSTRAINTS,
+        objective="entropy",
+        proposals=100,
+        seed=np.random.SeedSequence([12345, 2]),
+        checkpoint_every=100,
+    )
+    second = run_feasible_gfs_search(
+        repaired, seed=np.random.SeedSequence([12345, 3]), **settings
+    )
+    assert first.counts == second.counts
+    assert design_probability_mass(first.final_design) == pytest.approx(
+        design_probability_mass(second.final_design), abs=0.0, rel=0.0
+    )
