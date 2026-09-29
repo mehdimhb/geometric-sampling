@@ -165,8 +165,8 @@ support before objective evaluation. If they agree within mass tolerance, the
 proposal is a structural no-op and is rejected. This explicitly covers the
 case `A' = B` and `B' = A`.
 
-All random choices derive from the pre-specified root seed `12345`, with four
-role-tagged streams:
+All random choices derive from the predeclared reproducible demonstration seed
+`12345`, with four role-tagged streams:
 
 - permutation: `np.random.SeedSequence([12345, 0])`;
 - repair: `np.random.SeedSequence([12345, 1])`;
@@ -398,12 +398,13 @@ permutation_rng = np.random.default_rng(np.random.SeedSequence([12345, 0]))
 madow_order = permutation_rng.permutation(10)
 ```
 
-which yields `[4, 8, 1, 3, 7, 9, 6, 0, 2, 5]`. This permutation is generated
-solely from the pre-specified seed and role tag, without inspecting or
-optimizing against the forbidden pairs, group constraint, infeasible mass, LP
-solution, entropy, or SIPs. It is fixed before any constraint diagnostics are
-computed. The repair, entropy, and SIP searches use the distinct role-tagged
-streams specified in Section 4.
+which yields `[4, 8, 1, 3, 7, 9, 6, 0, 2, 5]`. For this demonstration, the
+permutation is generated solely from the declared seed and role tag, without
+passing the forbidden pairs, group constraint, infeasible mass, LP solution,
+entropy, or SIPs into the permutation generator. The repair, entropy, and SIP
+searches use the distinct role-tagged streams specified in Section 4. A later
+methodological study must repeat the analysis over many independently
+predeclared seeds rather than generalizing from this one demonstration order.
 
 The notebook explicitly verifies `sum(pi) = 4` within floating-point
 tolerance. A preliminary read-only probe found 122 hard-constraint-feasible
