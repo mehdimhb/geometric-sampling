@@ -1,6 +1,7 @@
 """Focused tests for the constrained-GFS research prototype."""
 
 from dataclasses import replace
+from itertools import combinations
 
 import numpy as np
 import pytest
@@ -12,16 +13,21 @@ from graphical_sampling.constrained import (
     DesignDiagnostics,
     GroupCapacity,
     _Float64Design,
+    analyze_pair_attainability,
     build_madow_design,
     compute_fip,
     compute_sip,
     design_entropy,
+    enumerate_feasible_samples,
+    incidence_matrix,
     infeasible_mass,
     is_feasible,
     propose_gfs_exchange,
     role_rng,
     run_constraint_repair,
     seeded_madow_order,
+    solve_feasibility_reference,
+    solve_numerical_maxent,
     validate_probability_mass,
 )
 from graphical_sampling.maxent.finite_population import design_probability_mass
@@ -425,3 +431,121 @@ def test_repair_replays_exactly_and_balances_all_proposal_counts():
     )
     assert counts.feasibility_rejected == 0
     assert counts.invariant_failures == 0
+
+
+def test_enumeration_and_feasibility_reference_for_production_problem():
+    samples = enumerate_feasible_samples(CONSTRAINTS)
+    assert len(samples) == 122
+    assert samples == tuple(sorted(samples))
+    assert all(is_feasible(sample, CONSTRAINTS) for sample in samples)
+
+    incidence = incidence_matrix(samples, 10)
+    assert incidence.shape == (10, 122)
+    np.testing.assert_array_equal(incidence.sum(axis=0), np.full(122, 4.0))
+    result = solve_feasibility_reference(PI, samples, incidence)
+    assert result.success
+    assert result.status == "feasible"
+    assert result.feasible_sample_count == 122
+    assert result.normalization_error < 1e-10
+    assert result.max_fip_error < 1e-10
+    assert result.max_equality_error < 1e-10
+    assert not hasattr(result, "probabilities")
+
+
+def test_empty_feasible_space_is_reported_as_mathematical_infeasibility():
+    constraints = ConstraintSystem(
+        population_size=3,
+        sample_size=2,
+        forbidden_pairs=frozenset(
+            {
+                frozenset({0, 1}),
+                frozenset({0, 2}),
+                frozenset({1, 2}),
+            }
+        ),
+    )
+    samples = enumerate_feasible_samples(constraints)
+    assert samples == ()
+    incidence = incidence_matrix(samples, 3)
+    assert incidence.shape == (3, 0)
+    result = solve_feasibility_reference([2 / 3] * 3, samples, incidence)
+    assert result.success is False
+    assert result.status == "infeasible"
+    assert result.feasible_sample_count == 0
+    assert not hasattr(result, "probabilities")
+
+
+def test_nonempty_but_fip_incompatible_space_is_explicitly_infeasible():
+    constraints = ConstraintSystem(
+        population_size=3,
+        sample_size=2,
+        forbidden_pairs=frozenset({frozenset({0, 1})}),
+    )
+    samples = enumerate_feasible_samples(constraints)
+    incidence = incidence_matrix(samples, 3)
+    assert samples
+    result = solve_feasibility_reference([0.9, 0.9, 0.2], samples, incidence)
+    assert result.success is False
+    assert result.status == "infeasible"
+    assert not hasattr(result, "probabilities")
+
+
+def test_pair_attainability_identifies_explicit_forbidden_pairs():
+    samples = enumerate_feasible_samples(CONSTRAINTS)
+    incidence = incidence_matrix(samples, 10)
+    result = analyze_pair_attainability(PI, samples, incidence, CONSTRAINTS)
+    explicit = {(0, 1), (2, 3), (4, 5)}
+    assert set(result.explicit_forbidden) == explicit
+    for pair in explicit:
+        assert result.categories[pair] == "explicit_forbidden"
+        assert result.maximum_sip[pair] == pytest.approx(0.0)
+    assert not (
+        set(result.marginal_attainable)
+        & (
+            set(result.explicit_forbidden)
+            | set(result.other_constraint_incompatible)
+            | set(result.marginal_inattainable)
+        )
+    )
+    categorized = (
+        set(result.explicit_forbidden)
+        | set(result.other_constraint_incompatible)
+        | set(result.marginal_inattainable)
+        | set(result.marginal_attainable)
+    )
+    assert categorized == set(result.categories) == set(combinations(range(10), 2))
+
+
+def test_pair_attainability_separates_geometric_from_marginal_possibility():
+    constraints = ConstraintSystem(population_size=3, sample_size=2)
+    samples = enumerate_feasible_samples(constraints)
+    incidence = incidence_matrix(samples, 3)
+    assert samples == ((0, 1), (0, 2), (1, 2))
+    result = analyze_pair_attainability(
+        [1.0, 1.0, 0.0], samples, incidence, constraints
+    )
+    assert result.categories[(0, 1)] == "marginal_attainable"
+    assert result.maximum_sip[0, 1] == pytest.approx(1.0)
+    assert result.categories[(0, 2)] == "marginal_inattainable"
+    assert result.categories[(1, 2)] == "marginal_inattainable"
+    assert set(result.marginal_attainable) == {(0, 1)}
+    assert set(result.marginal_inattainable) == {(0, 2), (1, 2)}
+
+
+def test_numerical_maxent_reference_is_feasible_and_labeled_as_a_benchmark():
+    samples = enumerate_feasible_samples(CONSTRAINTS)
+    incidence = incidence_matrix(samples, 10)
+    result = solve_numerical_maxent(PI, samples, incidence)
+    assert result.success
+    assert result.label == "Numerical constrained MaxEnt benchmark"
+    assert "Numerical" in result.label
+    assert "Exact" not in result.label
+    assert result.probabilities.shape == (122,)
+    assert np.all(result.probabilities >= 0.0)
+    assert float(result.probabilities.sum()) == pytest.approx(1.0, abs=1e-10)
+    np.testing.assert_allclose(
+        incidence @ result.probabilities, PI, atol=1e-9, rtol=0.0
+    )
+    assert result.max_equality_error < 1e-9
+    assert np.isfinite(result.entropy)
+    assert result.entropy <= np.log(122) + 1e-12

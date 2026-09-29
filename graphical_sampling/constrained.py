@@ -11,9 +11,12 @@ from dataclasses import dataclass
 from itertools import combinations
 from math import fsum
 from time import perf_counter
+from types import MappingProxyType
 from typing import Iterable, Mapping, Sequence
 
 import numpy as np
+from scipy.optimize import linprog, minimize
+from scipy.special import logsumexp
 
 from .design import Design
 from .maxent.finite_population import design_probability_mass
@@ -791,4 +794,410 @@ def run_constraint_repair(
         runtime_seconds=float(runtime),
         status="feasible" if reached_feasibility else "budget_exhausted",
         reached_feasibility=reached_feasibility,
+    )
+
+
+def enumerate_feasible_samples(
+    constraints: ConstraintSystem,
+) -> tuple[tuple[int, ...], ...]:
+    """Enumerate hard-feasible fixed-size samples in lexicographic order."""
+
+    if not isinstance(constraints, ConstraintSystem):
+        raise TypeError("constraints must be a ConstraintSystem")
+    return tuple(
+        sample
+        for sample in combinations(
+            range(constraints.population_size), constraints.sample_size
+        )
+        if is_feasible(sample, constraints)
+    )
+
+
+def incidence_matrix(
+    samples: Sequence[Sequence[int]], population_size: int
+) -> np.ndarray:
+    """Return the population-by-sample binary incidence matrix."""
+
+    size = _validated_population_size(population_size)
+    columns = tuple(tuple(sample) for sample in samples)
+    result = np.zeros((size, len(columns)), dtype=np.float64)
+    for column, sample in enumerate(columns):
+        units = tuple(_as_unit(unit, context="sample") for unit in sample)
+        if len(set(units)) != len(units):
+            raise ValueError("incidence sample units must be distinct")
+        if any(unit < 0 or unit >= size for unit in units):
+            raise ValueError("incidence sample unit is outside the population range")
+        result[np.asarray(units, dtype=np.int64), column] = 1.0
+    return result
+
+
+@dataclass(frozen=True)
+class FeasibilityResult:
+    """Summary of an independent finite-design LP existence check."""
+
+    success: bool
+    status: str
+    message: str
+    feasible_sample_count: int
+    positive_support_size: int
+    normalization_error: float
+    max_fip_error: float
+    max_equality_error: float
+
+
+def _validated_reference_problem(
+    prescribed_fip: Sequence[float],
+    samples: Sequence[Sequence[int]],
+    incidence: np.ndarray,
+    *,
+    tolerance: float,
+) -> tuple[np.ndarray, tuple[tuple[int, ...], ...], np.ndarray, int]:
+    if not np.isfinite(tolerance) or tolerance <= 0.0:
+        raise ValueError("tolerance must be finite and positive")
+    target, sample_size = _validate_prescribed_fip(
+        prescribed_fip, require_positive=False
+    )
+    normalized_samples = tuple(
+        tuple(_as_unit(unit, context="sample") for unit in sample)
+        for sample in samples
+    )
+    if any(len(sample) != sample_size for sample in normalized_samples):
+        raise ValueError("every reference sample must have the fixed sample size")
+    expected = incidence_matrix(normalized_samples, target.size)
+    matrix = np.asarray(incidence, dtype=np.float64)
+    if matrix.shape != expected.shape:
+        raise ValueError("incidence shape does not match samples and population")
+    if not np.all(np.isfinite(matrix)):
+        raise ValueError("incidence must contain only finite values")
+    if not np.array_equal(matrix, expected):
+        raise ValueError("incidence columns are not aligned with samples")
+    return target, normalized_samples, matrix, sample_size
+
+
+def solve_feasibility_reference(
+    prescribed_fip: Sequence[float],
+    samples: Sequence[Sequence[int]],
+    incidence: np.ndarray,
+    *,
+    tolerance: float = 1e-12,
+) -> FeasibilityResult:
+    """Use HiGHS only to verify that a constrained design exists."""
+
+    target, normalized_samples, matrix, _ = _validated_reference_problem(
+        prescribed_fip,
+        samples,
+        incidence,
+        tolerance=tolerance,
+    )
+    sample_count = len(normalized_samples)
+    if sample_count == 0:
+        return FeasibilityResult(
+            success=False,
+            status="infeasible",
+            message="hard constraints admit no fixed-size samples",
+            feasible_sample_count=0,
+            positive_support_size=0,
+            normalization_error=float("inf"),
+            max_fip_error=float("inf"),
+            max_equality_error=float("inf"),
+        )
+
+    equality = np.vstack([np.ones(sample_count, dtype=np.float64), matrix])
+    rhs = np.concatenate([[1.0], target])
+    solution = linprog(
+        np.zeros(sample_count, dtype=np.float64),
+        A_eq=equality,
+        b_eq=rhs,
+        bounds=(0.0, None),
+        method="highs",
+    )
+    if not solution.success or solution.x is None:
+        if int(solution.status) == 2:
+            return FeasibilityResult(
+                success=False,
+                status="infeasible",
+                message=str(solution.message),
+                feasible_sample_count=sample_count,
+                positive_support_size=0,
+                normalization_error=float("inf"),
+                max_fip_error=float("inf"),
+                max_equality_error=float("inf"),
+            )
+        raise RuntimeError(
+            "HiGHS failed during the feasibility reference: "
+            f"status={solution.status}; {solution.message}"
+        )
+
+    probability = np.asarray(solution.x, dtype=np.float64)
+    if not np.all(np.isfinite(probability)) or np.any(probability < -tolerance):
+        raise RuntimeError("HiGHS returned invalid feasibility probabilities")
+    normalization_error = abs(float(fsum(float(value) for value in probability)) - 1.0)
+    achieved_fip = matrix @ probability
+    max_fip_error = float(np.max(np.abs(achieved_fip - target)))
+    max_equality_error = float(np.max(np.abs(equality @ probability - rhs)))
+    if max(normalization_error, max_fip_error, max_equality_error) > tolerance:
+        raise RuntimeError("HiGHS feasibility result failed independent validation")
+    return FeasibilityResult(
+        success=True,
+        status="feasible",
+        message=str(solution.message),
+        feasible_sample_count=sample_count,
+        positive_support_size=int(np.count_nonzero(probability > tolerance)),
+        normalization_error=float(normalization_error),
+        max_fip_error=max_fip_error,
+        max_equality_error=max_equality_error,
+    )
+
+
+@dataclass(frozen=True)
+class PairAttainability:
+    """Maximum pair SIPs and exhaustive hard/marginal pair taxonomy."""
+
+    maximum_sip: np.ndarray
+    categories: Mapping[tuple[int, int], str]
+    explicit_forbidden: frozenset[tuple[int, int]]
+    other_constraint_incompatible: frozenset[tuple[int, int]]
+    marginal_inattainable: frozenset[tuple[int, int]]
+    marginal_attainable: frozenset[tuple[int, int]]
+
+    def __post_init__(self) -> None:
+        maximum = np.array(self.maximum_sip, dtype=np.float64, copy=True)
+        maximum.flags.writeable = False
+        object.__setattr__(self, "maximum_sip", maximum)
+        object.__setattr__(self, "categories", MappingProxyType(dict(self.categories)))
+        for name in (
+            "explicit_forbidden",
+            "other_constraint_incompatible",
+            "marginal_inattainable",
+            "marginal_attainable",
+        ):
+            object.__setattr__(self, name, frozenset(getattr(self, name)))
+
+
+def analyze_pair_attainability(
+    prescribed_fip: Sequence[float],
+    samples: Sequence[Sequence[int]],
+    incidence: np.ndarray,
+    constraints: ConstraintSystem,
+    *,
+    tolerance: float = 1e-12,
+) -> PairAttainability:
+    """Maximize each compatible pair SIP under the prescribed FIP margins."""
+
+    if not isinstance(constraints, ConstraintSystem):
+        raise TypeError("constraints must be a ConstraintSystem")
+    target, normalized_samples, matrix, _ = _validated_reference_problem(
+        prescribed_fip,
+        samples,
+        incidence,
+        tolerance=tolerance,
+    )
+    if (
+        constraints.population_size != target.size
+        or normalized_samples != enumerate_feasible_samples(constraints)
+    ):
+        raise ValueError(
+            "samples must be the complete enumerated hard-feasible sample space"
+        )
+    feasibility = solve_feasibility_reference(
+        target,
+        normalized_samples,
+        matrix,
+        tolerance=tolerance,
+    )
+    if not feasibility.success:
+        raise ValueError(
+            "pair attainability is undefined because the prescribed constrained "
+            "design is infeasible"
+        )
+
+    sample_count = len(normalized_samples)
+    equality = np.vstack([np.ones(sample_count, dtype=np.float64), matrix])
+    rhs = np.concatenate([[1.0], target])
+    maximum = np.zeros((target.size, target.size), dtype=np.float64)
+    np.fill_diagonal(maximum, target)
+    categories: dict[tuple[int, int], str] = {}
+    category_sets: dict[str, set[tuple[int, int]]] = {
+        "explicit_forbidden": set(),
+        "other_constraint_incompatible": set(),
+        "marginal_inattainable": set(),
+        "marginal_attainable": set(),
+    }
+    explicit_pairs = {
+        tuple(sorted(int(unit) for unit in pair))
+        for pair in constraints.forbidden_pairs
+    }
+
+    for first, second in combinations(range(target.size), 2):
+        pair = (first, second)
+        if pair in explicit_pairs:
+            category = "explicit_forbidden"
+            optimum = 0.0
+        else:
+            pair_incidence = matrix[first] * matrix[second]
+            if not np.any(pair_incidence):
+                category = "other_constraint_incompatible"
+                optimum = 0.0
+            else:
+                solution = linprog(
+                    -pair_incidence,
+                    A_eq=equality,
+                    b_eq=rhs,
+                    bounds=(0.0, None),
+                    method="highs",
+                )
+                if not solution.success or solution.x is None:
+                    raise RuntimeError(
+                        "HiGHS failed during pair-attainability analysis for "
+                        f"{pair}: status={solution.status}; {solution.message}"
+                    )
+                probability = np.asarray(solution.x, dtype=np.float64)
+                residual = float(np.max(np.abs(equality @ probability - rhs)))
+                if (
+                    not np.all(np.isfinite(probability))
+                    or np.any(probability < -tolerance)
+                    or residual > tolerance
+                ):
+                    raise RuntimeError(
+                        f"pair-attainability solution for {pair} failed validation"
+                    )
+                optimum = float(pair_incidence @ probability)
+                if (
+                    not np.isfinite(optimum)
+                    or optimum < -tolerance
+                    or optimum > 1.0 + tolerance
+                    or abs(optimum + float(solution.fun)) > tolerance
+                ):
+                    raise RuntimeError(
+                        f"pair-attainability objective for {pair} failed validation"
+                    )
+                category = (
+                    "marginal_attainable"
+                    if optimum > tolerance
+                    else "marginal_inattainable"
+                )
+        maximum[first, second] = optimum
+        maximum[second, first] = optimum
+        categories[pair] = category
+        category_sets[category].add(pair)
+
+    return PairAttainability(
+        maximum_sip=maximum,
+        categories=categories,
+        explicit_forbidden=frozenset(category_sets["explicit_forbidden"]),
+        other_constraint_incompatible=frozenset(
+            category_sets["other_constraint_incompatible"]
+        ),
+        marginal_inattainable=frozenset(
+            category_sets["marginal_inattainable"]
+        ),
+        marginal_attainable=frozenset(category_sets["marginal_attainable"]),
+    )
+
+
+@dataclass(frozen=True)
+class MaxEntReference:
+    """Validated numerical maximum-entropy reference over feasible samples."""
+
+    probabilities: np.ndarray
+    entropy: float
+    max_equality_error: float
+    success: bool
+    message: str
+    label: str = "Numerical constrained MaxEnt benchmark"
+
+    def __post_init__(self) -> None:
+        probability = np.array(self.probabilities, dtype=np.float64, copy=True)
+        probability.flags.writeable = False
+        object.__setattr__(self, "probabilities", probability)
+
+
+def solve_numerical_maxent(
+    prescribed_fip: Sequence[float],
+    samples: Sequence[Sequence[int]],
+    incidence: np.ndarray,
+    *,
+    tolerance: float = 1e-10,
+) -> MaxEntReference:
+    """Solve and independently validate the constrained finite MaxEnt dual."""
+
+    target, normalized_samples, matrix, _ = _validated_reference_problem(
+        prescribed_fip,
+        samples,
+        incidence,
+        tolerance=tolerance,
+    )
+    feasibility = solve_feasibility_reference(
+        target,
+        normalized_samples,
+        matrix,
+        tolerance=tolerance,
+    )
+    if not feasibility.success:
+        raise ValueError(
+            "Numerical constrained MaxEnt benchmark is mathematically infeasible"
+        )
+
+    features = matrix[:-1]
+    reduced_target = target[:-1]
+
+    def dual_terms(
+        theta: np.ndarray,
+    ) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
+        logits = theta @ features
+        log_partition = float(logsumexp(logits))
+        probability = np.exp(logits - log_partition)
+        moments = features @ probability
+        gradient = moments - reduced_target
+        hessian = (features * probability) @ features.T - np.outer(
+            moments, moments
+        )
+        objective = log_partition - float(theta @ reduced_target)
+        return objective, gradient, hessian, probability
+
+    def objective(theta: np.ndarray) -> float:
+        return dual_terms(theta)[0]
+
+    def gradient(theta: np.ndarray) -> np.ndarray:
+        return dual_terms(theta)[1]
+
+    def hessian(theta: np.ndarray) -> np.ndarray:
+        return dual_terms(theta)[2]
+
+    solution = minimize(
+        objective,
+        np.zeros(features.shape[0], dtype=np.float64),
+        jac=gradient,
+        hess=hessian,
+        method="trust-exact",
+        options={"gtol": min(tolerance / 10.0, 1e-12), "maxiter": 10_000},
+    )
+    _, _, _, probability = dual_terms(np.asarray(solution.x, dtype=np.float64))
+    equality = np.vstack(
+        [np.ones(len(normalized_samples), dtype=np.float64), matrix]
+    )
+    rhs = np.concatenate([[1.0], target])
+    residual = equality @ probability - rhs
+    max_equality_error = float(np.max(np.abs(residual)))
+    if (
+        not np.all(np.isfinite(solution.x))
+        or not np.all(np.isfinite(probability))
+        or np.any(probability < 0.0)
+        or max_equality_error > tolerance
+    ):
+        raise RuntimeError(
+            "Numerical constrained MaxEnt benchmark failed to reach tolerance: "
+            f"{solution.message}; residual={max_equality_error:.3e}"
+        )
+    entropy = float(
+        -np.sum(probability[probability > 0.0] * np.log(probability[probability > 0.0]))
+    )
+    if not np.isfinite(entropy):
+        raise RuntimeError("Numerical constrained MaxEnt benchmark returned nonfinite entropy")
+    return MaxEntReference(
+        probabilities=probability,
+        entropy=entropy,
+        max_equality_error=max_equality_error,
+        success=True,
+        message=str(solution.message),
     )
