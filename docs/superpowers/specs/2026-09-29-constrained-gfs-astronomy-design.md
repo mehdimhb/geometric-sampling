@@ -1,60 +1,152 @@
 # Constrained GFS for Astronomical Target Selection — Design Specification
 
-**Status:** Proposed for user review  
-**Date:** 2026-09-29  
+**Status:** Revised for user review
+**Date:** 2026-09-30
 **Repository:** `graphical-sampling`
 
 ## 1. Purpose and scientific question
 
 Add a small research prototype that tests whether fixed-size Graphical
-Finite-Population Sampling (GFS) segment exchanges can navigate and improve a
-sampling design after hard support constraints have been imposed.
+Finite-Population Sampling (GFS) exchanges can repair and then improve a
+sampling design subject to hard astronomical target constraints.
 
-The experiment keeps three questions separate:
+The scientific claim being tested is:
 
-1. **Feasibility:** does any fixed-size design exist with the prescribed
-   first-order inclusion probabilities (FIPs) and hard constraints?
-2. **Navigation:** starting from one such design, can local GFS segment
-   exchanges move through other feasible designs while preserving the FIPs?
-3. **Optimization:** can feasible GFS exchanges improve design entropy or
-   second-order inclusion probability (SIP) coverage among allowed pairs?
+> Starting from the Madow fixed-size design, can GFS segment exchanges
+> progressively eliminate probability mass assigned to constraint-violating
+> samples while preserving the prescribed first-order inclusion probabilities,
+> fixed sample size, and without-replacement property, and then navigate the
+> feasible constrained design space to improve entropy and second-order
+> inclusion probabilities?
 
-The central methodological distinction is:
+The primary workflow is
 
-> **The LP establishes existence; GFS provides navigation.**
+\[
+\boxed{\text{Madow}
+\rightarrow \text{GFS constraint repair}
+\rightarrow \text{GFS feasible navigation}
+\rightarrow \text{GFS optimization}}.
+\]
 
-Linear programming is used only to verify compatibility and obtain one initial
-feasible point. It is not presented as the proposed navigation or optimization
-method. The reusable code is generic constrained-GFS functionality; astronomy
-terminology, artificial coordinates, and scientific interpretation remain in
-the example notebook.
+Linear programming is not used to construct the starting point or to repair
+the design. Its role is strictly independent verification and benchmarking:
 
-This prototype does not claim that all compatible designs are connected by
-GFS moves, that hill climbing reaches a global optimum, or that the method
-scales to survey-sized astronomical populations.
+> **LP verifies existence and provides benchmarks; GFS constructs, repairs,
+> navigates, and optimizes.**
 
-## 2. Relationship to the existing GFS implementation
+The experiment keeps four questions separate:
 
-The existing `Design._switch` implements the fixed-size Algorithm-4 four-piece
-split on the package's graphical heap/order representation. It selects two
-support samples, exchanges one unit from each sample's set difference, removes
-equal mass from both parents, and assigns that mass to the two exchanged
-children. Existing `Design`, `Order`, heap construction, and exchange code will
-not be rewritten.
+1. **Existence:** does any fixed-size design satisfy the prescribed FIPs and
+   all hard constraints?
+2. **Repair:** can GFS exchanges move the ordinary Madow design to the
+   constraint-feasible set without changing its FIPs?
+3. **Navigation:** once feasible, can further GFS exchanges remain inside that
+   set and change the support and SIP matrix?
+4. **Optimization:** can feasible GFS navigation improve entropy or SIP quality
+   among pairs that are theoretically attainable?
 
-An LP solution is an arbitrary finite distribution over feasible samples and
-does not naturally have the package's graphical heap/order provenance. The new
-prototype therefore uses an algebraic support representation rather than
-manufacturing a misleading `Design` hierarchy. Its elementary transition is
-still explicitly a **GFS segment exchange**, with the same four-sample algebra:
+The reusable code is generic constrained-GFS functionality. Artificial
+coordinates, fibre-collision language, and scientific interpretation remain
+in the example notebook.
+
+## 2. Mathematical state and hard constraints
+
+Let a fixed-size sampling design be a finite probability distribution
+
+\[
+D=\{(s,p_s): s\subseteq\{0,\ldots,N-1\},\ |s|=n,\ p_s>0\}.
+\]
+
+Every valid intermediate design, including an initially constraint-violating
+one, must satisfy:
+
+\[
+\sum_s p_s=1,\qquad
+\sum_{s:k\in s}p_s=\pi_k,\qquad
+p_s\geq0,
+\]
+
+and every support key must contain exactly `n` distinct population units.
+
+The hard sample-feasibility system supports:
+
+- explicit forbidden pairs `(k, l)` that cannot occur together; and
+- `GroupCapacity(units=G, capacity=c)`, requiring `|s intersect G| <= c`.
+
+`is_feasible(...)` validates unit range, uniqueness, sample size, explicit
+forbidden pairs, and every group capacity. Malformed constraints raise clear
+`TypeError` or `ValueError` exceptions rather than being silently repaired.
+
+Let `F` be the family of hard-constraint-feasible size-`n` samples. Define the
+total infeasible probability mass
+
+\[
+V(D)=\sum_{s\notin\mathcal F}p_s.
+\]
+
+`V(D)=0` if and only if every positive-probability support sample is feasible.
+For numerical validation, “positive” means greater than the declared support
+tolerance. The implementation computes `V` from an aggregated `float64`
+support mapping without renormalizing it.
+
+## 3. Relationship to the existing GFS implementation
+
+The existing `Design._build` constructs the ordered fixed-size Madow/GFS
+design, and `Design._switch` implements the Algorithm-4 four-fragment segment
+exchange. These methods, `Design.exchange`, `Order`, and the heap machinery
+remain unchanged.
+
+The prototype builds its initial state using the existing package classes:
+
+1. Construct `Population` from the prescribed `pi`, sample size `n`, and the
+   notebook's display coordinates.
+2. Construct a single-cluster, single-zone order in population-index order.
+3. Call `Design.from_order(...)` so `Design._build` produces the ordinary
+   Madow/GFS support.
+4. Aggregate equal support samples only for read-only diagnostics and objective
+   calculation.
+5. Verify normalization, fixed size, no replacement, and the prescribed FIPs
+   before beginning repair.
+
+Each search proposal copies the current package `Design` and calls its existing
+`Design.exchange(...)`. The search wrapper controls the RNG, exchange
+coefficient, candidate validation, objective comparison, and commit/reject
+decision; it does not reproduce the exchange algebra in an unrelated
+optimizer. The prototype uses one partition and `pull_strategy="random"`, so
+both exchanged fragments are selected by the package's random heap operation.
+
+The current package drops fragments below `1e-9` in `_push`, which is too loose
+for the requested `1e-10` invariant tests over long exchange runs. The
+prototype may use a minimal `float64` subclass following the repository's
+existing `prescribed_sip.methods.package_gfs.Float64Design` precedent. That
+adapter may only lower the fragment cutoff, preserve the subclass on `copy`,
+and provide controlled RNG state. It must inherit `Design.exchange` and
+`Design._switch` unchanged. No marginal repair, normalization, or alternate
+transition is permitted.
+
+## 4. The elementary GFS proposal
+
+For two selected probability fragments belonging to samples `A` and `B`, the
+existing Algorithm-4 exchange chooses
+
+\[
+k\in A\setminus B,\qquad \ell\in B\setminus A
+\]
+
+and constructs
 
 \[
 A'=(A\setminus\{k\})\cup\{\ell\},\qquad
-B'=(B\setminus\{\ell\})\cup\{k\},
+B'=(B\setminus\{\ell\})\cup\{k\}.
 \]
 
-where `k in A \ B`, `l in B \ A`, and
-`0 < epsilon <= min(p_A, p_B)`. The mass update is
+For
+
+\[
+0<\varepsilon\leq\min(p_A,p_B),
+\]
+
+the four-fragment update is
 
 \[
 p_A\leftarrow p_A-\varepsilon,\quad
@@ -63,354 +155,384 @@ p_{A'}\leftarrow p_{A'}+\varepsilon,\quad
 p_{B'}\leftarrow p_{B'}+\varepsilon.
 \]
 
-The constrained method adds exactly one scientific rule to this move:
+It preserves total mass, every FIP, fixed sample size, and sampling without
+replacement algebraically. Those properties are independently checked on
+every candidate accepted by the search.
 
-> Reject the proposed GFS exchange whenever either child sample is infeasible.
+The candidate's aggregated support is compared with the current aggregated
+support before objective evaluation. If they agree within mass tolerance, the
+proposal is a structural no-op and is rejected. This explicitly covers the
+case `A' = B` and `B' = A`.
 
-No projection, marginal repair, resampling, or post-hoc renormalization is
-allowed. Identical support samples are merged algebraically, and numerical
-dust at or below a declared tolerance is removed only after checking that the
-result still satisfies all invariants.
+All random choices derive from one explicit root seed. Candidate copies receive
+independent deterministic child generators so a rejected proposal cannot
+advance or otherwise mutate the incumbent design's RNG or heaps.
 
-## 3. Package architecture and public concepts
+## 5. Stage 1 — GFS constraint repair
 
-Create `graphical_sampling/constrained.py` as a focused module. It will not
-depend on astronomy packages or modify the root package API. Callers import its
-supported functions and immutable result records directly from
-`graphical_sampling.constrained`.
+The initial Madow design is not conditioned on the astronomy constraints and
+may have `V(D_0) > 0`. This is expected and is part of the experiment.
 
-### 3.1 Constraint representation
-
-- A forbidden pair is normalized to an unordered two-element `frozenset` of
-  valid population indices.
-- `GroupCapacity` is an immutable record containing a nonempty unit set and a
-  nonnegative integer capacity.
-- `is_feasible(sample, *, population_size, sample_size, forbidden_pairs,
-  group_constraints)` validates index range, uniqueness, fixed size, absence
-  of forbidden pairs, and every group capacity.
-- Malformed constraints, repeated endpoints, out-of-range units, impossible
-  capacities, and invalid samples raise informative `ValueError`s rather than
-  being silently repaired.
-
-The implementation accepts standard Python iterables at its boundary and
-normalizes samples internally to sorted tuples or `frozenset`s. This makes
-duplicate support keys impossible while keeping notebook output readable.
-
-### 3.2 Enumerated feasible space and LP initialization
-
-`enumerate_feasible_samples(...)` enumerates all `n`-subsets of
-`range(N)`, retains only feasible samples, and returns a deterministic
-lexicographic tuple. `incidence_matrix(...)` returns an `N x M` float matrix
-with columns corresponding exactly to that tuple.
-
-`solve_feasible_design(...)` validates that `pi` is finite, lies in `[0, 1]`,
-and sums to `n` within tolerance. It solves
+Stage 1 repeatedly proposes ordinary GFS exchanges and uses `V(D)` as a strict
+repair objective:
 
 \[
-p\geq0,\quad \mathbf{1}^{\mathsf T}p=1,\quad Xp=\pi
+\text{accept }D'\quad\Longleftrightarrow\quad
+V(D') < V(D)-\tau_V.
 \]
 
-with `scipy.optimize.linprog(method="highs")`. Its result record contains the
-enumerated samples, incidence matrix, solver status/message, and an aggregated
-positive-support probability mapping. Solver success is never trusted without
-independent checks of nonnegativity, normalization, feasibility, fixed size,
-and FIP residuals.
+Hard-constraint-infeasible samples may remain in the support during repair.
+They are not projected out, deleted, renormalized, or replaced by an LP
+solution. An accepted repair move may therefore lead to another infeasible
+design, but the total infeasible mass must strictly decrease. Consequently the
+accepted repair trace is monotonically decreasing in `V`.
 
-`solve_feasible_design(...)` always returns an immutable `FeasibilityResult`.
-For mathematical infeasibility, `success` is false, `design` is `None`, and the
-solver status/message are retained. An unexpected solver failure raises
-`RuntimeError`. The infeasible path never emits a candidate design. The notebook
-reports this outcome and stops the navigation experiments. It does not change
-the requested FIPs. A separate diagnostic cell may investigate which
-artificial constraint relaxation restores feasibility, preferring constraint
-changes over FIP changes, but such a relaxation is clearly labeled and does
-not replace the requested experiment silently.
-
-### 3.3 Algebraic constrained design and diagnostics
-
-A constrained design is represented by a copy-on-write
-`dict[frozenset[int], float]` from a unique fixed-size sample key to a
-nonnegative `float64` probability. Public functions never mutate an input
-mapping; a successful exchange returns a new mapping.
-The module supplies:
-
-- aggregation and validation of support mass;
-- `compute_fip(...)`;
-- `compute_sip(...)`;
-- `design_entropy(...)` using `-sum(p * log(p))` over positive mass;
-- support comparison helpers for shared, added, and removed samples;
-- allowed-pair classification and summary statistics.
-
-The SIP matrix is exact with respect to the finite support calculation:
+Repair uses maximal legal exchanged mass,
 
 \[
-\pi_{k\ell}=\sum_{s:\{k,\ell\}\subseteq s}p_s.
+\varepsilon=\min(p_A,p_B),
 \]
 
-Its diagonal equals the computed FIP vector. Pair summaries use unordered
-off-diagonal pairs only and divide them into exactly three categories:
+by passing `exchange_coef=1.0` to the existing exchange. This remains an
+ordinary Algorithm-4 exchange and allows a smaller parent fragment to be
+removed exactly, rather than forcing `V` to approach zero only asymptotically.
+Randomness remains in fragment and unit selection.
 
-1. physically forbidden pairs, whose SIP must be zero;
-2. physically allowed pairs with SIP at or below the numerical zero tolerance;
-3. physically allowed pairs with positive SIP.
+Stage 1 succeeds only when the aggregated support contains no
+positive-probability infeasible sample and independently computed `V(D)` is at
+or below tolerance. If the proposal budget is exhausted first, the notebook
+reports repair failure and does not run the Stage-2 experiments. It does not
+substitute an LP-derived feasible design.
 
-Group capacity constraints can make additional pairs logically impossible even
-when not listed as forbidden pairs. For this experiment, “physically
-forbidden pair” means a pair excluded by any supplied hard constraint when
-considered within at least one size-`n` completion. Pair classification will
-therefore be derived from the enumerated feasible sample space: a pair is
-physically allowed if it occurs in at least one feasible sample, and forbidden
-otherwise. The notebook will separately identify the three explicitly supplied
-forbidden pairs so the terminology is transparent.
+If the initial Madow design already has `V(D_0)=0`, Stage 1 records immediate
+success with zero accepted repair moves and Stage 2 starts from that unchanged
+Madow design.
 
-## 4. Elementary constrained GFS proposal
+The default repair budget is 20,000 proposals. The seed is `12345`, and the
+notebook exposes the budget and tolerance in its parameter cell.
 
-`constrained_exchange(...)` performs one auditable Algorithm-4 move:
+## 6. Stage 2 — feasible GFS navigation and optimization
 
-1. Select two distinct positive-probability support samples uniformly.
-2. Select `k` uniformly from `A \ B` and `l` uniformly from `B \ A`. If either
-   difference is empty, classify the proposal as structurally rejected.
-3. Draw `alpha ~ Uniform(0.1, 0.9)` and set
-   `epsilon = alpha * min(p_A, p_B)`.
-4. Construct `A'` and `B'` by exchanging `k` and `l`.
-5. Reject without changing the design unless both children pass the complete
-   feasibility predicate.
-6. Otherwise construct the four-term mass update, merge identical keys, and
-   canonicalize values whose absolute mass is no larger than the declared
-   numerical tolerance to zero.
-7. Validate the canonical candidate's total mass, nonnegativity, fixed sample size,
-   uniqueness, hard constraints, and FIPs before it can be accepted by a
-   search objective.
+Both Stage-2 searches start independently from the fully repaired GFS design.
+They do not start from the LP solution and do not continue from one another.
+The root seed `12345` is split into reproducible repair, entropy, and pairwise
+streams.
 
-The proposal result records the two parents, exchanged units, children,
-`alpha`, `epsilon`, feasibility status, rejection reason, and candidate design.
-This makes it possible to test the move as GFS algebra rather than infer its
-identity from an optimizer's behavior.
+Stage 2 uses the same package exchange with
+`alpha ~ Uniform(0.1, 0.9)` and
+`epsilon = alpha * min(p_A, p_B)`. A candidate is constraint-admissible only
+when every positive-probability support sample is feasible. Thus, from a
+feasible incumbent, any proposal introducing an infeasible child is rejected
+before objective evaluation.
 
-All random choices come from an explicit `numpy.random.Generator`; no hidden
-global generator is used.
+Each Stage-2 experiment uses 20,000 proposals by default.
 
-## 5. Search and accounting
+### 6.1 Entropy objective
 
-`run_constrained_gfs(...)` proposes a fixed number of GFS exchanges from the
-current design. A proposal is committed only when it is feasible and strictly
-improves the selected objective beyond a small objective tolerance. Rejected
-proposals leave the current design value-equivalent and unmodified.
+The entropy run accepts an admissible proposal only when
 
-The search result records:
+\[
+H(D')>H(D)+\tau_H,
+\qquad
+H(D)=-\sum_{s:p_s>0}p_s\log p_s.
+\]
+
+It reports initial repaired entropy, final GFS entropy, support overlap and
+change, maximum FIP error, and the gap to the numerical constrained MaxEnt
+reference optimum.
+
+### 6.2 Attainable-pair SIP objective
+
+For a design `D`, compute
+
+\[
+\pi_{k\ell}(D)=\sum_{s:\{k,\ell\}\subseteq s}p_s.
+\]
+
+The pairwise run accepts an admissible proposal only when it strictly improves
+
+\[
+Q(D)=\sum_{(k,\ell)\in\mathcal A}
+\log(\pi_{k\ell}(D)+10^{-12}),
+\]
+
+where `A` contains only pairs proven marginal-attainable by the independent
+per-pair LP analysis in Section 8. Constraint-incompatible and
+marginal-inattainable pairs are excluded from the score.
+
+The run reports before and after: attainable zero-SIP count, minimum, median,
+and mean attainable SIP, entropy, support overlap and change, maximum FIP
+error, and a norm of the SIP-matrix change.
+
+## 7. Search accounting and invariant checks
+
+Every phase records:
 
 - requested and actually proposed exchanges;
 - structurally valid proposals;
-- feasible proposals;
-- infeasible proposals;
-- accepted improving proposals;
-- rejected proposals, equal to `proposed - accepted`;
-- rejection counts by structural, infeasible, and non-improving reason;
-- checkpoint objective, entropy, allowed-pair metrics, support size, maximum
-  FIP error, and elapsed runtime.
+- structural no-ops;
+- candidates whose aggregate support is constraint-feasible;
+- candidates whose aggregate support is constraint-infeasible;
+- proposals rejected by the Stage-2 hard-feasibility gate;
+- objective-improving accepted exchanges;
+- non-improving rejected exchanges;
+- checkpoint objective, `V(D)`, entropy, support size, FIP error, and runtime.
 
-Checkpoints are indexed by proposal count and also record cumulative accepted
-moves. This avoids conflating attempted navigation with successful objective
-improvements.
+Constraint-feasible and constraint-infeasible candidate counts describe the
+candidate state and are reported in addition to the mutually exclusive
+decision counts. The decision identity is
 
-The accounting identity is
-`proposed = structural_rejected + infeasible + feasible`. Accepted moves are a
-subset of feasible proposals; `non_improving = feasible - accepted`, and
-`rejected = proposed - accepted`.
+`proposed = no_op + invariant_failure + feasibility_rejected + accepted + non_improving`.
 
-### 5.1 Entropy objective
+An invariant failure is treated as an implementation error and aborts the run;
+its count should remain zero. At every accepted exchange the implementation
+checks, to tight tolerance:
 
-The first run starts from the LP design and accepts a feasible move only when
+- total probability equals one;
+- the FIP vector equals the prescribed `pi`;
+- every support sample has exactly `n` units;
+- every support sample contains distinct, in-range units;
+- all probabilities are finite and nonnegative.
+
+During Stage 1, hard-constraint feasibility is deliberately not an invariant,
+but accepted `V(D)` must never increase. During Stage 2, every
+positive-probability support sample must remain hard-constraint feasible.
+
+Checkpoint indices include both cumulative proposal count and accepted-move
+count, so traces do not conflate attempted navigation with committed changes.
+
+## 8. Independent LP verification and benchmarks
+
+All LP calculations enumerate the hard-constraint-feasible size-`n` samples in
+deterministic lexicographic order and form their `N x M` incidence matrix `X`.
+They never replace the Madow or GFS-produced state.
+
+### 8.1 Existence check
+
+Use `scipy.optimize.linprog(method="highs")` to test
 
 \[
-H(p_{new}) > H(p_{current}) + \tau_H.
+p\geq0,\quad \mathbf 1^{\mathsf T}p=1,\quad Xp=\pi.
 \]
 
-It uses seed `12345`, 20,000 proposals, `alpha` in `[0.1, 0.9]`, and regular
-checkpoints. Its report compares initial entropy, final GFS entropy, support
-change, and an independently computed constrained maximum-entropy benchmark.
+The result reports mathematical feasibility, solver status, and independently
+validated residuals. For infeasibility, no candidate design is returned. An
+unexpected solver failure is distinct from mathematical infeasibility.
 
-### 5.2 Allowed-pair coverage objective
+If the requested system is infeasible, the notebook reports the result and
+does not silently change `pi`. It may investigate a minimal relaxation of the
+artificial constraints in a clearly labeled diagnostic, preferring a
+constraint change over an FIP change.
 
-The second run starts from the same LP design, with a fresh generator using
-seed `12345`, so it is a separate experiment rather than a continuation of the
-entropy run. Its score is
+### 8.2 Pair taxonomy and attainability
+
+Every unordered pair belongs to one primary category:
+
+1. **explicit forbidden:** listed directly in the collision constraints;
+2. **other constraint-incompatible:** not explicitly forbidden but absent from
+   every hard-constraint-feasible size-`n` sample;
+3. **constraint-compatible but marginal-inattainable:** present in at least one
+   hard-feasible sample, but unable to receive positive SIP in any design with
+   the prescribed `pi`;
+4. **marginal-attainable:** able to receive positive SIP under both the hard
+   constraints and prescribed `pi`.
+
+For each constraint-compatible pair `(k, l)`, solve
 
 \[
-\sum_{(k,\ell)\in\mathcal A}\log(\pi_{k\ell}+10^{-12}),
+\max_p \sum_{s:\{k,\ell\}\subseteq s}p_s
+\quad\text{subject to}\quad
+p\geq0,\ \mathbf 1^{\mathsf T}p=1,\ Xp=\pi.
 \]
 
-where `A` contains only physically allowed unordered pairs. Physically
-forbidden pairs never enter the score and must remain zero. The result reports
-before/after zero allowed SIP count, minimum, median, and mean allowed SIP,
-entropy, support overlap/change, maximum FIP error, and the size of the SIP
-matrix change.
+A pair is marginal-attainable only when the independently validated optimum is
+greater than the declared SIP tolerance. Solver failure aborts the pairwise
+benchmark instead of being interpreted as a zero optimum.
 
-Strict hill climbing can become trapped at a local optimum and does not imply
-that every feasible state is reachable. That behavior is a result to report,
-not a condition to conceal with restarts or LP re-optimization.
+For each observed Madow or GFS design, marginal-attainable pairs are subdivided
+into currently zero and currently positive SIP. Only a marginal-attainable pair
+left at zero is evidence about navigation or optimization performance.
 
-## 6. Exact constrained maximum-entropy benchmark
+### 8.3 Numerical constrained maximum-entropy benchmark
 
-For this 210-candidate problem only, solve the concave program over all
-feasible samples:
+Numerically solve
 
 \[
 \max_p -\sum_s p_s\log p_s
 \quad\text{subject to}\quad
-p\geq0,\ \mathbf{1}^{\mathsf T}p=1,\ Xp=\pi.
+p\geq0,\ \mathbf 1^{\mathsf T}p=1,\ Xp=\pi
 \]
 
-Use SciPy's installed optimization facilities with stable entropy evaluation
-and analytic derivatives where appropriate. Initialize from the verified LP
-solution or a feasible interior mixture, remove linearly redundant equality
-rows if the solver requires it, and independently validate the returned
-probabilities and FIPs. Solver failure is reported explicitly; it does not
-invalidate the GFS experiment or trigger a new dependency.
+over the enumerated feasible sample space using installed SciPy facilities.
+Because entropy is concave and the feasible region is convex, a validated
+optimizer result is a global reference optimum up to numerical tolerance. It
+is labeled **Numerical constrained MaxEnt benchmark**, never “exact” and never
+“GFS”. Solver failure is reported and does not trigger a new dependency.
 
-This result is labeled **Exact constrained MaxEnt benchmark**, not “GFS”. The
-entropy gap is `H_exact - H_gfs_final`. The benchmark may characterize what is
-achievable, but it does not supply navigation moves or replace the GFS final
-state.
-
-## 7. Required small experiment
+## 9. Required toy experiment
 
 Use exactly:
 
 - `N = 10`, `n = 4`;
 - `pi = [0.55, 0.45, 0.50, 0.40, 0.35, 0.35, 0.40, 0.35, 0.35, 0.30]`;
-- forbidden pairs `(0, 1)`, `(2, 3)`, `(4, 5)`;
+- explicit forbidden pairs `(0, 1)`, `(2, 3)`, `(4, 5)`;
 - group `{6, 7, 8}` with capacity `2`;
-- GFS seed `12345` and 20,000 proposals per objective.
+- root seed `12345`.
 
-The notebook explicitly verifies that `sum(pi)` is four within floating-point
-tolerance. A read-only design probe performed while writing this specification
-found 122 feasible size-four samples, a successful HiGHS solution with nine
-positive support samples, and maximum equality residual about
-`2.8e-16`. These are preliminary observations only; the executed notebook and
-tests recompute and validate them from the production implementation.
+The notebook explicitly verifies `sum(pi) = 4` within floating-point
+tolerance. A preliminary read-only probe found 122 hard-constraint-feasible
+size-four samples and confirmed that the constrained FIP system is LP-feasible.
+The production notebook recomputes and independently validates these values.
 
-The initial report includes support size, achieved FIPs, maximum FIP error,
-entropy, exact SIP matrix, number of physically forbidden pairs, number of
-allowed zero-SIP pairs, and minimum/mean allowed SIP. Final reports add median
-allowed SIP, support intersection/additions/removals, GFS proposal accounting,
-and a direct assertion that the FIP vector is unchanged while the SIP matrix
-has changed whenever at least one nontrivial move was accepted.
+The experiment begins with the package-generated Madow/GFS design even if its
+support violates the hard constraints. The LP support is never substituted,
+compared as an alternative starting state, or passed to a GFS search.
 
-## 8. Notebook and figures
+## 10. Notebook narrative and figures
 
 Create and execute
 `simulations/jupyters/constrained_gfs_astronomy_demo.ipynb`. It is written for
-a statistician and contains these concise sections:
+a statistician and follows this order:
 
-1. Motivation
+1. Motivation and the Madow-to-repair scientific question
 2. Population and prescribed FIPs
 3. Artificial fibre constraints
-4. Exact feasibility check
-5. Initial feasible design
-6. Constrained GFS exchange
-7. Entropy optimization
-8. Pairwise-inclusion optimization
-9. Results
-10. Short conclusions
+4. Initial Madow/GFS design
+5. Initial violations and infeasible mass `V(D_0)`
+6. GFS constraint repair
+7. Feasible GFS entropy optimization
+8. Feasible GFS pairwise optimization
+9. Independent LP existence and benchmark results
+10. Results and numerical MaxEnt comparison
+11. Short conclusions and limitations
 
-The notebook imports reusable package code rather than redefining the exchange
-or solver. Its outputs include:
+The notebook reports, in sequence:
 
-- a labeled 2-D artificial target field with the three explicit forbidden
-  pairs connected by dashed lines;
-- entropy versus accepted GFS moves, with proposal checkpoints available in
-  the underlying data;
-- SIP heatmaps before and after pairwise optimization, using a common color
-  scale and visibly distinguishing hard-forbidden cells;
-- a compact comparison table for the initial LP design, final entropy-GFS
-  design, final pair-GFS design, and exact MaxEnt benchmark where applicable;
-- proposal/feasibility/acceptance/rejection counts and elapsed runtime;
-- initial-versus-final support overlap and FIP/SIP change diagnostics.
+- initial Madow support size, entropy, FIPs, SIP matrix, and FIP error;
+- number and total probability mass of initial violating samples;
+- `V(D)` at every repair checkpoint and whether zero is reached;
+- invariant errors and support/SIP changes throughout repair;
+- entropy and pairwise results only after successful repair;
+- LP feasibility as an independent existence check;
+- the numerical constrained MaxEnt reference optimum;
+- all pair categories and per-pair maximum achievable SIP;
+- phase-specific proposal, feasible/infeasible, no-op, non-improving, and
+  accepted counts;
+- phase runtimes and total runtime.
 
-The committed notebook is the fully executed default run with outputs. It must
-execute top-to-bottom from a fresh kernel. Tests may execute a temporary copy
-with reduced proposal counts to keep the suite fast; the production notebook
-retains 20,000 proposals in each experiment.
+Required figures are:
 
-## 9. Tests and invariant validation
+1. a labeled 2-D artificial target field with explicit forbidden pairs shown
+   as dashed connections;
+2. infeasible mass `V(D)` versus proposal count, with accepted-move count
+   available on a secondary annotation or companion trace;
+3. entropy versus accepted Stage-2 entropy exchanges;
+4. three SIP heatmaps on a shared scale: initial Madow, fully repaired GFS,
+   and pair-optimized GFS, with constraint-incompatible cells identified.
 
-Implementation follows test-driven development. Focused tests will cover:
+A compact table compares the initial Madow design, repaired GFS design,
+entropy-optimized GFS design, pair-optimized GFS design, and numerical MaxEnt
+reference where a metric applies.
 
-- constraint normalization and `is_feasible` for forbidden pairs and group
-  capacities;
-- deterministic enumeration and incidence-matrix alignment;
-- the requested LP problem's feasibility and an intentionally incompatible
-  FIP/constraint problem's explicit infeasibility;
-- a hand-constructed Algorithm-4 exchange whose exact four mass deltas are
-  asserted;
-- rejection when either exchanged child is infeasible;
-- merging when a child already exists and safe removal of numerical dust;
-- reproducible replay with an explicit generator;
-- every accepted exchange preserving total mass, target FIPs, fixed sample
-  size, unit uniqueness, nonnegativity, forbidden pairs, and group capacities
-  to `1e-10` or tighter;
-- SIP diagonals matching FIPs and hard-forbidden pair SIPs remaining zero;
-- pair taxonomy excluding physically forbidden pairs from the coverage score;
-- exact accounting identities among proposed, feasible, accepted, and rejected
-  exchanges;
-- entropy and pair objectives accepting only strict improvements;
-- maximum-entropy benchmark feasibility and entropy dominance over the initial
-  and GFS hill-climbing results within solver tolerance;
-- notebook structure and a reduced-cost clean-kernel execution.
+The notebook imports reusable package code rather than redefining the exchange,
+repair search, or LP benchmarks. The committed deliverable is fully executed
+with default settings and outputs. Tests may execute a temporary reduced-budget
+copy, but the production notebook retains the default proposal budgets.
+
+The pairwise search necessarily computes its attainability mask before scoring
+proposals, but the notebook presents the full LP feasibility, MaxEnt, and
+per-pair benchmark tables after the GFS experiment. This keeps LP visibly in a
+reference role rather than presenting it as a construction stage.
+
+## 11. Tests and validation
+
+Implementation follows test-driven development. Focused tests cover:
+
+- constraint validation for forbidden pairs and group capacities;
+- deterministic feasible-sample enumeration and incidence alignment;
+- the requested system's LP feasibility and a deliberately impossible
+  constraint/FIP system's explicit infeasibility;
+- construction of the initial Madow/GFS design through existing package code;
+- a check that the proposal wrapper calls inherited `Design.exchange` and
+  `Design._switch` rather than a substitute optimizer transition;
+- hand verification of the four-fragment Algorithm-4 mass algebra;
+- explicit structural rejection of aggregated null/no-op exchanges;
+- exact reproducibility for seed `12345`;
+- every accepted Stage-1 and Stage-2 exchange preserving normalization,
+  prescribed FIPs, fixed sample size, uniqueness, index range, and
+  nonnegative probability to `1e-10` or tighter;
+- strict monotonic nonincrease of `V(D)` across accepted Stage-1 moves;
+- a Stage-1 test in which infeasible support remains temporarily while `V`
+  decreases;
+- the Stage-1 success condition requiring no positive infeasible support;
+- every Stage-2 positive-probability sample satisfying all hard constraints;
+- Stage-2 rejection of any proposal that introduces an infeasible child;
+- SIP diagonals matching FIPs and constraint-incompatible SIPs remaining zero
+  after repair;
+- per-pair LP maxima distinguishing all four pair categories;
+- exclusion of marginal-inattainable pairs from the pairwise objective;
+- numerical MaxEnt feasibility and objective dominance within solver tolerance;
+- exact accounting identities for proposal outcomes;
+- notebook structure and reduced-budget clean-kernel execution.
 
 Before completion, run the focused tests, the entire repository test suite, and
-the full default notebook. Any pre-existing unrelated failure is named in the
+the full default notebook. Any unrelated pre-existing failure is named in the
 final report rather than hidden.
 
-## 10. Numerical policy and error handling
+## 12. Numerical policy and failure handling
 
-- Use `float64` throughout probability calculations.
-- Default mass/invariant tolerance is `1e-12`; public validation accepts an
-  explicit positive finite tolerance.
-- Report zero SIP pairs using a declared `1e-12` threshold.
-- Compare invariant residuals against absolute tolerances with zero relative
-  tolerance where practical.
-- Never clip materially negative probabilities, renormalize a broken design,
-  or repair FIPs. Values within numerical dust tolerance may be canonicalized
-  to zero before validation; the candidate is rejected if canonicalization
-  causes any invariant to exceed tolerance.
-- Invalid input raises `TypeError` or `ValueError`; mathematical infeasibility
-  is distinguished from solver/runtime failure.
-- Objective values that are nonfinite cause rejection with a diagnostic reason.
+- Use `float64` throughout probability, FIP, SIP, and objective calculations.
+- Default invariant and support-mass tolerance is `1e-12`; public functions
+  accept an explicit finite positive tolerance.
+- Report zero SIP and pair attainability with a declared `1e-12` tolerance.
+- Use absolute comparisons with zero relative tolerance for invariants where
+  practical.
+- Do not renormalize a broken design, clip materially negative mass, repair
+  FIPs, or discard an infeasible support sample.
+- Numerical zero fragments may be omitted only when independent validation
+  confirms all core invariants remain within tolerance.
+- Nonfinite objectives or invariant failures abort with diagnostic context.
+- Mathematical LP infeasibility, numerical solver failure, repair-budget
+  exhaustion, and Stage-2 objective stagnation are distinct outcomes.
 
-## 11. Deliverables and repository boundaries
+## 13. Deliverables and repository boundaries
 
 Expected changed files are limited to:
 
 - `graphical_sampling/constrained.py`;
 - `tests/test_constrained_gfs.py`;
-- `tests/test_constrained_gfs_notebook.py` if notebook execution checks warrant
-  a separate file;
+- `tests/test_constrained_gfs_notebook.py` if notebook checks warrant a
+  separate file;
 - `simulations/jupyters/constrained_gfs_astronomy_demo.ipynb`;
 - this specification and the later implementation plan.
 
-No astronomy dependency is added. Existing `Design`, GFS search, max-entropy
-modules, and unrelated simulations are left unchanged unless implementation
-reveals a small necessary export or compatibility fix, which must be justified
-before inclusion. Existing dirty and untracked user files are preserved.
+No astronomy dependency is added. Existing `Design.exchange`,
+`Design._switch`, Madow construction, GFS search code, and unrelated
+simulations remain unchanged. A minimal numerical subclass is allowed only as
+described in Section 3 and must reuse the inherited exchange implementation.
+Existing dirty and untracked user files are preserved.
 
-The final handoff reports the changed-file list, exact test commands/results,
-executed notebook path, feasibility and numerical simulation results, runtime,
-limitations, surprising findings, and a short assessment of whether the
-observed navigation and SIP improvement justify pursuing a methodological
-paper.
+The final handoff reports the changed-file list, exact test commands and
+results, executed notebook path, numerical findings, runtimes, limitations,
+surprises, and a short assessment of whether the evidence supports pursuing a
+methodological paper.
 
-## 12. Interpretation standard
+## 14. Interpretation standard and limitations
 
-Evidence supporting further work would consist of all invariants remaining at
-numerical precision, a nontrivial feasible-proposal rate, accepted moves that
-change the support and SIP matrix, and material improvement in entropy and/or
-allowed-pair coverage. Failure to reach the MaxEnt benchmark, low acceptance,
-or persistent allowed zero-SIP pairs are scientifically useful negative
-results and will be reported directly.
+Evidence supporting further work would consist of:
 
-The conclusions must say that LP verified existence and supplied the starting
-point, while GFS supplied the local, marginal-preserving moves. They must not
-claim positivity for physically forbidden pairs, universal reachability,
-connectivity, global optimality, or large-scale practicality.
+- repair reaching `V(D)=0` through accepted GFS exchanges alone;
+- all core invariants remaining at numerical precision throughout repair;
+- a nontrivial feasible-proposal rate after repair;
+- accepted Stage-2 moves changing support and SIP structure; and
+- material entropy or attainable-pair SIP improvement.
+
+Failure to reach feasibility within budget, low feasible-proposal rates,
+stagnation below the numerical MaxEnt reference, or attainable pairs remaining
+at zero SIP are scientifically useful negative results and are reported
+directly.
+
+The prototype does not claim that GFS always reaches `V(D)=0`, that every
+compatible constrained design is reachable, that the feasible GFS move graph
+is connected, that hill climbing reaches a global optimum, or that the method
+scales to DESI-sized populations.
