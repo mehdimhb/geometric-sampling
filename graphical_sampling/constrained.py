@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import combinations
 from math import fsum
+from time import perf_counter
 from typing import Iterable, Mapping, Sequence
 
 import numpy as np
@@ -558,4 +559,236 @@ def propose_gfs_exchange(
         diagnostics=diagnostics,
         no_op=False,
         constraint_feasible=diagnostics.violating_support_size == 0,
+    )
+
+
+@dataclass(frozen=True)
+class SearchCounts:
+    """Mutually auditable proposal and candidate-state counts."""
+
+    proposed: int
+    structurally_valid: int
+    no_op: int
+    constraint_feasible_candidates: int
+    constraint_infeasible_candidates: int
+    feasibility_rejected: int
+    accepted: int
+    non_improving: int
+    invariant_failures: int
+
+
+@dataclass(frozen=True)
+class SearchCheckpoint:
+    """State of a GFS search after one proposal count."""
+
+    proposal: int
+    accepted: int
+    objective: float
+    infeasible_mass: float
+    entropy: float
+    support_size: int
+    max_fip_error: float
+    elapsed_seconds: float
+
+
+@dataclass(frozen=True)
+class GfsSearchResult:
+    """Final GFS design, trace, and complete proposal accounting."""
+
+    final_design: Design
+    trace: tuple[SearchCheckpoint, ...]
+    counts: SearchCounts
+    runtime_seconds: float
+    status: str
+    reached_feasibility: bool
+
+
+def _validate_search_controls(
+    proposals: int, checkpoint_every: int, tolerance: float
+) -> tuple[int, int, float]:
+    if isinstance(proposals, (bool, np.bool_)) or not isinstance(
+        proposals, (int, np.integer)
+    ):
+        raise TypeError("proposals must be an integer")
+    if int(proposals) < 0:
+        raise ValueError("proposals must be nonnegative")
+    if isinstance(checkpoint_every, (bool, np.bool_)) or not isinstance(
+        checkpoint_every, (int, np.integer)
+    ):
+        raise TypeError("checkpoint_every must be an integer")
+    if int(checkpoint_every) <= 0:
+        raise ValueError("checkpoint_every must be positive")
+    if not np.isfinite(tolerance) or tolerance <= 0.0:
+        raise ValueError("tolerance must be finite and positive")
+    return int(proposals), int(checkpoint_every), float(tolerance)
+
+
+def _phase_rng(
+    seed: int | np.random.SeedSequence,
+) -> np.random.Generator:
+    if isinstance(seed, (bool, np.bool_)):
+        raise TypeError("seed must be an integer or SeedSequence")
+    if isinstance(seed, (int, np.integer)):
+        if int(seed) < 0:
+            raise ValueError("seed must be nonnegative")
+        return np.random.default_rng(int(seed))
+    if not isinstance(seed, np.random.SeedSequence):
+        raise TypeError("seed must be an integer or SeedSequence")
+    return np.random.default_rng(seed)
+
+
+def _search_counts(values: Mapping[str, int]) -> SearchCounts:
+    return SearchCounts(**{name: int(values[name]) for name in SearchCounts.__dataclass_fields__})
+
+
+def _record_checkpoint(
+    trace: list[SearchCheckpoint],
+    *,
+    proposal: int,
+    accepted: int,
+    objective: float,
+    diagnostics: DesignDiagnostics,
+    started: float,
+) -> None:
+    row = SearchCheckpoint(
+        proposal=int(proposal),
+        accepted=int(accepted),
+        objective=float(objective),
+        infeasible_mass=float(diagnostics.infeasible_mass),
+        entropy=float(diagnostics.entropy),
+        support_size=int(diagnostics.support_size),
+        max_fip_error=float(diagnostics.max_fip_error),
+        elapsed_seconds=float(perf_counter() - started),
+    )
+    if trace and trace[-1].proposal == row.proposal:
+        trace[-1] = row
+    else:
+        trace.append(row)
+
+
+def run_constraint_repair(
+    initial_design: Design,
+    prescribed_fip: Sequence[float],
+    constraints: ConstraintSystem,
+    *,
+    proposals: int,
+    seed: int | np.random.SeedSequence,
+    checkpoint_every: int = 100,
+    tolerance: float = 1e-12,
+) -> GfsSearchResult:
+    """Strictly decrease infeasible mass using maximal inherited GFS exchanges."""
+
+    proposals, checkpoint_every, tolerance = _validate_search_controls(
+        proposals, checkpoint_every, tolerance
+    )
+    if not isinstance(initial_design, Design):
+        raise TypeError("initial_design must be a Design")
+    rng = _phase_rng(seed)
+    started = perf_counter()
+    target = np.asarray(prescribed_fip, dtype=np.float64)
+    current = initial_design.copy()
+    current_diagnostics = validate_probability_mass(
+        design_probability_mass(current),
+        target,
+        constraints,
+        require_feasible=False,
+        tolerance=tolerance,
+    )
+    counts = {name: 0 for name in SearchCounts.__dataclass_fields__}
+    trace: list[SearchCheckpoint] = []
+    _record_checkpoint(
+        trace,
+        proposal=0,
+        accepted=0,
+        objective=current_diagnostics.infeasible_mass,
+        diagnostics=current_diagnostics,
+        started=started,
+    )
+
+    reached_feasibility = (
+        current_diagnostics.infeasible_mass <= tolerance
+        and current_diagnostics.violating_support_size == 0
+    )
+    if reached_feasibility:
+        runtime = perf_counter() - started
+        return GfsSearchResult(
+            final_design=current,
+            trace=tuple(trace),
+            counts=_search_counts(counts),
+            runtime_seconds=float(runtime),
+            status="already_feasible",
+            reached_feasibility=True,
+        )
+
+    for proposal_index in range(1, proposals + 1):
+        counts["proposed"] += 1
+        proposal = propose_gfs_exchange(
+            current,
+            target,
+            constraints,
+            rng=rng,
+            exchange_coef=1.0,
+            tolerance=tolerance,
+        )
+        if proposal.no_op:
+            counts["no_op"] += 1
+        else:
+            counts["structurally_valid"] += 1
+            assert proposal.candidate is not None
+            assert proposal.diagnostics is not None
+            if proposal.constraint_feasible:
+                counts["constraint_feasible_candidates"] += 1
+            else:
+                counts["constraint_infeasible_candidates"] += 1
+
+            if (
+                proposal.diagnostics.infeasible_mass
+                < current_diagnostics.infeasible_mass - tolerance
+            ):
+                current = proposal.candidate
+                current_diagnostics = proposal.diagnostics
+                counts["accepted"] += 1
+                _record_checkpoint(
+                    trace,
+                    proposal=proposal_index,
+                    accepted=counts["accepted"],
+                    objective=current_diagnostics.infeasible_mass,
+                    diagnostics=current_diagnostics,
+                    started=started,
+                )
+            else:
+                counts["non_improving"] += 1
+
+        reached_feasibility = (
+            current_diagnostics.infeasible_mass <= tolerance
+            and current_diagnostics.violating_support_size == 0
+        )
+        if proposal_index % checkpoint_every == 0 or reached_feasibility:
+            _record_checkpoint(
+                trace,
+                proposal=proposal_index,
+                accepted=counts["accepted"],
+                objective=current_diagnostics.infeasible_mass,
+                diagnostics=current_diagnostics,
+                started=started,
+            )
+        if reached_feasibility:
+            break
+
+    _record_checkpoint(
+        trace,
+        proposal=counts["proposed"],
+        accepted=counts["accepted"],
+        objective=current_diagnostics.infeasible_mass,
+        diagnostics=current_diagnostics,
+        started=started,
+    )
+    runtime = perf_counter() - started
+    return GfsSearchResult(
+        final_design=current,
+        trace=tuple(trace),
+        counts=_search_counts(counts),
+        runtime_seconds=float(runtime),
+        status="feasible" if reached_feasibility else "budget_exhausted",
+        reached_feasibility=reached_feasibility,
     )

@@ -20,6 +20,7 @@ from graphical_sampling.constrained import (
     is_feasible,
     propose_gfs_exchange,
     role_rng,
+    run_constraint_repair,
     seeded_madow_order,
     validate_probability_mass,
 )
@@ -269,3 +270,158 @@ def test_proposal_rejects_unchanged_aggregate_as_structural_no_op(monkeypatch):
     assert proposal.no_op is True
     assert proposal.candidate is None
     assert proposal.diagnostics is None
+
+
+def test_repair_reaches_feasibility_through_strict_gfs_improvements():
+    result = run_constraint_repair(
+        make_production_madow_design(),
+        PI,
+        CONSTRAINTS,
+        proposals=2_000,
+        seed=np.random.SeedSequence([12345, 1]),
+        checkpoint_every=250,
+    )
+    assert result.reached_feasibility
+    assert result.status == "feasible"
+    assert result.trace[0].infeasible_mass == pytest.approx(0.9, abs=1e-12)
+    assert result.trace[-1].infeasible_mass <= 1e-12
+    assert result.counts.accepted > 0
+    assert result.counts.proposed <= 2_000
+    assert result.counts.invariant_failures == 0
+
+    final_mass = design_probability_mass(result.final_design)
+    validate_probability_mass(
+        final_mass,
+        PI,
+        CONSTRAINTS,
+        require_feasible=True,
+        tolerance=1e-10,
+    )
+
+    accepted_rows = []
+    previous_accepted = 0
+    for row in result.trace:
+        if row.accepted > previous_accepted:
+            assert row.accepted == previous_accepted + 1
+            accepted_rows.append(row)
+            previous_accepted = row.accepted
+    accepted_v = np.array(
+        [result.trace[0].infeasible_mass]
+        + [row.infeasible_mass for row in accepted_rows]
+    )
+    assert np.all(np.diff(accepted_v) < -1e-12)
+    assert any(row.infeasible_mass > 1e-12 for row in accepted_rows[:-1])
+
+
+def test_repair_returns_immediately_for_an_initially_feasible_design():
+    unconstrained = ConstraintSystem(population_size=10, sample_size=4)
+    initial = make_production_madow_design()
+    before = design_probability_mass(initial)
+    result = run_constraint_repair(
+        initial,
+        PI,
+        unconstrained,
+        proposals=10,
+        seed=np.random.SeedSequence([12345, 1]),
+        checkpoint_every=100,
+    )
+    assert result.status == "already_feasible"
+    assert result.reached_feasibility
+    assert result.counts.proposed == 0
+    assert result.counts.accepted == 0
+    assert len(result.trace) == 1
+    assert result.trace[0].proposal == 0
+    assert design_probability_mass(result.final_design) == before
+
+
+def test_zero_budget_repair_records_iteration_zero_without_changing_design():
+    initial = make_production_madow_design()
+    before = design_probability_mass(initial)
+    result = run_constraint_repair(
+        initial,
+        PI,
+        CONSTRAINTS,
+        proposals=0,
+        seed=np.random.SeedSequence([12345, 1]),
+        checkpoint_every=100,
+    )
+    assert result.status == "budget_exhausted"
+    assert not result.reached_feasibility
+    assert result.counts.proposed == 0
+    assert len(result.trace) == 1
+    assert result.trace[0].proposal == 0
+    assert design_probability_mass(result.final_design) == before
+
+
+def test_repair_records_final_attempt_when_checkpoint_exceeds_budget():
+    result = run_constraint_repair(
+        make_production_madow_design(),
+        PI,
+        CONSTRAINTS,
+        proposals=3,
+        seed=np.random.SeedSequence([12345, 1]),
+        checkpoint_every=100,
+    )
+    assert result.trace[-1].proposal == result.counts.proposed == 3
+
+
+def test_repair_replays_exactly_and_balances_all_proposal_counts():
+    kwargs = dict(
+        prescribed_fip=PI,
+        constraints=CONSTRAINTS,
+        proposals=2_000,
+        seed=np.random.SeedSequence([12345, 1]),
+        checkpoint_every=250,
+    )
+    first = run_constraint_repair(make_production_madow_design(), **kwargs)
+    kwargs["seed"] = np.random.SeedSequence([12345, 1])
+    second = run_constraint_repair(make_production_madow_design(), **kwargs)
+
+    assert design_probability_mass(first.final_design) == pytest.approx(
+        design_probability_mass(second.final_design), abs=0.0, rel=0.0
+    )
+    assert first.counts == second.counts
+    assert first.status == second.status
+    stable_first = [
+        (
+            row.proposal,
+            row.accepted,
+            row.objective,
+            row.infeasible_mass,
+            row.entropy,
+            row.support_size,
+            row.max_fip_error,
+        )
+        for row in first.trace
+    ]
+    stable_second = [
+        (
+            row.proposal,
+            row.accepted,
+            row.objective,
+            row.infeasible_mass,
+            row.entropy,
+            row.support_size,
+            row.max_fip_error,
+        )
+        for row in second.trace
+    ]
+    assert stable_first == stable_second
+
+    counts = first.counts
+    assert counts.proposed == (
+        counts.no_op
+        + counts.invariant_failures
+        + counts.feasibility_rejected
+        + counts.accepted
+        + counts.non_improving
+    )
+    assert counts.structurally_valid == (
+        counts.accepted + counts.non_improving + counts.feasibility_rejected
+    )
+    assert counts.structurally_valid == (
+        counts.constraint_feasible_candidates
+        + counts.constraint_infeasible_candidates
+    )
+    assert counts.feasibility_rejected == 0
+    assert counts.invariant_failures == 0
