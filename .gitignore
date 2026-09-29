@@ -176,6 +176,7 @@ temp_*
 /prescribed_sip/final_equal_fip/raw_runs/
 
 .DS_Store
+.worktrees/
 # *.tar.gz
 
 # simulations/best_designs/
