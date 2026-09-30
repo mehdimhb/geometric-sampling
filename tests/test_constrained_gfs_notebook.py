@@ -54,6 +54,12 @@ def test_notebook_has_approved_structure_and_imports_reusable_methods():
         "def solve_numerical_maxent(",
     ):
         assert forbidden_definition not in code
+    for required_report in (
+        "phase_diagnostics",
+        "pair_diagnostics",
+        "Total notebook runtime",
+    ):
+        assert required_report in code
 
 
 def _assert_accounting(counts):
