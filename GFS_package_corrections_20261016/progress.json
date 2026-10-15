@@ -1,0 +1,34 @@
+{
+  "stage": "complete_local_branch",
+  "backup_complete": true,
+  "defect_probes_complete": true,
+  "baseline_tests": {
+    "passed": 46,
+    "failed": 3,
+    "preexisting_missing_notebook": true
+  },
+  "production_modified": true,
+  "approval_received": true,
+  "branch": "codex/gfs-numerical-corrections-20261016",
+  "regression_red": {
+    "failed": 45,
+    "passed": 17
+  },
+  "updated_UTC": "2026-10-15T23:22:07.736032+00:00",
+  "final_tests": {
+    "passed": 114,
+    "failed": 3,
+    "new_regression_passed": 68,
+    "preexisting_failures_only": true
+  },
+  "independent_review": "no blocking issue",
+  "controlled_DI_evaluations": 8,
+  "controlled_comparison_complete": true,
+  "historical_studies_rerun": false,
+  "release_performed": false,
+  "merge_performed": false,
+  "publication_performed": false,
+  "original_branch": "gfs-yves",
+  "original_HEAD": "7e20e9ccbf4eb09e13464899f89e681e0bb1b864",
+  "note": "Small regression-test DI calls are additional to the eight controlled comparisons; no Monte Carlo study/480 evaluation was rerun."
+}

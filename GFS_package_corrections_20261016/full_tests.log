@@ -1,0 +1,196 @@
+........................................................................ [ 62%]
+................FFF.........................                             [100%]
+=================================== FAILURES ===================================
+____ test_wide_two_part_exchange_moves_six_percent_and_shades_both_regions _____
+
+fp = PosixPath('/home/bardia/projects/graphical-sampling/simulations/jupyters/17_graphical_maxent_die.ipynb')
+as_version = 4, capture_validation_error = None, kwargs = {}
+
+    def read(fp, as_version, capture_validation_error=None, **kwargs):
+        """Read a notebook from a file as a NotebookNode of the given version.
+    
+        The string can contain a notebook of any version.
+        The notebook will be returned `as_version`, converting, if necessary.
+    
+        Notebook format errors will be logged.
+    
+        Parameters
+        ----------
+        fp : file or str
+            A file-like object with a read method that returns unicode (use
+            ``io.open()`` in Python 2), or a path to a file.
+        as_version : int
+            The version of the notebook format to return.
+            The notebook will be converted, if necessary.
+            Pass nbformat.NO_CONVERT to prevent conversion.
+        capture_validation_error : dict, optional
+            If provided, a key of "ValidationError" with a
+            value of the ValidationError instance will be added
+            to the dictionary.
+    
+        Returns
+        -------
+        nb : NotebookNode
+            The notebook that was read.
+        """
+    
+        try:
+>           buf = fp.read()
+                  ^^^^^^^
+E           AttributeError: 'PosixPath' object has no attribute 'read'
+
+.venv/lib/python3.12/site-packages/nbformat/__init__.py:169: AttributeError
+
+During handling of the above exception, another exception occurred:
+
+    def test_wide_two_part_exchange_moves_six_percent_and_shades_both_regions():
+>       notebook = nbformat.read(NOTEBOOK, as_version=4)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_maxent_notebook.py:14: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fp = PosixPath('/home/bardia/projects/graphical-sampling/simulations/jupyters/17_graphical_maxent_die.ipynb')
+as_version = 4, capture_validation_error = None, kwargs = {}
+
+    def read(fp, as_version, capture_validation_error=None, **kwargs):
+        """Read a notebook from a file as a NotebookNode of the given version.
+    
+        The string can contain a notebook of any version.
+        The notebook will be returned `as_version`, converting, if necessary.
+    
+        Notebook format errors will be logged.
+    
+        Parameters
+        ----------
+        fp : file or str
+            A file-like object with a read method that returns unicode (use
+            ``io.open()`` in Python 2), or a path to a file.
+        as_version : int
+            The version of the notebook format to return.
+            The notebook will be converted, if necessary.
+            Pass nbformat.NO_CONVERT to prevent conversion.
+        capture_validation_error : dict, optional
+            If provided, a key of "ValidationError" with a
+            value of the ValidationError instance will be added
+            to the dictionary.
+    
+        Returns
+        -------
+        nb : NotebookNode
+            The notebook that was read.
+        """
+    
+        try:
+            buf = fp.read()
+        except AttributeError:
+>           with open(fp, encoding="utf8") as f:  # noqa: PTH123
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           FileNotFoundError: [Errno 2] No such file or directory: '/home/bardia/projects/graphical-sampling/simulations/jupyters/17_graphical_maxent_die.ipynb'
+
+.venv/lib/python3.12/site-packages/nbformat/__init__.py:171: FileNotFoundError
+___ test_mean_only_microscopic_start_approaches_exact_target_without_entropy ___
+
+fp = PosixPath('/home/bardia/projects/graphical-sampling/simulations/jupyters/17_graphical_maxent_die.ipynb')
+as_version = 4, capture_validation_error = None, kwargs = {}
+
+    def read(fp, as_version, capture_validation_error=None, **kwargs):
+        """Read a notebook from a file as a NotebookNode of the given version.
+    
+        The string can contain a notebook of any version.
+        The notebook will be returned `as_version`, converting, if necessary.
+    
+        Notebook format errors will be logged.
+    
+        Parameters
+        ----------
+        fp : file or str
+            A file-like object with a read method that returns unicode (use
+            ``io.open()`` in Python 2), or a path to a file.
+        as_version : int
+            The version of the notebook format to return.
+            The notebook will be converted, if necessary.
+            Pass nbformat.NO_CONVERT to prevent conversion.
+        capture_validation_error : dict, optional
+            If provided, a key of "ValidationError" with a
+            value of the ValidationError instance will be added
+            to the dictionary.
+    
+        Returns
+        -------
+        nb : NotebookNode
+            The notebook that was read.
+        """
+    
+        try:
+>           buf = fp.read()
+                  ^^^^^^^
+E           AttributeError: 'PosixPath' object has no attribute 'read'
+
+.venv/lib/python3.12/site-packages/nbformat/__init__.py:169: AttributeError
+
+During handling of the above exception, another exception occurred:
+
+    def test_mean_only_microscopic_start_approaches_exact_target_without_entropy():
+>       notebook = nbformat.read(NOTEBOOK, as_version=4)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_maxent_notebook.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fp = PosixPath('/home/bardia/projects/graphical-sampling/simulations/jupyters/17_graphical_maxent_die.ipynb')
+as_version = 4, capture_validation_error = None, kwargs = {}
+
+    def read(fp, as_version, capture_validation_error=None, **kwargs):
+        """Read a notebook from a file as a NotebookNode of the given version.
+    
+        The string can contain a notebook of any version.
+        The notebook will be returned `as_version`, converting, if necessary.
+    
+        Notebook format errors will be logged.
+    
+        Parameters
+        ----------
+        fp : file or str
+            A file-like object with a read method that returns unicode (use
+            ``io.open()`` in Python 2), or a path to a file.
+        as_version : int
+            The version of the notebook format to return.
+            The notebook will be converted, if necessary.
+            Pass nbformat.NO_CONVERT to prevent conversion.
+        capture_validation_error : dict, optional
+            If provided, a key of "ValidationError" with a
+            value of the ValidationError instance will be added
+            to the dictionary.
+    
+        Returns
+        -------
+        nb : NotebookNode
+            The notebook that was read.
+        """
+    
+        try:
+            buf = fp.read()
+        except AttributeError:
+>           with open(fp, encoding="utf8") as f:  # noqa: PTH123
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           FileNotFoundError: [Errno 2] No such file or directory: '/home/bardia/projects/graphical-sampling/simulations/jupyters/17_graphical_maxent_die.ipynb'
+
+.venv/lib/python3.12/site-packages/nbformat/__init__.py:171: FileNotFoundError
+______ test_notebook_executes_reduced_study_and_exposes_expected_results _______
+
+tmp_path = PosixPath('/tmp/pytest-of-bardia/pytest-5/test_notebook_executes_reduced0')
+
+    def test_notebook_executes_reduced_study_and_exposes_expected_results(tmp_path):
+>       assert NOTEBOOK.exists(), "notebook 17 has not been created"
+E       AssertionError: notebook 17 has not been created
+E       assert False
+E        +  where False = exists()
+E        +    where exists = PosixPath('/home/bardia/projects/graphical-sampling/simulations/jupyters/17_graphical_maxent_die.ipynb').exists
+
+tests/test_maxent_notebook.py:93: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_maxent_notebook.py::test_wide_two_part_exchange_moves_six_percent_and_shades_both_regions
+FAILED tests/test_maxent_notebook.py::test_mean_only_microscopic_start_approaches_exact_target_without_entropy
+FAILED tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+3 failed, 113 passed in 44.93s

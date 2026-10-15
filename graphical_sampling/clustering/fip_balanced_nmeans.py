@@ -17,13 +17,13 @@ from sklearn.cluster import KMeans
 from k_means_constrained import KMeansConstrained
 from numba import jit
 
-from ..population import Population
+from ..population import Population, _positive_integer, _mass_tolerance, _random_seed
 from ..order import Cluster, Zone, Floor, Ceil
 from joblib import Parallel, delayed
 
 
 @jit(nopython=True)
-def _greedy_jitter_numba(D, n, start_node):
+def _greedy_jitter_numba(D, n, start_node, rng=None):
     """
     Greedy Nearest Neighbor with minimal probabilistic noise (Jitter).
     """
@@ -49,7 +49,7 @@ def _greedy_jitter_numba(D, n, start_node):
         # distances by a random factor between 0.9 and 1.1.
         # This sometimes makes the 2nd or 3rd closest look like the closest.
         # It preserves the "structure" of the data while adding variety.
-        noise = np.random.rand(n) * 0.2 + 0.9 # Range [0.9, 1.1]
+        noise = (np.random.rand(n) if rng is None else rng.random(n)) * 0.2 + 0.9 # Range [0.9, 1.1]
         dists *= noise
 
         nxt = np.argmin(dists)
@@ -80,6 +80,10 @@ def _two_opt_open_numba(D, path, n):
 
 
 class OpenTSPSolver:
+    def __init__(self, *, random_state: int | None = None):
+        """Opt-in per-call replay without changing the caller's global RNG."""
+        self.random_state = _random_seed(random_state)
+
     def solve(self, points: np.ndarray, restarts: int = 15) -> np.ndarray:
         """
         Finds the best OPEN path (Start -> End) by trying multiple random start nodes.
@@ -107,13 +111,14 @@ class OpenTSPSolver:
 
         # 2. Run the heavy logic in Numba
         # We pass the matrix and let the JIT function handle the looping.
-        best_path = self._run_multi_start_numba(D, n, restarts)
+        rng = None if self.random_state is None else np.random.default_rng(self.random_state)
+        best_path = self._run_multi_start_numba(D, n, restarts, rng)
 
         return best_path
 
     @staticmethod
     @jit(nopython=True)
-    def _run_multi_start_numba(D, n, restarts):
+    def _run_multi_start_numba(D, n, restarts, rng=None):
         """
         Runs the full pipeline (Greedy + 2-Opt) 'restarts' times.
         Fully Compiled = Blazing Fast.
@@ -126,12 +131,12 @@ class OpenTSPSolver:
 
             # --- 1. Randomized Start & Construction ---
             # Pick a random start node
-            start_node = np.random.randint(0, n)
+            start_node = np.random.randint(0, n) if rng is None else rng.integers(0, n)
 
             # Build path with "Jitter" (Probabilistic Greedy)
             # We add slight noise to distances to simulate picking from "top k"
             # without the expensive sorting cost.
-            current_path = _greedy_jitter_numba(D, n, start_node)
+            current_path = _greedy_jitter_numba(D, n, start_node, rng)
 
             # --- 2. 2-Opt Optimization ---
             _two_opt_open_numba(D, current_path, n)
@@ -341,13 +346,28 @@ class _Clustering:
         return self
 
 class FIPBalancedNMeans:
+    """Probability-balanced clustering with K=n/r preliminary centers.
+
+    Supplied finite (K, 2) centers initialize the selected preliminary method;
+    omitting them preserves that method's historical initialization. An integer
+    random_state replays each fit in the same software environment, including
+    its TSP route; None retains unseeded behavior. Existing hardening/tie rules
+    and effective OT stopping thresholds are unchanged.
+    """
     def __init__(self, n: int, r_sample_per_cluster: int = 1, centroid_grid_x: int = None, n_init=50, tol=1e-9, max_iter=100, split_size=0.001,
                 init_clust_method: Literal['weighted', 'expanded', 'ot'] = 'expanded',
+                *, random_state: int | None = None,
                 ) -> None:
-        self.n = n
-        assert n % r_sample_per_cluster == 0, "n must be divisible by r_sample_per_cluster"
-        self.r = r_sample_per_cluster
-        self.K = int(n // r_sample_per_cluster)
+        self.n = _positive_integer(n, "n")
+        self.r = _positive_integer(r_sample_per_cluster, "r_sample_per_cluster")
+        if self.n % self.r:
+            raise ValueError("n must be divisible by r_sample_per_cluster")
+        self.K = self.n // self.r
+        self.random_state = _random_seed(random_state)
+        self._cluster_seed = self._tsp_seed = None
+        if self.random_state is not None:
+            seeds = np.random.SeedSequence(self.random_state).generate_state(2)
+            self._cluster_seed, self._tsp_seed = map(int, seeds)
         self.centroid_grid_x = centroid_grid_x 
         
         self.pop: Population | None = None
@@ -356,7 +376,7 @@ class FIPBalancedNMeans:
         self.path_order: np.ndarray | None = None
         self.membership: np.ndarray | None = None
         self.clusters: list[Cluster] = []
-        self.tsp_solver = OpenTSPSolver()
+        self.tsp_solver = OpenTSPSolver(random_state=self._tsp_seed)
 
         self.n_init = n_init
         self.tol = tol
@@ -365,6 +385,11 @@ class FIPBalancedNMeans:
         self.split_size = split_size
 
     def fit(self, population: Population, init_centroids: np.ndarray | None = None) -> None:
+        total = float(np.sum(population.inclusions))
+        # Recursive zone fitting uses fractional r and a subset retaining parent n.
+        # Check actual mass, rather than that inherited metadata.
+        if abs(total - self.K * self.r) > _mass_tolerance(population.N, total):
+            raise ValueError("n/r cluster targets must match the population inclusion mass")
         self.pop = population
         coords = population.coords
         probs = population.inclusions
@@ -406,6 +431,8 @@ class FIPBalancedNMeans:
             sinkhorn_iter=100,
             tol=1e-4,
             n_init=5,
+            random_state=self._cluster_seed,
+            n_jobs=1,
         )
     
         clustering.fit(coords, inclusions, init_centroids)
@@ -624,7 +651,8 @@ class FIPBalancedNMeans:
 
         zones_fbn = FIPBalancedNMeans(
             n=num_zones, centroid_grid_x=centroid_grid_x_zone, 
-            n_init=self.n_init, tol=self.tol, max_iter=self.max_iter
+            n_init=self.n_init, tol=self.tol, max_iter=self.max_iter,
+            random_state=self._cluster_seed,
         )
         zones_fbn.r = np.sum(subpopulation.inclusions) / num_zones
         zones_fbn.fit(subpopulation)
@@ -659,6 +687,13 @@ class FIPBalancedNMeans:
     init_centroids: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
 
+        if init_centroids is not None:
+            init_centroids = np.asarray(init_centroids, dtype=np.float64)
+            if (init_centroids.shape != (self.K, coords.shape[1])
+                    or not np.isfinite(init_centroids).all()):
+                raise ValueError("init_centroids must be finite with shape (K, n_features)")
+        rng = np.random.default_rng(self._cluster_seed)
+
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", message=".*divide by zero.*")
             warnings.filterwarnings("ignore", message=".*overflow.*")
@@ -673,7 +708,7 @@ class FIPBalancedNMeans:
             grid_y = np.linspace(coords.min(), coords.max(), int(np.ceil(self.K/centroid_grid_x)))
             gx, gy = np.meshgrid(grid_x, grid_y)
             grid_centers = np.column_stack([gx.ravel(), gy.ravel()])
-            init_centers = grid_centers[:self.K]
+            init_centers = grid_centers[:self.K] if init_centroids is None else init_centroids.copy()
             # -----------------------------------------
             # --------------------------------------------------
             # Weighted KMeans
@@ -683,23 +718,13 @@ class FIPBalancedNMeans:
                 probs_normalized = probs / probs.sum() * len(coords)
 
                 if init_centroids is not None:
-                    init_centroids = np.asarray(init_centroids)
-
-                    if init_centroids.ndim == 2 and init_centroids.shape[0] == self.K:
-                        k_means = KMeans(
-                            n_clusters=self.K,
-                            init=init_centroids,
-                            tol=self.tol,
-                            max_iter=self.max_iter,
-                            n_init=1
-                        )
-
-                        labels = k_means.fit_predict(coords, sample_weight=probs_normalized)
-                        centroids = k_means.cluster_centers_
-                        return labels, centroids
-
-                    # If the number of initial centers does not match self.K,
-                    # ignore them and fall back to ordinary KMeans initialization.
+                    k_means = KMeans(
+                        n_clusters=self.K, init=init_centroids, tol=self.tol,
+                        max_iter=self.max_iter, n_init=1,
+                        random_state=self._cluster_seed,
+                    )
+                    labels = k_means.fit_predict(coords, sample_weight=probs_normalized)
+                    return labels, k_means.cluster_centers_
 
                 best_error = np.inf
                 best_labels = None
@@ -711,7 +736,8 @@ class FIPBalancedNMeans:
                         n_clusters=self.K,
                         n_init=1,
                         tol=self.tol,
-                        max_iter=self.max_iter
+                        max_iter=self.max_iter,
+                        random_state=None if self._cluster_seed is None else int(rng.integers(0, 2**32)),
                     )
 
                     raw_labels = k_means.fit_predict(coords, sample_weight=probs_normalized)
@@ -749,8 +775,8 @@ class FIPBalancedNMeans:
                     size_max=cluster_size + 1 if self.K > 1 else cluster_size,
                     init=init_centers,
                     n_init=1,
-                    random_state=42,
-                    n_jobs=-1
+                    random_state=42 if self._cluster_seed is None else self._cluster_seed,
+                    n_jobs=1
                 )
             
                 extended_labels = kmeans.fit_predict(expanded_coords)

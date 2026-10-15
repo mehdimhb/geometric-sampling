@@ -1,0 +1,821 @@
+FFFFF..FFF..FFFF.F.....FF.FFFFFFFFFFF.....FFFFFFFFFFFFFFF.FFFF           [100%]
+=================================== FAILURES ===================================
+___________ test_historical_normalization_does_not_lose_a_cluster[4] ___________
+
+n = 4
+
+    @pytest.mark.parametrize('n', [4, 8, 16, 32])
+    def test_historical_normalization_does_not_lose_a_cluster(n):
+        pi = n * np.ones(144) / 144
+        pi *= n / pi.sum()
+        before = pi.copy()
+        pop = Population(coords(144), pi)
+>       assert pop.n == n
+E       assert 3 == 4
+E        +  where 3 = <graphical_sampling.population.Population object at 0x76f353afd070>.n
+
+tests/test_population_numerical_validation.py:17: AssertionError
+___________ test_historical_normalization_does_not_lose_a_cluster[8] ___________
+
+n = 8
+
+    @pytest.mark.parametrize('n', [4, 8, 16, 32])
+    def test_historical_normalization_does_not_lose_a_cluster(n):
+        pi = n * np.ones(144) / 144
+        pi *= n / pi.sum()
+        before = pi.copy()
+        pop = Population(coords(144), pi)
+>       assert pop.n == n
+E       assert 7 == 8
+E        +  where 7 = <graphical_sampling.population.Population object at 0x76f353afdeb0>.n
+
+tests/test_population_numerical_validation.py:17: AssertionError
+__________ test_historical_normalization_does_not_lose_a_cluster[16] ___________
+
+n = 16
+
+    @pytest.mark.parametrize('n', [4, 8, 16, 32])
+    def test_historical_normalization_does_not_lose_a_cluster(n):
+        pi = n * np.ones(144) / 144
+        pi *= n / pi.sum()
+        before = pi.copy()
+        pop = Population(coords(144), pi)
+>       assert pop.n == n
+E       assert 15 == 16
+E        +  where 15 = <graphical_sampling.population.Population object at 0x76f353afdc70>.n
+
+tests/test_population_numerical_validation.py:17: AssertionError
+__________ test_historical_normalization_does_not_lose_a_cluster[32] ___________
+
+n = 32
+
+    @pytest.mark.parametrize('n', [4, 8, 16, 32])
+    def test_historical_normalization_does_not_lose_a_cluster(n):
+        pi = n * np.ones(144) / 144
+        pi *= n / pi.sum()
+        before = pi.copy()
+        pop = Population(coords(144), pi)
+>       assert pop.n == n
+E       assert 31 == 32
+E        +  where 31 = <graphical_sampling.population.Population object at 0x76f353afe0f0>.n
+
+tests/test_population_numerical_validation.py:17: AssertionError
+___ test_integer_inference_accepts_only_roundoff_without_changing_pi[-1e-12] ___
+
+offset = -1e-12
+
+    @pytest.mark.parametrize('offset', [-1e-12, 0., 1e-12])
+    def test_integer_inference_accepts_only_roundoff_without_changing_pi(offset):
+        pi = np.array([.5, .5, .5, .5 + offset])
+        pop = Population(coords(4), pi)
+>       assert pop.n == 2
+E       assert 1 == 2
+E        +  where 1 = <graphical_sampling.population.Population object at 0x76f353afec30>.n
+
+tests/test_population_numerical_validation.py:27: AssertionError
+_________ test_fractional_total_is_rejected_instead_of_truncated[pi0] __________
+
+pi = array([0.6, 0.6, 0.6, 0.6])
+
+    @pytest.mark.parametrize('pi', [np.full(4, .6), np.full(4, .1),
+                                    np.array([.5, .5, .5, .50001])])
+    def test_fractional_total_is_rejected_instead_of_truncated(pi):
+>       with pytest.raises(ValueError, match='integer'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_population_numerical_validation.py:34: Failed
+_________ test_fractional_total_is_rejected_instead_of_truncated[pi1] __________
+
+pi = array([0.1, 0.1, 0.1, 0.1])
+
+    @pytest.mark.parametrize('pi', [np.full(4, .6), np.full(4, .1),
+                                    np.array([.5, .5, .5, .50001])])
+    def test_fractional_total_is_rejected_instead_of_truncated(pi):
+>       with pytest.raises(ValueError, match='integer'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_population_numerical_validation.py:34: Failed
+_________ test_fractional_total_is_rejected_instead_of_truncated[pi2] __________
+
+pi = array([0.5    , 0.5    , 0.5    , 0.50001])
+
+    @pytest.mark.parametrize('pi', [np.full(4, .6), np.full(4, .1),
+                                    np.array([.5, .5, .5, .50001])])
+    def test_fractional_total_is_rejected_instead_of_truncated(pi):
+>       with pytest.raises(ValueError, match='integer'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_population_numerical_validation.py:34: Failed
+_________________ test_invalid_explicit_target_is_rejected[5] __________________
+
+n = 5
+
+    @pytest.mark.parametrize('n', [0, -1, 5, 2.5, 2., True, np.nan, np.inf])
+    def test_invalid_explicit_target_is_rejected(n):
+>       with pytest.raises(ValueError, match='n'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_population_numerical_validation.py:40: Failed
+________________ test_invalid_explicit_target_is_rejected[2.5] _________________
+
+n = 2.5
+
+    @pytest.mark.parametrize('n', [0, -1, 5, 2.5, 2., True, np.nan, np.inf])
+    def test_invalid_explicit_target_is_rejected(n):
+>       with pytest.raises(ValueError, match='n'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_population_numerical_validation.py:40: Failed
+________________ test_invalid_explicit_target_is_rejected[2.0] _________________
+
+n = 2.0
+
+    @pytest.mark.parametrize('n', [0, -1, 5, 2.5, 2., True, np.nan, np.inf])
+    def test_invalid_explicit_target_is_rejected(n):
+>       with pytest.raises(ValueError, match='n'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_population_numerical_validation.py:40: Failed
+________________ test_invalid_explicit_target_is_rejected[True] ________________
+
+n = True
+
+    @pytest.mark.parametrize('n', [0, -1, 5, 2.5, 2., True, np.nan, np.inf])
+    def test_invalid_explicit_target_is_rejected(n):
+>       with pytest.raises(ValueError, match='n'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_population_numerical_validation.py:40: Failed
+________________ test_invalid_explicit_target_is_rejected[inf] _________________
+
+n = inf
+
+    @pytest.mark.parametrize('n', [0, -1, 5, 2.5, 2., True, np.nan, np.inf])
+    def test_invalid_explicit_target_is_rejected(n):
+>       with pytest.raises(ValueError, match='n'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_population_numerical_validation.py:40: Failed
+_________________ test_nonfinite_coordinates_are_rejected[nan] _________________
+
+bad = nan
+
+    @pytest.mark.parametrize('bad', [np.nan, np.inf])
+    def test_nonfinite_coordinates_are_rejected(bad):
+        x = coords(4); x[0, 1] = bad
+>       with pytest.raises(ValueError, match='finite'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_population_numerical_validation.py:62: Failed
+_________________ test_nonfinite_coordinates_are_rejected[inf] _________________
+
+bad = inf
+
+    @pytest.mark.parametrize('bad', [np.nan, np.inf])
+    def test_nonfinite_coordinates_are_rejected(bad):
+        x = coords(4); x[0, 1] = bad
+>       with pytest.raises(ValueError, match='finite'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_population_numerical_validation.py:62: Failed
+______ test_supplied_centers_choose_the_requested_geometric_partition[ot] ______
+
+method = 'ot'
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    def test_supplied_centers_choose_the_requested_geometric_partition(method):
+        outputs = []
+        for centers in [HORIZONTAL, VERTICAL]:
+            solver = FIPBalancedNMeans(2, init_clust_method=method, split_size=.25)
+            labels, fitted = solver._get_labels_centroids(X, PI, centers)
+            outputs.append(labels[:, None] == labels[None, :])
+            # Labels may be permuted; the supplied centroid geometry is preserved.
+>           assert cdist(fitted, centers).min(axis=1).max() < 1e-8
+E           assert np.float64(0.7071067811865459) < 1e-08
+E            +  where np.float64(0.7071067811865459) = <built-in method max of numpy.ndarray object at 0x76f376bec930>()
+E            +    where <built-in method max of numpy.ndarray object at 0x76f376bec930> = array([0.70710678, 0.70710678]).max
+E            +      where array([0.70710678, 0.70710678]) = <built-in method min of numpy.ndarray object at 0x76f353affd50>(axis=1)
+E            +        where <built-in method min of numpy.ndarray object at 0x76f353affd50> = array([[0.70710678, 0.70710678],\n       [0.70710678, 0.70710678]]).min
+E            +          where array([[0.70710678, 0.70710678],\n       [0.70710678, 0.70710678]]) = cdist(array([[1.24184982e-58, 5.00000000e-01],\n       [1.00000000e+00, 5.00000000e-01]]), array([[0.5, 0. ],\n       [0.5, 1. ]]))
+
+tests/test_clustering_initialization_replay.py:25: AssertionError
+___ test_supplied_centers_choose_the_requested_geometric_partition[expanded] ___
+
+method = 'expanded'
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    def test_supplied_centers_choose_the_requested_geometric_partition(method):
+        outputs = []
+        for centers in [HORIZONTAL, VERTICAL]:
+            solver = FIPBalancedNMeans(2, init_clust_method=method, split_size=.25)
+            labels, fitted = solver._get_labels_centroids(X, PI, centers)
+            outputs.append(labels[:, None] == labels[None, :])
+            # Labels may be permuted; the supplied centroid geometry is preserved.
+>           assert cdist(fitted, centers).min(axis=1).max() < 1e-8
+E           assert np.float64(0.7071067811865476) < 1e-08
+E            +  where np.float64(0.7071067811865476) = <built-in method max of numpy.ndarray object at 0x76f3539dacd0>()
+E            +    where <built-in method max of numpy.ndarray object at 0x76f3539dacd0> = array([0.70710678, 0.70710678]).max
+E            +      where array([0.70710678, 0.70710678]) = <built-in method min of numpy.ndarray object at 0x76f3539daaf0>(axis=1)
+E            +        where <built-in method min of numpy.ndarray object at 0x76f3539daaf0> = array([[0.70710678, 0.70710678],\n       [0.70710678, 0.70710678]]).min
+E            +          where array([[0.70710678, 0.70710678],\n       [0.70710678, 0.70710678]]) = cdist(array([[0. , 0.5],\n       [1. , 0.5]]), array([[0.5, 0. ],\n       [0.5, 1. ]]))
+
+tests/test_clustering_initialization_replay.py:25: AssertionError
+__ test_supplied_invalid_centers_never_fall_back_silently[centers0-weighted] ___
+
+method = 'weighted'
+centers = array([[0., 0.],
+       [0., 0.],
+       [0., 0.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+>       with pytest.raises(ValueError, match='init_centroids'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_clustering_initialization_replay.py:34: Failed
+_____ test_supplied_invalid_centers_never_fall_back_silently[centers0-ot] ______
+
+method = 'ot', centers = array([[0., 0.],
+       [0., 0.],
+       [0., 0.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+>       with pytest.raises(ValueError, match='init_centroids'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_clustering_initialization_replay.py:34: Failed
+__ test_supplied_invalid_centers_never_fall_back_silently[centers0-expanded] ___
+
+method = 'expanded'
+centers = array([[0., 0.],
+       [0., 0.],
+       [0., 0.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+>       with pytest.raises(ValueError, match='init_centroids'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_clustering_initialization_replay.py:34: Failed
+__ test_supplied_invalid_centers_never_fall_back_silently[centers1-weighted] ___
+
+method = 'weighted', centers = array([[0., 0., 0.],
+       [0., 0., 0.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+        with pytest.raises(ValueError, match='init_centroids'):
+>           FIPBalancedNMeans(2, init_clust_method=method)._get_labels_centroids(X, PI, centers)
+
+tests/test_clustering_initialization_replay.py:35: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+graphical_sampling/clustering/fip_balanced_nmeans.py:697: in _get_labels_centroids
+    labels = k_means.fit_predict(coords, sample_weight=probs_normalized)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/sklearn/cluster/_kmeans.py:1070: in fit_predict
+    return self.fit(X, sample_weight=sample_weight).labels_
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/sklearn/base.py:1336: in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/sklearn/cluster/_kmeans.py:1481: in fit
+    self._validate_center_shape(X, init)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = KMeans(init=array([[0., 0., 0.],
+       [0., 0., 0.]]), max_iter=100,
+       n_clusters=2, n_init=1, tol=1e-09)
+X = array([[0., 0.],
+       [0., 1.],
+       [1., 0.],
+       [1., 1.]])
+centers = array([[0., 0., 0.],
+       [0., 0., 0.]])
+
+    def _validate_center_shape(self, X, centers):
+        """Check if centers is compatible with X and n_clusters."""
+        if centers.shape[0] != self.n_clusters:
+            raise ValueError(
+                f"The shape of the initial centers {centers.shape} does not "
+                f"match the number of clusters {self.n_clusters}."
+            )
+        if centers.shape[1] != X.shape[1]:
+>           raise ValueError(
+                f"The shape of the initial centers {centers.shape} does not "
+                f"match the number of features of the data {X.shape[1]}."
+            )
+E           ValueError: The shape of the initial centers (2, 3) does not match the number of features of the data 2.
+
+.venv/lib/python3.12/site-packages/sklearn/cluster/_kmeans.py:944: ValueError
+
+During handling of the above exception, another exception occurred:
+
+method = 'weighted', centers = array([[0., 0., 0.],
+       [0., 0., 0.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+>       with pytest.raises(ValueError, match='init_centroids'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'init_centroids'
+E         Actual message: 'The shape of the initial centers (2, 3) does not match the number of features of the data 2.'
+
+tests/test_clustering_initialization_replay.py:34: AssertionError
+_____ test_supplied_invalid_centers_never_fall_back_silently[centers1-ot] ______
+
+method = 'ot', centers = array([[0., 0., 0.],
+       [0., 0., 0.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+>       with pytest.raises(ValueError, match='init_centroids'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_clustering_initialization_replay.py:34: Failed
+__ test_supplied_invalid_centers_never_fall_back_silently[centers1-expanded] ___
+
+method = 'expanded', centers = array([[0., 0., 0.],
+       [0., 0., 0.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+>       with pytest.raises(ValueError, match='init_centroids'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_clustering_initialization_replay.py:34: Failed
+__ test_supplied_invalid_centers_never_fall_back_silently[centers2-weighted] ___
+
+method = 'weighted', centers = array([[nan,  0.],
+       [ 1.,  1.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+        with pytest.raises(ValueError, match='init_centroids'):
+>           FIPBalancedNMeans(2, init_clust_method=method)._get_labels_centroids(X, PI, centers)
+
+tests/test_clustering_initialization_replay.py:35: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+graphical_sampling/clustering/fip_balanced_nmeans.py:697: in _get_labels_centroids
+    labels = k_means.fit_predict(coords, sample_weight=probs_normalized)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/sklearn/cluster/_kmeans.py:1070: in fit_predict
+    return self.fit(X, sample_weight=sample_weight).labels_
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/sklearn/base.py:1336: in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/sklearn/cluster/_kmeans.py:1480: in fit
+    init = check_array(init, dtype=X.dtype, copy=True, order="C")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:1074: in check_array
+    _assert_all_finite(
+.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:133: in _assert_all_finite
+    _assert_all_finite_element_wise(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+X = array([[nan,  0.],
+       [ 1.,  1.]])
+
+    def _assert_all_finite_element_wise(
+        X, *, xp, allow_nan, msg_dtype=None, estimator_name=None, input_name=""
+    ):
+        # Cython implementation doesn't support FP16 or complex numbers
+        use_cython = (
+            xp is np and X.data.contiguous and X.dtype.type in {np.float32, np.float64}
+        )
+        if use_cython:
+            out = cy_isfinite(X.reshape(-1), allow_nan=allow_nan)
+            has_nan_error = False if allow_nan else out == FiniteStatus.has_nan
+            has_inf = out == FiniteStatus.has_infinite
+        else:
+            has_inf = xp.any(xp.isinf(X))
+            has_nan_error = False if allow_nan else xp.any(xp.isnan(X))
+        if has_inf or has_nan_error:
+            if has_nan_error:
+                type_err = "NaN"
+            else:
+                msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
+                type_err = f"infinity or a value too large for {msg_dtype!r}"
+            padded_input_name = input_name + " " if input_name else ""
+            msg_err = f"Input {padded_input_name}contains {type_err}."
+            if estimator_name and input_name == "X" and has_nan_error:
+                # Improve the error message on how to handle missing values in
+                # scikit-learn.
+                msg_err += (
+                    f"\n{estimator_name} does not accept missing values"
+                    " encoded as NaN natively. For supervised learning, you might want"
+                    " to consider sklearn.ensemble.HistGradientBoostingClassifier and"
+                    " Regressor which accept missing values encoded as NaNs natively."
+                    " Alternatively, it is possible to preprocess the data, for"
+                    " instance by using an imputer transformer in a pipeline or drop"
+                    " samples with missing values. See"
+                    " https://scikit-learn.org/stable/modules/impute.html"
+                    " You can find a list of all estimators that handle NaN values"
+                    " at the following page:"
+                    " https://scikit-learn.org/stable/modules/impute.html"
+                    "#estimators-that-handle-nan-values"
+                )
+>           raise ValueError(msg_err)
+E           ValueError: Input contains NaN.
+
+.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:182: ValueError
+
+During handling of the above exception, another exception occurred:
+
+method = 'weighted', centers = array([[nan,  0.],
+       [ 1.,  1.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+>       with pytest.raises(ValueError, match='init_centroids'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'init_centroids'
+E         Actual message: 'Input contains NaN.'
+
+tests/test_clustering_initialization_replay.py:34: AssertionError
+_____ test_supplied_invalid_centers_never_fall_back_silently[centers2-ot] ______
+
+method = 'ot', centers = array([[nan,  0.],
+       [ 1.,  1.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+>       with pytest.raises(ValueError, match='init_centroids'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_clustering_initialization_replay.py:34: Failed
+__ test_supplied_invalid_centers_never_fall_back_silently[centers2-expanded] ___
+
+method = 'expanded', centers = array([[nan,  0.],
+       [ 1.,  1.]])
+
+    @pytest.mark.parametrize('method', ['weighted', 'ot', 'expanded'])
+    @pytest.mark.parametrize('centers', [np.zeros((3, 2)), np.zeros((2, 3)),
+                                         np.array([[np.nan, 0.], [1., 1.]])])
+    def test_supplied_invalid_centers_never_fall_back_silently(method, centers):
+>       with pytest.raises(ValueError, match='init_centroids'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_clustering_initialization_replay.py:34: Failed
+______________ test_invalid_cluster_cardinality_is_rejected[0-1] _______________
+
+n = 0, r = 1
+
+    @pytest.mark.parametrize('n,r', [(0,1),(3,2),(4,0),(4,1.5)])
+    def test_invalid_cluster_cardinality_is_rejected(n, r):
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_clustering_initialization_replay.py:60: Failed
+______________ test_invalid_cluster_cardinality_is_rejected[3-2] _______________
+
+n = 3, r = 2
+
+    @pytest.mark.parametrize('n,r', [(0,1),(3,2),(4,0),(4,1.5)])
+    def test_invalid_cluster_cardinality_is_rejected(n, r):
+        with pytest.raises(ValueError):
+>           FIPBalancedNMeans(n, r_sample_per_cluster=r)
+
+tests/test_clustering_initialization_replay.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <graphical_sampling.clustering.fip_balanced_nmeans.FIPBalancedNMeans object at 0x76f349b76a80>
+n = 3, r_sample_per_cluster = 2, centroid_grid_x = None, n_init = 50
+tol = 1e-09, max_iter = 100, split_size = 0.001, init_clust_method = 'expanded'
+
+    def __init__(self, n: int, r_sample_per_cluster: int = 1, centroid_grid_x: int = None, n_init=50, tol=1e-9, max_iter=100, split_size=0.001,
+                init_clust_method: Literal['weighted', 'expanded', 'ot'] = 'expanded',
+                ) -> None:
+        self.n = n
+>       assert n % r_sample_per_cluster == 0, "n must be divisible by r_sample_per_cluster"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: n must be divisible by r_sample_per_cluster
+
+graphical_sampling/clustering/fip_balanced_nmeans.py:348: AssertionError
+______________ test_invalid_cluster_cardinality_is_rejected[4-0] _______________
+
+n = 4, r = 0
+
+    @pytest.mark.parametrize('n,r', [(0,1),(3,2),(4,0),(4,1.5)])
+    def test_invalid_cluster_cardinality_is_rejected(n, r):
+        with pytest.raises(ValueError):
+>           FIPBalancedNMeans(n, r_sample_per_cluster=r)
+
+tests/test_clustering_initialization_replay.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <graphical_sampling.clustering.fip_balanced_nmeans.FIPBalancedNMeans object at 0x76f349b77680>
+n = 4, r_sample_per_cluster = 0, centroid_grid_x = None, n_init = 50
+tol = 1e-09, max_iter = 100, split_size = 0.001, init_clust_method = 'expanded'
+
+    def __init__(self, n: int, r_sample_per_cluster: int = 1, centroid_grid_x: int = None, n_init=50, tol=1e-9, max_iter=100, split_size=0.001,
+                init_clust_method: Literal['weighted', 'expanded', 'ot'] = 'expanded',
+                ) -> None:
+        self.n = n
+>       assert n % r_sample_per_cluster == 0, "n must be divisible by r_sample_per_cluster"
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       ZeroDivisionError: integer modulo by zero
+
+graphical_sampling/clustering/fip_balanced_nmeans.py:348: ZeroDivisionError
+_____________ test_invalid_cluster_cardinality_is_rejected[4-1.5] ______________
+
+n = 4, r = 1.5
+
+    @pytest.mark.parametrize('n,r', [(0,1),(3,2),(4,0),(4,1.5)])
+    def test_invalid_cluster_cardinality_is_rejected(n, r):
+        with pytest.raises(ValueError):
+>           FIPBalancedNMeans(n, r_sample_per_cluster=r)
+
+tests/test_clustering_initialization_replay.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <graphical_sampling.clustering.fip_balanced_nmeans.FIPBalancedNMeans object at 0x76f349b26750>
+n = 4, r_sample_per_cluster = 1.5, centroid_grid_x = None, n_init = 50
+tol = 1e-09, max_iter = 100, split_size = 0.001, init_clust_method = 'expanded'
+
+    def __init__(self, n: int, r_sample_per_cluster: int = 1, centroid_grid_x: int = None, n_init=50, tol=1e-9, max_iter=100, split_size=0.001,
+                init_clust_method: Literal['weighted', 'expanded', 'ot'] = 'expanded',
+                ) -> None:
+        self.n = n
+>       assert n % r_sample_per_cluster == 0, "n must be divisible by r_sample_per_cluster"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: n must be divisible by r_sample_per_cluster
+
+graphical_sampling/clustering/fip_balanced_nmeans.py:348: AssertionError
+________________ test_fit_rejects_mismatched_population_target _________________
+
+    def test_fit_rejects_mismatched_population_target():
+        pop = Population(X, PI)
+>       with pytest.raises(ValueError, match='n'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_clustering_initialization_replay.py:66: Failed
+_______ test_tsp_explicit_seed_replays_without_changing_numpy_global_rng _______
+
+    def test_tsp_explicit_seed_replays_without_changing_numpy_global_rng():
+        points = np.random.default_rng(120).random((12, 2))
+>       solver = OpenTSPSolver(random_state=19)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: OpenTSPSolver() takes no arguments
+
+tests/test_clustering_initialization_replay.py:72: TypeError
+________ test_seeded_clustering_replays_on_the_same_instance[weighted] _________
+
+method = 'weighted'
+
+    @pytest.mark.parametrize('method', ['weighted','ot','expanded'])
+    def test_seeded_clustering_replays_on_the_same_instance(method):
+        x = np.random.default_rng(12).random((16, 2))
+        pop = Population(x, np.full(16, .25))
+>       solver = FIPBalancedNMeans(4, init_clust_method=method, n_init=2,
+                                  split_size=.125, random_state=21)
+E       TypeError: FIPBalancedNMeans.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_clustering_initialization_replay.py:88: TypeError
+___________ test_seeded_clustering_replays_on_the_same_instance[ot] ____________
+
+method = 'ot'
+
+    @pytest.mark.parametrize('method', ['weighted','ot','expanded'])
+    def test_seeded_clustering_replays_on_the_same_instance(method):
+        x = np.random.default_rng(12).random((16, 2))
+        pop = Population(x, np.full(16, .25))
+>       solver = FIPBalancedNMeans(4, init_clust_method=method, n_init=2,
+                                  split_size=.125, random_state=21)
+E       TypeError: FIPBalancedNMeans.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_clustering_initialization_replay.py:88: TypeError
+________ test_seeded_clustering_replays_on_the_same_instance[expanded] _________
+
+method = 'expanded'
+
+    @pytest.mark.parametrize('method', ['weighted','ot','expanded'])
+    def test_seeded_clustering_replays_on_the_same_instance(method):
+        x = np.random.default_rng(12).random((16, 2))
+        pop = Population(x, np.full(16, .25))
+>       solver = FIPBalancedNMeans(4, init_clust_method=method, n_init=2,
+                                  split_size=.125, random_state=21)
+E       TypeError: FIPBalancedNMeans.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_clustering_initialization_replay.py:88: TypeError
+_______________________ test_public_seed_validation[-1] ________________________
+
+state = -1
+
+    @pytest.mark.parametrize('state', [-1, True, 1.2, 2**32])
+    def test_public_seed_validation(state):
+        with pytest.raises(ValueError, match='random_state'):
+>           FIPBalancedNMeans(2, random_state=state)
+E           TypeError: FIPBalancedNMeans.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_clustering_initialization_replay.py:99: TypeError
+______________________ test_public_seed_validation[True] _______________________
+
+state = True
+
+    @pytest.mark.parametrize('state', [-1, True, 1.2, 2**32])
+    def test_public_seed_validation(state):
+        with pytest.raises(ValueError, match='random_state'):
+>           FIPBalancedNMeans(2, random_state=state)
+E           TypeError: FIPBalancedNMeans.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_clustering_initialization_replay.py:99: TypeError
+_______________________ test_public_seed_validation[1.2] _______________________
+
+state = 1.2
+
+    @pytest.mark.parametrize('state', [-1, True, 1.2, 2**32])
+    def test_public_seed_validation(state):
+        with pytest.raises(ValueError, match='random_state'):
+>           FIPBalancedNMeans(2, random_state=state)
+E           TypeError: FIPBalancedNMeans.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_clustering_initialization_replay.py:99: TypeError
+___________________ test_public_seed_validation[4294967296] ____________________
+
+state = 4294967296
+
+    @pytest.mark.parametrize('state', [-1, True, 1.2, 2**32])
+    def test_public_seed_validation(state):
+        with pytest.raises(ValueError, match='random_state'):
+>           FIPBalancedNMeans(2, random_state=state)
+E           TypeError: FIPBalancedNMeans.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_clustering_initialization_replay.py:99: TypeError
+_____ test_seeded_density_score_replays_across_workers_and_batches[nmeans] _____
+
+representative = 'nmeans'
+
+    @pytest.mark.parametrize('representative', ['nmeans','nmedoids'])
+    def test_seeded_density_score_replays_across_workers_and_batches(representative):
+        x = np.random.default_rng(14).random((24, 2))
+        pop = Population(x, np.full(24, .25))
+        samples = np.array([[0,3,6,10,15,23],[1,5,8,12,17,20],[0,3,6,10,15,23]])
+        opts = dict(representative=representative, random_state=31)
+>       serial = DensityDisparity(pop,n_jobs=1,**opts)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: DensityDisparity.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_density_disparity_replay.py:14: TypeError
+____ test_seeded_density_score_replays_across_workers_and_batches[nmedoids] ____
+
+representative = 'nmedoids'
+
+    @pytest.mark.parametrize('representative', ['nmeans','nmedoids'])
+    def test_seeded_density_score_replays_across_workers_and_batches(representative):
+        x = np.random.default_rng(14).random((24, 2))
+        pop = Population(x, np.full(24, .25))
+        samples = np.array([[0,3,6,10,15,23],[1,5,8,12,17,20],[0,3,6,10,15,23]])
+        opts = dict(representative=representative, random_state=31)
+>       serial = DensityDisparity(pop,n_jobs=1,**opts)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: DensityDisparity.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_density_disparity_replay.py:14: TypeError
+_______________________ test_density_seed_validation[-1] _______________________
+
+state = -1
+
+    @pytest.mark.parametrize('state', [-1, True, 1.2, 2**32])
+    def test_density_seed_validation(state):
+        pop=Population(np.array([[0.,0.],[1.,1.]]),np.ones(2))
+        with pytest.raises(ValueError,match='random_state'):
+>           DensityDisparity(pop,random_state=state)
+E           TypeError: DensityDisparity.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_density_disparity_replay.py:44: TypeError
+______________________ test_density_seed_validation[True] ______________________
+
+state = True
+
+    @pytest.mark.parametrize('state', [-1, True, 1.2, 2**32])
+    def test_density_seed_validation(state):
+        pop=Population(np.array([[0.,0.],[1.,1.]]),np.ones(2))
+        with pytest.raises(ValueError,match='random_state'):
+>           DensityDisparity(pop,random_state=state)
+E           TypeError: DensityDisparity.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_density_disparity_replay.py:44: TypeError
+______________________ test_density_seed_validation[1.2] _______________________
+
+state = 1.2
+
+    @pytest.mark.parametrize('state', [-1, True, 1.2, 2**32])
+    def test_density_seed_validation(state):
+        pop=Population(np.array([[0.,0.],[1.,1.]]),np.ones(2))
+        with pytest.raises(ValueError,match='random_state'):
+>           DensityDisparity(pop,random_state=state)
+E           TypeError: DensityDisparity.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_density_disparity_replay.py:44: TypeError
+___________________ test_density_seed_validation[4294967296] ___________________
+
+state = 4294967296
+
+    @pytest.mark.parametrize('state', [-1, True, 1.2, 2**32])
+    def test_density_seed_validation(state):
+        pop=Population(np.array([[0.,0.],[1.,1.]]),np.ones(2))
+        with pytest.raises(ValueError,match='random_state'):
+>           DensityDisparity(pop,random_state=state)
+E           TypeError: DensityDisparity.__init__() got an unexpected keyword argument 'random_state'
+
+tests/test_density_disparity_replay.py:44: TypeError
+=============================== warnings summary ===============================
+tests/test_population_numerical_validation.py::test_invalid_weights_are_rejected_before_normalization[pi0]
+  /home/bardia/projects/graphical-sampling/graphical_sampling/population.py:123: RuntimeWarning: invalid value encountered in divide
+    inclusions = n * raw_inclusions / total_weight
+
+tests/test_population_numerical_validation.py::test_nonfinite_coordinates_are_rejected[inf]
+  /home/bardia/projects/graphical-sampling/graphical_sampling/population.py:158: RuntimeWarning: invalid value encountered in divide
+    return (coords - coords.min(axis=0)) / scale
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_population_numerical_validation.py::test_historical_normalization_does_not_lose_a_cluster[4]
+FAILED tests/test_population_numerical_validation.py::test_historical_normalization_does_not_lose_a_cluster[8]
+FAILED tests/test_population_numerical_validation.py::test_historical_normalization_does_not_lose_a_cluster[16]
+FAILED tests/test_population_numerical_validation.py::test_historical_normalization_does_not_lose_a_cluster[32]
+FAILED tests/test_population_numerical_validation.py::test_integer_inference_accepts_only_roundoff_without_changing_pi[-1e-12]
+FAILED tests/test_population_numerical_validation.py::test_fractional_total_is_rejected_instead_of_truncated[pi0]
+FAILED tests/test_population_numerical_validation.py::test_fractional_total_is_rejected_instead_of_truncated[pi1]
+FAILED tests/test_population_numerical_validation.py::test_fractional_total_is_rejected_instead_of_truncated[pi2]
+FAILED tests/test_population_numerical_validation.py::test_invalid_explicit_target_is_rejected[5]
+FAILED tests/test_population_numerical_validation.py::test_invalid_explicit_target_is_rejected[2.5]
+FAILED tests/test_population_numerical_validation.py::test_invalid_explicit_target_is_rejected[2.0]
+FAILED tests/test_population_numerical_validation.py::test_invalid_explicit_target_is_rejected[True]
+FAILED tests/test_population_numerical_validation.py::test_invalid_explicit_target_is_rejected[inf]
+FAILED tests/test_population_numerical_validation.py::test_nonfinite_coordinates_are_rejected[nan]
+FAILED tests/test_population_numerical_validation.py::test_nonfinite_coordinates_are_rejected[inf]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_centers_choose_the_requested_geometric_partition[ot]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_centers_choose_the_requested_geometric_partition[expanded]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_invalid_centers_never_fall_back_silently[centers0-weighted]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_invalid_centers_never_fall_back_silently[centers0-ot]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_invalid_centers_never_fall_back_silently[centers0-expanded]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_invalid_centers_never_fall_back_silently[centers1-weighted]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_invalid_centers_never_fall_back_silently[centers1-ot]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_invalid_centers_never_fall_back_silently[centers1-expanded]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_invalid_centers_never_fall_back_silently[centers2-weighted]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_invalid_centers_never_fall_back_silently[centers2-ot]
+FAILED tests/test_clustering_initialization_replay.py::test_supplied_invalid_centers_never_fall_back_silently[centers2-expanded]
+FAILED tests/test_clustering_initialization_replay.py::test_invalid_cluster_cardinality_is_rejected[0-1]
+FAILED tests/test_clustering_initialization_replay.py::test_invalid_cluster_cardinality_is_rejected[3-2]
+FAILED tests/test_clustering_initialization_replay.py::test_invalid_cluster_cardinality_is_rejected[4-0]
+FAILED tests/test_clustering_initialization_replay.py::test_invalid_cluster_cardinality_is_rejected[4-1.5]
+FAILED tests/test_clustering_initialization_replay.py::test_fit_rejects_mismatched_population_target
+FAILED tests/test_clustering_initialization_replay.py::test_tsp_explicit_seed_replays_without_changing_numpy_global_rng
+FAILED tests/test_clustering_initialization_replay.py::test_seeded_clustering_replays_on_the_same_instance[weighted]
+FAILED tests/test_clustering_initialization_replay.py::test_seeded_clustering_replays_on_the_same_instance[ot]
+FAILED tests/test_clustering_initialization_replay.py::test_seeded_clustering_replays_on_the_same_instance[expanded]
+FAILED tests/test_clustering_initialization_replay.py::test_public_seed_validation[-1]
+FAILED tests/test_clustering_initialization_replay.py::test_public_seed_validation[True]
+FAILED tests/test_clustering_initialization_replay.py::test_public_seed_validation[1.2]
+FAILED tests/test_clustering_initialization_replay.py::test_public_seed_validation[4294967296]
+FAILED tests/test_density_disparity_replay.py::test_seeded_density_score_replays_across_workers_and_batches[nmeans]
+FAILED tests/test_density_disparity_replay.py::test_seeded_density_score_replays_across_workers_and_batches[nmedoids]
+FAILED tests/test_density_disparity_replay.py::test_density_seed_validation[-1]
+FAILED tests/test_density_disparity_replay.py::test_density_seed_validation[True]
+FAILED tests/test_density_disparity_replay.py::test_density_seed_validation[1.2]
+FAILED tests/test_density_disparity_replay.py::test_density_seed_validation[4294967296]
+45 failed, 17 passed, 2 warnings in 40.02s

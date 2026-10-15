@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "protected_files": 5287,
+  "unchanged_files": 5284,
+  "authorized_source_changes": [
+    "/home/bardia/projects/graphical-sampling/graphical_sampling/clustering/fip_balanced_nmeans.py",
+    "/home/bardia/projects/graphical-sampling/graphical_sampling/index/density_disparity.py",
+    "/home/bardia/projects/graphical-sampling/graphical_sampling/population.py"
+  ],
+  "unexpected_changes": [],
+  "missing_files": [],
+  "historical_archive_SHA256": "4f45e7293c6e8a788b8d8a4360677b4b1d40795f92b13c5d2e4d9d091850ec3b",
+  "historical_archive_valid": true,
+  "historical_files_verified": 49,
+  "historical_archive_errors": [],
+  "note": "The three source changes were explicitly approved after the historical audit; all research files and the historical archive remain unchanged."
+}

@@ -1,4 +1,5 @@
 from ..clustering import FIPBalancedNMeans
+from ..population import _random_seed
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
@@ -8,6 +9,14 @@ from joblib import Parallel, delayed
 
 
 class DensityDisparity:
+    """Historical package DI with optional reproducible reference construction.
+
+    An integer random_state selects a local stream for each sample-index tuple,
+    independent of batch ordering and n_jobs. None preserves the unseeded API.
+    Replay assumes the same input order/settings and software environment;
+    cross-platform bitwise equality is not promised. Subclasses overriding
+    _process_one_sample retain their signature and own seed handling.
+    """
     def __init__(
             self,
             population,
@@ -16,7 +25,9 @@ class DensityDisparity:
             clustering_max_iter: int = 100,
             kde_rtol: float = 1e-4,
             representative: str = "nmeans",   # "nmeans" or "nmedoids"
+            *, random_state: int | None = None,
     ):
+        self.random_state = _random_seed(random_state)
         self.pop = population
         self.coords = self.pop.coords
         self.probs = self.pop.inclusions
@@ -68,12 +79,20 @@ class DensityDisparity:
         """The complete, independent pipeline for a single sample."""
         raw_sample = self.coords[sample_indices]
 
+        # The sample tuple, rather than batch position or worker, selects its stream.
+        # Normalize valid negative indices to their equivalent population indices.
+        seed = None
+        if self.random_state is not None:
+            entropy = [self.random_state, *(int(i) % self.pop.N for i in sample_indices)]
+            seed = int(np.random.SeedSequence(entropy).generate_state(1)[0])
+
         # 1. Clustering per sample
         fbn = FIPBalancedNMeans(
             n=self.pop.n,
             tol=self.clustering_tol,
             max_iter=self.clustering_max_iter,
-            init_clust_method="weighted"
+            init_clust_method="weighted",
+            random_state=seed,
         )
         fbn.fit(self.pop, init_centroids=raw_sample)
 

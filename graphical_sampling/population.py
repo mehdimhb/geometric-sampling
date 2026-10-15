@@ -1,5 +1,27 @@
 from __future__ import annotations
+import math
 import numpy as np
+
+
+def _positive_integer(value, name):
+    if (isinstance(value, (bool, np.bool_))
+            or not isinstance(value, (int, np.integer)) or value <= 0):
+        raise ValueError(f"{name} must be a positive integer")
+    return int(value)
+
+
+def _mass_tolerance(size, total):
+    """Float64 summation allowance; not a rounding rule for fractional designs."""
+    return max(1e-10, 16 * np.finfo(np.float64).eps * max(size, abs(total), 1))
+
+
+def _random_seed(value):
+    if value is None:
+        return None
+    if (isinstance(value, (bool, np.bool_))
+            or not isinstance(value, (int, np.integer)) or not 0 <= value < 2**32):
+        raise ValueError("random_state must be an integer in [0, 2**32) or None")
+    return int(value)
 
 
 class Population:
@@ -50,17 +72,30 @@ class Population:
                                                       this is used in the case of subset populations.
             n (int, optional): The desired sample size. If provided, `inclusions` is treated
                                as a vector of weights and normalized into probabilities.
+                               Otherwise, the sum must be within max(1e-10,
+                               16*float64_eps*max(N, abs(sum), 1)) of an integer;
+                               probabilities are preserved without renormalizing.
 
         Raises:
             ValueError: If the shapes of `coords` or `inclusions` do not match the
                         implied pop size N, or if `coords` is not (N,2).
         """
-        N = coords.shape[0]
-
+        coords = np.asarray(coords, dtype=np.float64)
+        inclusions = np.asarray(inclusions, dtype=np.float64)
         if coords.ndim != 2 or coords.shape[1] != 2:
             raise ValueError("coords must be a 2D array with shape (N, 2)")
+        N = coords.shape[0]
+        if N == 0 or not np.isfinite(coords).all():
+            raise ValueError("coords must be nonempty and finite")
         if inclusions.ndim != 1 or inclusions.size != N:
             raise ValueError("inclusions must be a 1D array with shape (N,)")
+
+        if not np.isfinite(inclusions).all() or not (inclusions > 0).all():
+            raise ValueError("inclusions/weights must be positive and finite")
+        if n is not None:
+            n = _positive_integer(n, "n")
+            if n > N:
+                raise ValueError("n must not exceed population size")
 
         # Normalize weights to inclusion probabilities if a sample size N is given
         if n is not None:
@@ -89,7 +124,11 @@ class Population:
         self._inclusions = np.ascontiguousarray(inclusions, dtype=np.float64)
         self._variable = np.ascontiguousarray(variable, dtype=np.float64)
         self._indices = _indices_final
-        self._n = n if n is not None else int(np.sum(self._inclusions))
+        total = math.fsum(self._inclusions)
+        nearest = int(round(total))
+        if abs(total - nearest) > _mass_tolerance(N, total):
+            raise ValueError("inclusion probabilities must sum to an integer sample size")
+        self._n = n if n is not None else _positive_integer(nearest, "inferred n")
 
     @staticmethod
     def _normalize_inclusions(raw_inclusions: np.ndarray, n: int, max_iter: int = 1000) -> np.ndarray:

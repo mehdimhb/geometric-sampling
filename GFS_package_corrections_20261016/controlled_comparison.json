@@ -1,0 +1,47 @@
+{
+  "historical_backup_SHA256": "4f45e7293c6e8a788b8d8a4360677b4b1d40795f92b13c5d2e4d9d091850ec3b",
+  "cases": [
+    {
+      "name": "square_compatibility",
+      "historical_n": 2,
+      "corrected_n": 2,
+      "historical_DI": 0.0,
+      "corrected_DI": 0.0,
+      "DI_difference": 0.0,
+      "same_labels": true,
+      "same_path": true
+    },
+    {
+      "name": "clustered24_compatibility",
+      "historical_n": 4,
+      "corrected_n": 4,
+      "historical_DI": 0.0,
+      "corrected_DI": 0.0,
+      "DI_difference": 0.0,
+      "same_labels": true,
+      "same_path": true
+    },
+    {
+      "name": "clustered144_roundoff",
+      "historical_n": 3,
+      "corrected_n": 4,
+      "historical_DI": 0.0,
+      "corrected_DI": 0.0,
+      "DI_difference": 0.0,
+      "same_labels": false,
+      "same_path": false
+    },
+    {
+      "name": "Meuse_first24_compatibility",
+      "historical_n": 6,
+      "corrected_n": 6,
+      "historical_DI": 0.09856258954992361,
+      "corrected_DI": 0.09856258954992361,
+      "DI_difference": 0.0,
+      "same_labels": true,
+      "same_path": true
+    }
+  ],
+  "interpretation": "Fixed cases only, not Monte Carlo estimates or evidence about historical design rankings. Common legacy RNG states isolate compatibility/target-n effects; the new optional seed uses a separate local Generator.",
+  "DI_evaluations": 8
+}

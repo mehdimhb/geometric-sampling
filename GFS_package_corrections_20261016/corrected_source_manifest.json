@@ -1,0 +1,11 @@
+{
+  "GFS_package_corrections_20261016/compare_controlled.py": "4908a37eb3982facac04ea94ada8365065e60f5845e83a38d8204708397a904d",
+  "GFS_package_corrections_20261016/reproduce_defects.py": "1dd3277766749ce7d29db55c87c30a2d799de3c35cd5c1fa871ef26d53690c59",
+  "GFS_package_corrections_20261016/verify_preservation.py": "49f2d7a58ee204a216fc2f6d6c145926e48d2006c5f4931fd7c2956b4af7c895",
+  "graphical_sampling/clustering/fip_balanced_nmeans.py": "2a18be5c4a2e6d2ef7d4a5c65368e46279c1ebcd0cc72da6a0c857f6c32e1c6f",
+  "graphical_sampling/index/density_disparity.py": "92eb05736a93bca0f95b1af69cb4534ebdc7efa7f1656c26871a53288679d475",
+  "graphical_sampling/population.py": "76cf5cf6c9c4de321358a3aecec6a25a6e616195bf6e26eec90869543a8f0b38",
+  "tests/test_clustering_initialization_replay.py": "14b5b449bde3660294a15f37f9fb2b3e5d486fa1d29af1ed4fa4f1283f394481",
+  "tests/test_density_disparity_replay.py": "9aa645af34e93db68b65a391323e0a08383e6813c3d6b46a431e42688a253b4f",
+  "tests/test_population_numerical_validation.py": "4188f2d0c51752f356f688a50e956a7b19d7fe12b94bf0f35395992ddb8b7e05"
+}
