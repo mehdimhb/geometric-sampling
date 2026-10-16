@@ -1,0 +1,147 @@
+"""Structure and reduced execution contract for the constrained-GFS demo."""
+
+from pathlib import Path
+
+import nbformat
+import numpy as np
+import pytest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+NOTEBOOK = ROOT / "simulations/jupyters/constrained_gfs_astronomy_demo.ipynb"
+HEADINGS = [
+    "# 1. Motivation and the Madow-to-repair scientific question",
+    "# 2. Population and prescribed FIPs",
+    "# 3. Artificial fibre constraints",
+    "# 4. Initial Madow/GFS design",
+    "# 5. Initial violations and infeasible mass",
+    "# 6. GFS constraint repair",
+    "# 7. Feasible GFS entropy optimization",
+    "# 8. Feasible GFS pairwise optimization",
+    "# 9. Independent LP existence and benchmark results",
+    "# 10. Results and numerical MaxEnt comparison",
+    "# 11. Short conclusions and limitations",
+]
+
+
+def test_notebook_has_approved_structure_and_imports_reusable_methods():
+    assert NOTEBOOK.exists(), "constrained-GFS astronomy notebook has not been created"
+    notebook = nbformat.read(NOTEBOOK, as_version=4)
+    parameter_cells = [
+        cell
+        for cell in notebook.cells
+        if cell.cell_type == "code" and "parameters" in cell.metadata.get("tags", [])
+    ]
+    assert len(parameter_cells) == 1
+
+    markdown = "\n".join(
+        cell.source for cell in notebook.cells if cell.cell_type == "markdown"
+    )
+    positions = [markdown.index(heading) for heading in HEADINGS]
+    assert positions == sorted(positions)
+    assert (
+        "LP verifies existence and provides benchmarks; GFS constructs, repairs, "
+        "navigates, and optimizes"
+    ) in markdown
+
+    code = "\n".join(
+        cell.source for cell in notebook.cells if cell.cell_type == "code"
+    )
+    for forbidden_definition in (
+        "def exchange(",
+        "def run_constraint_repair(",
+        "def analyze_pair_attainability(",
+        "def solve_numerical_maxent(",
+    ):
+        assert forbidden_definition not in code
+    for required_report in (
+        "phase_diagnostics",
+        "pair_diagnostics",
+        "Total notebook runtime",
+    ):
+        assert required_report in code
+
+
+def _assert_accounting(counts):
+    assert counts["proposed"] == (
+        counts["no_op"]
+        + counts["invariant_failures"]
+        + counts["feasibility_rejected"]
+        + counts["accepted"]
+        + counts["non_improving"]
+    )
+    assert counts["structurally_valid"] == (
+        counts["constraint_feasible_candidates"]
+        + counts["constraint_infeasible_candidates"]
+    )
+
+
+def test_notebook_executes_reduced_study_and_exposes_results(tmp_path):
+    notebook = nbformat.read(NOTEBOOK, as_version=4)
+    reduced = {
+        "root_seed": 12345,
+        "repair_proposals": 2_000,
+        "entropy_proposals": 500,
+        "sip_proposals": 500,
+        "checkpoint_every": 100,
+        "invariant_tolerance": 1e-12,
+        "sip_zero_tolerance": 1e-12,
+        "write_outputs": False,
+        "output_dir": str(tmp_path),
+    }
+    namespace = {"__name__": "__main__"}
+    for index, cell in enumerate(notebook.cells):
+        if cell.cell_type != "code":
+            continue
+        exec(compile(cell.source, f"{NOTEBOOK.name}:cell-{index}", "exec"), namespace)
+        if "parameters" in cell.metadata.get("tags", []):
+            namespace["SETTINGS"] = reduced
+
+    results = namespace["results"]
+    assert set(results) == {
+        "settings",
+        "madow",
+        "repair",
+        "entropy",
+        "sip",
+        "lp_feasibility",
+        "pair_attainability",
+        "maxent_reference",
+        "comparison",
+        "figures",
+        "runtime_seconds",
+    }
+    np.testing.assert_array_equal(
+        results["madow"]["order"], [4, 8, 1, 3, 7, 9, 6, 0, 2, 5]
+    )
+    assert results["madow"]["infeasible_mass"] == pytest.approx(0.9, abs=1e-12)
+    assert results["madow"]["violating_support_size"] > 0
+    assert results["repair"]["reached_feasibility"]
+    assert results["repair"]["final_infeasible_mass"] <= 1e-12
+    assert results["repair"]["max_fip_error"] < 1e-10
+    assert results["repair"]["support_changed"]
+    assert results["repair"]["sip_change_norm"] > 0.0
+    assert results["repair"]["all_support_feasible"]
+    assert results["entropy"]["max_fip_error"] < 1e-10
+    assert results["entropy"]["all_support_feasible"]
+    assert results["sip"]["max_fip_error"] < 1e-10
+    assert results["sip"]["all_support_feasible"]
+    assert results["lp_feasibility"]["success"]
+    assert results["lp_feasibility"]["feasible_sample_count"] == 122
+    assert (
+        results["maxent_reference"]["label"]
+        == "Numerical constrained MaxEnt benchmark"
+    )
+    assert results["figures"] == {
+        "target_field",
+        "repair_trace",
+        "entropy_trace",
+        "sip_heatmaps",
+    }
+    assert results["pair_attainability"]["marginal_attainable_count"] > 0
+    assert results["sip"]["attainable_zero_after"] <= results["sip"][
+        "attainable_zero_before"
+    ]
+    for phase in ("repair", "entropy", "sip"):
+        _assert_accounting(results[phase]["counts"])
+    assert not any(tmp_path.iterdir())
