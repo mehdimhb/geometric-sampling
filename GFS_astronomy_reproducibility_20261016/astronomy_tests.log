@@ -1,0 +1,16 @@
+..............................................                           [100%]
+=============================== warnings summary ===============================
+tests/test_constrained_gfs_notebook.py::test_notebook_executes_reduced_study_and_exposes_results
+  constrained_gfs_astronomy_demo.ipynb:cell-7:16: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_constrained_gfs_notebook.py::test_notebook_executes_reduced_study_and_exposes_results
+  constrained_gfs_astronomy_demo.ipynb:cell-13:21: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_constrained_gfs_notebook.py::test_notebook_executes_reduced_study_and_exposes_results
+  constrained_gfs_astronomy_demo.ipynb:cell-15:31: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_constrained_gfs_notebook.py::test_notebook_executes_reduced_study_and_exposes_results
+  constrained_gfs_astronomy_demo.ipynb:cell-21:17: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+46 passed, 4 warnings in 129.02s (0:02:09)

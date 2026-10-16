@@ -1,0 +1,29 @@
+{
+  "stage": "implementation_and_verification_complete",
+  "astronomy_merge_commit": "5ff9ed4a6e31a5f6e9e61bd4e9d99dcc6cd9d42f",
+  "astronomy_tests": {
+    "passed": 46,
+    "failed": 0
+  },
+  "reproducibility_tests": {
+    "passed": 49,
+    "failed": 0
+  },
+  "stable_red": {
+    "failed": 1,
+    "passed": 5
+  },
+  "production_delta": "one stable argsort line",
+  "seed_support": "already present; retained",
+  "main_modified": false,
+  "experiments_rerun": false,
+  "updated_UTC": "2026-10-16T09:13:44.204002+00:00",
+  "combined_tests": {
+    "passed": 157,
+    "failed": 0,
+    "warnings": 20
+  },
+  "preservation_passed": true,
+  "independent_review": "no actionable integration issue",
+  "branch": "codex/gfs-numerical-corrections-20261016"
+}

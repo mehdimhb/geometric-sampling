@@ -842,7 +842,7 @@ class FIPBalancedNMeans:
                     key -= d_next
 
             # Sort locally: low key -> close to prev; high key -> close to next
-            mega_indices.append(curr_idx[np.argsort(key)])
+            mega_indices.append(curr_idx[np.argsort(key, kind="stable")])
 
         if not mega_indices:
             return []

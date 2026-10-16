@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "protected_count": 5287,
+  "unchanged_count": 5286,
+  "authorized_changed_files": [
+    "/home/bardia/projects/graphical-sampling/graphical_sampling/clustering/fip_balanced_nmeans.py"
+  ],
+  "unexpected_changes": [],
+  "missing_files": [],
+  "backup_valid": true,
+  "source_worktree_test_unchanged": true,
+  "exact_one_line_production_patch": true,
+  "main_refs": {
+    "main": "dc2881af84a41e4f7658b6d21401e58470871b55",
+    "origin/main": "dc2881af84a41e4f7658b6d21401e58470871b55",
+    "origin/backup/main-before-di-20261016": "dc2881af84a41e4f7658b6d21401e58470871b55"
+  }
+}

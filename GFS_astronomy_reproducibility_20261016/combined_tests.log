@@ -1,0 +1,56 @@
+........................................................................ [ 45%]
+........................................................................ [ 91%]
+.............                                                            [100%]
+=============================== warnings summary ===============================
+tests/test_constrained_gfs_notebook.py::test_notebook_executes_reduced_study_and_exposes_results
+  constrained_gfs_astronomy_demo.ipynb:cell-7:16: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_constrained_gfs_notebook.py::test_notebook_executes_reduced_study_and_exposes_results
+  constrained_gfs_astronomy_demo.ipynb:cell-13:21: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_constrained_gfs_notebook.py::test_notebook_executes_reduced_study_and_exposes_results
+  constrained_gfs_astronomy_demo.ipynb:cell-15:31: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_constrained_gfs_notebook.py::test_notebook_executes_reduced_study_and_exposes_results
+  constrained_gfs_astronomy_demo.ipynb:cell-21:17: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_wide_two_part_exchange_moves_six_percent_and_shades_both_regions
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-25:142: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-20:40: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-20:62: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-20:88: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-20:132: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-26:176: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-27:153: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-30:49: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-33:291: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-34:89: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+tests/test_maxent_notebook.py::test_notebook_executes_reduced_study_and_exposes_expected_results
+  17_graphical_maxent_die.ipynb:cell-35:29: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+157 passed, 20 warnings in 243.31s (0:04:03)

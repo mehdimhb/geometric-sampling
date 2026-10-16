@@ -1,0 +1,24 @@
+{
+  "snapshot": "/tmp/gfs-combined-validation-agvf5inx/snapshot",
+  "imported_package": "/tmp/gfs-combined-validation-agvf5inx/snapshot/graphical_sampling/__init__.py",
+  "base_HEAD": "902ed8ef49edf4042ea8c30afefaa9aa974ad9ea",
+  "astronomy_HEAD": "789d29aa9d7455f1ca42faf11358549a03d2cc5a",
+  "source_hashes": {
+    "graphical_sampling/constrained.py": "d65f4817e303643d1417c14ef79e02718fdc559efa3b741c654e28aac161fecf",
+    "simulations/jupyters/constrained_gfs_astronomy_demo.ipynb": "b8212e00650362b5d3f25faec7c508efc7e4d399769ece75017effa537135cff",
+    "tests/test_constrained_gfs.py": "ba0bdecce69058a97dcb6c97d31b9205034a47d0c4c4da8afb42b8568cce6319",
+    "tests/test_constrained_gfs_notebook.py": "85eabc4f7de691f110a40a181a4dbdab8dfd2f95bee14b27377307597c41eede",
+    "graphical_sampling/clustering/fip_balanced_nmeans.py": "d6fbce7439795a52e3343e95d4fe29378545633abc7506fa8d844a0878e1cb96",
+    "tests/test_fip_stable_ordering.py": "c808a1302cfeea169597167aebdc2c904ea275f8f7e03d3a7eec90b908fb7847"
+  },
+  "command": [
+    "/home/bardia/projects/graphical-sampling/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests",
+    "-q"
+  ],
+  "stage": "complete",
+  "note": "Committed package tests plus requested astronomy/stable additions. Untracked unrelated tests are excluded. Existing notebook contracts use reduced settings in the isolated snapshot; no original Monte Carlo or completed480 DI evaluation is run.",
+  "exit_code": 0
+}
