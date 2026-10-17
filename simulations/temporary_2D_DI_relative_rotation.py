@@ -83,7 +83,7 @@ def calculate_di(pop, sample):
     fit = fit_ot(pop, sample)
     scorer = DensityDisparity(pop, representative="nmedoids", n_jobs=1)
     medoids, _ = scorer._cluster_medoids(fit.labels, fit.centroids)
-    rows, cols = linear_sum_assignment(cdist(medoids, sample))
+    rows, cols = linear_sum_assignment(cdist(medoids, sample, metric="sqeuclidean"))
     assigned = np.empty_like(medoids)
     assigned[rows] = sample[cols]
     translated = coords + (assigned - medoids)[fit.labels]

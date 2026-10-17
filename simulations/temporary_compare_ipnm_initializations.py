@@ -110,7 +110,7 @@ def weighted_medoids(coords, pik, labels, n_clusters):
 
 def score_with_reference(sample, coords, labels, medoids, scorer):
     raw_sample = coords[sample]
-    rows, cols = linear_sum_assignment(cdist(medoids, raw_sample))
+    rows, cols = linear_sum_assignment(cdist(medoids, raw_sample, metric="sqeuclidean"))
     assigned = np.empty_like(medoids)
     assigned[rows] = raw_sample[cols]
     translated = coords + (assigned - medoids)[labels]

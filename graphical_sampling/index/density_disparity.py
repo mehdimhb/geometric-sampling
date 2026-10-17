@@ -9,7 +9,15 @@ from joblib import Parallel, delayed
 
 
 class DensityDisparity:
-    """Historical package DI with optional reproducible reference construction.
+    r"""Density Index with optional reproducible reference construction.
+
+    Sample coordinates c are matched one-to-one to reference points r by
+    minimizing the sum of squared Euclidean distances, for both centroid and
+    medoid references:
+
+    .. math::
+
+        \min_{\tau} \sum_{i=1}^{n} \|\mathbf{c}_{\tau(i)} - \mathbf{r}_i\|^2.
 
     An integer random_state selects a local stream for each sample-index tuple,
     independent of batch ordering and n_jobs. None preserves the unseeded API.
@@ -110,7 +118,11 @@ class DensityDisparity:
             raise ValueError("representative must be either 'nmeans' or 'nmedoids'.")
 
         # 3. Assign sample points to the selected reference points
-        cost = cdist(reference_points, raw_sample)
+        cost = cdist(
+            reference_points,
+            raw_sample,
+            metric="sqeuclidean",
+        )
         row_ind, col_ind = linear_sum_assignment(cost)
 
         assigned_sample = np.empty_like(reference_points)

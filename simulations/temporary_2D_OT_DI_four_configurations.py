@@ -76,7 +76,7 @@ def transform(refs, angle, scale, shift):
 def evaluate(sample):
     fit = fit_ot(sample)
     medoids, _ = scorer._cluster_medoids(fit.labels, fit.centroids)
-    rows, cols = linear_sum_assignment(cdist(medoids, sample))
+    rows, cols = linear_sum_assignment(cdist(medoids, sample, metric="sqeuclidean"))
     assigned = np.empty_like(medoids); assigned[rows] = sample[cols]
     translated = coords + (assigned-medoids)[fit.labels]
     di = scorer._score_single_density(scorer._density(translated))

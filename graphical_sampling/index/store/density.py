@@ -8,6 +8,15 @@ from joblib import Parallel, delayed
 
 
 class Density:
+    r"""Density Index with squared Euclidean sample-to-centroid matching.
+
+    For sample coordinates c and centroid references r, matching minimizes
+
+    .. math::
+
+        \min_{\tau} \sum_{i=1}^{n} \|\mathbf{c}_{\tau(i)} - \mathbf{r}_i\|^2.
+    """
+
     def __init__(
             self,
             population,
@@ -76,7 +85,7 @@ class Density:
         centroids = fbn.centroids
 
         # 2. Assign sample points to the newly generated centroids
-        cost = cdist(centroids, raw_sample)
+        cost = cdist(centroids, raw_sample, metric="sqeuclidean")
         _, col_ind = linear_sum_assignment(cost)
         assigned_sample = raw_sample[col_ind]
 

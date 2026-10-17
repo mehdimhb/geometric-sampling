@@ -41,7 +41,7 @@ medoids,_ = base_scorer._cluster_medoids(fit.labels,fit.centroids)
 def evaluate(x, labels, refs, sample):
     local_pop=SimpleNamespace(coords=x,inclusions=pik,indices=np.arange(N),ids=np.arange(N),variable=np.zeros(N),N=N,n=n)
     scorer=DensityDisparity(local_pop,representative="nmedoids",n_jobs=1)
-    r,c=linear_sum_assignment(cdist(refs,sample)); assigned=np.empty_like(refs); assigned[r]=sample[c]
+    r,c=linear_sum_assignment(cdist(refs,sample,metric="sqeuclidean")); assigned=np.empty_like(refs); assigned[r]=sample[c]
     moved=x+(assigned-refs)[labels]
     return scorer._score_single_density(scorer._density(moved)),assigned
 

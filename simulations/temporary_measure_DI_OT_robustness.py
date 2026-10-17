@@ -71,7 +71,7 @@ def one_score(s,pop,scorer):
     f=SampleInitializedOT(n=pop.n,init_clust_method="ot",split_size=.001)
     f.fit(pop,init_centroids=raw)
     med,_=scorer._cluster_medoids(f.labels,f.centroids)
-    r,c=linear_sum_assignment(cdist(med,raw)); assigned=np.empty_like(med); assigned[r]=raw[c]
+    r,c=linear_sum_assignment(cdist(med,raw,metric="sqeuclidean")); assigned=np.empty_like(med); assigned[r]=raw[c]
     moved=coords+(assigned-med)[f.labels]
     return scorer._score_single_density(scorer._density(moved))
 
